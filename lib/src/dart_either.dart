@@ -73,9 +73,6 @@ abstract class Either<L, R> {
   C foldLeft<C>(C initial, C Function(C, R) rightOperation) =>
       fold((_) => initial, (r) => rightOperation(initial, r));
 
-  C foldRight<C>(C initial, C Function(R, C) leftOperation) =>
-      fold((_) => initial, (r) => leftOperation(r, initial));
-
   /// If this is a `Left`, then return the left value in `Right` or vice versa.
   ///
   /// Example:
