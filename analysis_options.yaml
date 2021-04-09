@@ -1,0 +1,6 @@
+include: package:pedantic/analysis_options.1.11.0.yaml
+linter:
+  rules:
+    - public_member_api_docs
+    - prefer_final_locals
+    - prefer_relative_imports
