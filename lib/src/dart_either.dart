@@ -30,14 +30,17 @@ abstract class Either<L, R> {
 
   static Stream<Either<L, R>> catchStreamError<L extends Object, R>(
           Stream<R> stream) =>
-      stream.map((data) => Either<L, R>.right(data)).transform(
-        StreamTransformer.fromHandlers(handleError: (e, s, sink) {
-          if (e is L) {
-            sink.add(Either.left(e));
-          } else {
-            sink.addError(e, s);
-          }
-        }),
+      stream.transform(
+        StreamTransformer<R, Either<L, R>>.fromHandlers(
+          handleData: (data, sink) => sink.add(Either.right(data)),
+          handleError: (e, s, sink) {
+            if (e is L) {
+              sink.add(Either.left(e));
+            } else {
+              sink.addError(e, s);
+            }
+          },
+        ),
       );
 
   /// Returns `true` if this is a [Left], `false` otherwise.
