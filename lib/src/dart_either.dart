@@ -23,13 +23,13 @@ abstract class Either<L, R> {
   }
 
   static Future<Either<L, R>> catchFutureError<L extends Object, R>(
-      Future<R> Function() f) =>
+          Future<R> Function() f) =>
       f()
           .then((value) => Either<L, R>.right(value))
           .onError<L>((error, _) => Either.left(error));
 
   static Stream<Either<L, R>> catchStreamError<L extends Object, R>(
-      Stream<R> stream) =>
+          Stream<R> stream) =>
       stream.map((data) => Either<L, R>.right(data)).transform(
         StreamTransformer.fromHandlers(handleError: (e, s, sink) {
           if (e is L) {
@@ -62,8 +62,10 @@ abstract class Either<L, R> {
   /// [ifLeft] is the function to apply if this is a [Left].
   /// [ifRight] is the function to apply if this is a [Right].
   /// Returns the results of applying the function.
-  C fold<C>(C Function(L) ifLeft,
-      C Function(R) ifRight,) {
+  C fold<C>(
+    C Function(L) ifLeft,
+    C Function(R) ifRight,
+  ) {
     final self = this;
     return self is Left<L>
         ? ifLeft(self.value)
@@ -106,11 +108,13 @@ abstract class Either<L, R> {
       fold((l) => Either.left(l), f);
 
   /// Map over Left and Right of this Either
-  Either<C, D> bimap<C, D>(C Function(L) leftOperation,
-      D Function(R) rightOperation,) =>
+  Either<C, D> bimap<C, D>(
+    C Function(L) leftOperation,
+    D Function(R) rightOperation,
+  ) =>
       fold(
-            (l) => Either.left(leftOperation(l)),
-            (r) => Either.right(rightOperation(r)),
+        (l) => Either.left(leftOperation(l)),
+        (r) => Either.right(rightOperation(r)),
       );
 
   /// Returns `false` if [Left] or returns the result of the application of
@@ -161,8 +165,7 @@ class Left<T> extends Either<T, Never> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is Left && runtimeType == other.runtimeType &&
-              value == other.value;
+      other is Left && runtimeType == other.runtimeType && value == other.value;
 
   @override
   int get hashCode => value.hashCode;
@@ -186,9 +189,9 @@ class Right<T> extends Either<Never, T> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is Right &&
-              runtimeType == other.runtimeType &&
-              value == other.value;
+      other is Right &&
+          runtimeType == other.runtimeType &&
+          value == other.value;
 
   @override
   int get hashCode => value.hashCode;
