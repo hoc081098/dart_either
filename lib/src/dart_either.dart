@@ -2,6 +2,27 @@ import 'dart:async';
 
 import 'package:meta/meta.dart';
 
+class EitherError<E extends Object> {
+  final E error;
+  final StackTrace stackTrace;
+
+  const EitherError._(this.error, this.stackTrace);
+
+  @override
+  String toString() => 'EitherError($error,\n$stackTrace)';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EitherError &&
+          runtimeType == other.runtimeType &&
+          error == other.error &&
+          stackTrace == other.stackTrace;
+
+  @override
+  int get hashCode => error.hashCode ^ stackTrace.hashCode;
+}
+
 @immutable
 @sealed
 abstract class Either<L, R> {
@@ -14,34 +35,35 @@ abstract class Either<L, R> {
   static Either<void, R> fromNullable<R>(R? value) =>
       value == null ? Either.left(null) : Either.right(value);
 
-  static Either<L, R> catchError<L extends Object, R>(R Function() f) {
+  static Either<EitherError<E>, R> catchError<E extends Object, R>(
+      R Function() f) {
     try {
       return Either.right(f());
-    } on L catch (e) {
-      return Either.left(e);
+    } on E catch (e, s) {
+      return Either.left(EitherError._(e, s));
     }
   }
 
-  static Future<Either<L, R>> catchFutureError<L extends Object, R>(
-          Future<R> Function() f) =>
-      f()
-          .then((value) => Either<L, R>.right(value))
-          .onError<L>((error, _) => Either.left(error));
+  static Future<Either<EitherError<E>, R>>
+      catchFutureError<E extends Object, R>(Future<R> Function() f) => f()
+          .then((value) => Either<EitherError<E>, R>.right(value))
+          .onError<E>((e, s) => Either.left(EitherError._(e, s)));
 
-  static Stream<Either<L, R>> catchStreamError<L extends Object, R>(
-          Stream<R> stream) =>
-      stream.transform(
-        StreamTransformer<R, Either<L, R>>.fromHandlers(
-          handleData: (data, sink) => sink.add(Either.right(data)),
-          handleError: (e, s, sink) {
-            if (e is L) {
-              sink.add(Either.left(e));
-            } else {
-              sink.addError(e, s);
-            }
-          },
-        ),
-      );
+  static Stream<Either<EitherError<E>, R>>
+      catchStreamError<E extends Object, R>(Stream<R> stream) {
+    return stream.transform(
+      StreamTransformer<R, Either<EitherError<E>, R>>.fromHandlers(
+        handleData: (data, sink) => sink.add(Either.right(data)),
+        handleError: (e, s, sink) {
+          if (e is E) {
+            sink.add(Either.left(EitherError._(e, s)));
+          } else {
+            sink.addError(e, s);
+          }
+        },
+      ),
+    );
+  }
 
   /// Returns `true` if this is a [Left], `false` otherwise.
   /// Used only for performance instead of fold.
@@ -204,56 +226,6 @@ class Right<T> extends Either<Never, T> {
 }
 
 extension ToEitherStreamExtension<R> on Stream<R> {
-  Stream<Either<L, R>> either<L extends Object>() =>
-      Either.catchStreamError<L, R>(this);
-}
-
-Either<Object, String> catchObject() {
-  return Either.catchError(() {
-    throw Exception('Test');
-  });
-}
-
-Either<Exception, String> catchException() {
-  return Either.catchError<Exception, String>(() {
-    throw 'A string';
-  });
-}
-
-Future<Either<Object, String>> catchObjectAsync() {
-  return Either.catchFutureError(() async {
-    await Future<void>.delayed(const Duration(seconds: 1));
-    throw Exception('Test 2');
-  });
-}
-
-Future<Either<Exception, String>> catchExceptionAsync() {
-  return Either.catchFutureError(() async {
-    await Future<void>.delayed(const Duration(seconds: 1));
-    throw 'A string';
-  });
-}
-
-Stream<Either<Object, int>> getStream() {
-  return Stream.fromIterable([1, 2, 3, 4])
-      .map((v) => v == 3 ? throw Exception('Error...') : v)
-      .either();
-}
-
-void main() async {
-  catchObject().fold((e) => print('Error: $e'), print);
-  (await catchObjectAsync()).fold((e) => print('Error: $e'), print);
-
-  try {
-    catchException().fold((e) => print('Error: $e'), print);
-  } catch (e) {
-    print('Unhandled $e');
-  }
-  try {
-    (await catchExceptionAsync()).fold((e) => print('Error: $e'), print);
-  } catch (e) {
-    print('Unhandled $e');
-  }
-
-  getStream().listen(print);
+  Stream<Either<EitherError<E>, R>> either<E extends Object>() =>
+      Either.catchStreamError<E, R>(this);
 }
