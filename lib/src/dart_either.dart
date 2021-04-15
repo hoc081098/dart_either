@@ -45,9 +45,10 @@ abstract class Either<L, R> {
   }
 
   static Future<Either<EitherError<E>, R>>
-      catchFutureError<E extends Object, R>(Future<R> Function() f) => f()
-          .then((value) => Either<EitherError<E>, R>.right(value))
-          .onError<E>((e, s) => Either.left(EitherError._(e, s)));
+      catchFutureError<E extends Object, R>(Future<R> Function() f) =>
+          Future.sync(f)
+              .then((value) => Either<EitherError<E>, R>.right(value))
+              .onError<E>((e, s) => Either.left(EitherError._(e, s)));
 
   static Stream<Either<EitherError<E>, R>>
       catchStreamError<E extends Object, R>(Stream<R> stream) {
@@ -173,6 +174,16 @@ abstract class Either<L, R> {
   /// final Either<int, int> left = Left(12).orNull()   // Result: null
   /// ```
   R? orNull() => fold((l) => null, (r) => r);
+
+  /// Returns the value from this [Either.Right] or allows clients to transform [Either.Left] to [Either.Right] while providing access to
+  /// the value of [Either.Left].
+  ///
+  /// Example:
+  /// ```
+  /// Right(12).getOrHandle((v) => 17) // Result: 12
+  /// Left(12).getOrHandle((v) => v + 5) // Result: 17
+  /// ```
+  R getOrHandle(R Function(L) defaultValue) => fold(defaultValue, (r) => r);
 }
 
 /// The left side of the disjoint union, as opposed to the [Right] side.
@@ -228,4 +239,60 @@ class Right<T> extends Either<Never, T> {
 extension ToEitherStreamExtension<R> on Stream<R> {
   Stream<Either<EitherError<E>, R>> either<E extends Object>() =>
       Either.catchStreamError<E, R>(this);
+}
+
+@sealed
+abstract class EitherEffect<L, R> {
+  R bind(Either<L, R> either);
+
+  Future<R> bindFuture(Future<Either<L, R>> future);
+}
+
+class _EitherBindError<T> {
+  final T error;
+
+  _EitherBindError(this.error);
+}
+
+class _EitherEffectImpl<L, R> implements EitherEffect<L, R> {
+  @override
+  R bind(Either<L, R> either) {
+    return either.getOrHandle((v) => throw _EitherBindError(v));
+  }
+
+  @override
+  Future<R> bindFuture(Future<Either<L, R>> future) {
+    return future.then(bind);
+  }
+}
+
+Either<L, R> eitherBinding<L, R>(R Function(EitherEffect<L, R>) effect) {
+  try {
+    return Either.right(effect(_EitherEffectImpl<L, R>()));
+  } on _EitherBindError<L> catch (e, s) {
+    return Either.left(e.error);
+  }
+}
+
+Future<Either<L, R>> eitherBindingFuture<L extends Object, R>(
+    Future<R> Function(EitherEffect<L, R>) effect) {
+  return Future.sync(() => effect(_EitherEffectImpl<L, R>()))
+      .then((value) => Either<L, R>.right(value))
+      .onError<_EitherBindError<L>>((e, s) => Either.left(e.error));
+  ;
+}
+
+Future<Either<Object, int>> f() {
+  return eitherBindingFuture<EitherError<Object>, int>((e) async {
+    final v1 = e.bind(Right(1));
+    final v2 = e.bind(Either.catchError(() => 99));
+    final v3 = await e.bindFuture(Either.catchFutureError(() async {
+      return 2;
+    }));
+    return v1 + v2 + v3;
+  });
+}
+
+void main() async {
+  (await f()).fold(print, print);
 }
