@@ -4,4 +4,3 @@
 library dart_either;
 
 export 'src/dart_either.dart';
-
