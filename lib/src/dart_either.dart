@@ -2,26 +2,8 @@ import 'dart:async';
 
 import 'package:meta/meta.dart';
 
-class EitherError<E extends Object> {
-  final E error;
-  final StackTrace stackTrace;
-
-  const EitherError._(this.error, this.stackTrace);
-
-  @override
-  String toString() => 'EitherError($error,\n$stackTrace)';
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is EitherError &&
-          runtimeType == other.runtimeType &&
-          error == other.error &&
-          stackTrace == other.stackTrace;
-
-  @override
-  int get hashCode => error.hashCode ^ stackTrace.hashCode;
-}
+/// Map [error] and [stackTrace] to [T] value.
+typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 
 @immutable
 @sealed
@@ -35,36 +17,35 @@ abstract class Either<L, R> {
   static Either<void, R> fromNullable<R>(R? value) =>
       value == null ? Either.left(null) : Either.right(value);
 
-  static Either<EitherError<E>, R> catchError<E extends Object, R>(
-      R Function() f) {
+  static Either<L, R> catchError<L, R>(
+    ErrorMapper<L> errorMapper,
+    R Function() f,
+  ) {
     try {
       return Either.right(f());
-    } on E catch (e, s) {
-      return Either.left(EitherError._(e, s));
+    } catch (e, s) {
+      return Either.left(errorMapper(e, s));
     }
   }
 
-  static Future<Either<EitherError<E>, R>>
-      catchFutureError<E extends Object, R>(Future<R> Function() f) =>
-          Future.sync(f)
-              .then((value) => Either<EitherError<E>, R>.right(value))
-              .onError<E>((e, s) => Either.left(EitherError._(e, s)));
+  static Future<Either<L, R>> catchFutureError<L, R>(
+    ErrorMapper<L> errorMapper,
+    Future<R> Function() f,
+  ) =>
+      Future.sync(f)
+          .then((value) => Either<L, R>.right(value))
+          .onError<Object>((e, s) => Either.left(errorMapper(e, s)));
 
-  static Stream<Either<EitherError<E>, R>>
-      catchStreamError<E extends Object, R>(Stream<R> stream) {
-    return stream.transform(
-      StreamTransformer<R, Either<EitherError<E>, R>>.fromHandlers(
-        handleData: (data, sink) => sink.add(Either.right(data)),
-        handleError: (e, s, sink) {
-          if (e is E) {
-            sink.add(Either.left(EitherError._(e, s)));
-          } else {
-            sink.addError(e, s);
-          }
-        },
-      ),
-    );
-  }
+  static Stream<Either<L, R>> catchStreamError<L, R>(
+    ErrorMapper<L> errorMapper,
+    Stream<R> stream,
+  ) =>
+      stream.transform(
+        StreamTransformer<R, Either<L, R>>.fromHandlers(
+          handleData: (data, sink) => sink.add(Either.right(data)),
+          handleError: (e, s, sink) => sink.add(Either.left(errorMapper(e, s))),
+        ),
+      );
 
   /// Returns `true` if this is a [Left], `false` otherwise.
   /// Used only for performance instead of fold.
@@ -236,40 +217,50 @@ class Right<T> extends Either<Never, T> {
   String toString() => 'Either.Right($value)';
 }
 
-extension ToEitherStreamExtension<R> on Stream<R> {
-  Stream<Either<EitherError<E>, R>> either<E extends Object>() =>
-      Either.catchStreamError<E, R>(this);
+extension EitherExtensions<L extends Object, R> on Either<L, R> {
+  Future<R> asFuture() => fold((e) => Future.error(e), (v) => Future.value(v));
 }
 
+extension ToEitherStreamExtension<R> on Stream<R> {
+  Stream<Either<L, R>> asEitherStream<L>(ErrorMapper<L> errorMapper) =>
+      Either.catchStreamError<L, R>(errorMapper, this);
+}
+
+/// Used for monad comprehensions.
 @sealed
 abstract class EitherEffect<L, R> {
+  /// Attempt to get right value of either.
+  /// Or throws a [ControlError].
   R bind(Either<L, R> either);
 
+  /// Attempt to get right value of either.
+  /// Or return a Future that completes with a [ControlError].
   Future<R> bindFuture(Future<Either<L, R>> future);
 }
 
-class _EitherBindError<T> {
+extension EitherEffectExtensions<L, R> on EitherEffect<L, R> {
+  R operator <<(Either<L, R> either) => bind(either);
+}
+
+class ControlError<T> {
   final T error;
 
-  _EitherBindError(this.error);
+  ControlError(this.error);
 }
 
 class _EitherEffectImpl<L, R> implements EitherEffect<L, R> {
   @override
-  R bind(Either<L, R> either) {
-    return either.getOrHandle((v) => throw _EitherBindError(v));
-  }
+  R bind(Either<L, R> either) =>
+      either.getOrHandle((v) => throw ControlError(v));
 
   @override
-  Future<R> bindFuture(Future<Either<L, R>> future) {
-    return future.then(bind);
-  }
+  Future<R> bindFuture(Future<Either<L, R>> future) => future.then(bind);
 }
 
 Either<L, R> eitherBinding<L, R>(R Function(EitherEffect<L, R>) effect) {
   try {
     return Either.right(effect(_EitherEffectImpl<L, R>()));
-  } on _EitherBindError<L> catch (e, s) {
+  } on ControlError<L> catch (e) {
     return Either.left(e.error);
   }
 }
@@ -278,21 +269,5 @@ Future<Either<L, R>> eitherBindingFuture<L extends Object, R>(
     Future<R> Function(EitherEffect<L, R>) effect) {
   return Future.sync(() => effect(_EitherEffectImpl<L, R>()))
       .then((value) => Either<L, R>.right(value))
-      .onError<_EitherBindError<L>>((e, s) => Either.left(e.error));
-  ;
-}
-
-Future<Either<Object, int>> f() {
-  return eitherBindingFuture<EitherError<Object>, int>((e) async {
-    final v1 = e.bind(Right(1));
-    final v2 = e.bind(Either.catchError(() => 99));
-    final v3 = await e.bindFuture(Either.catchFutureError(() async {
-      return 2;
-    }));
-    return v1 + v2 + v3;
-  });
-}
-
-void main() async {
-  (await f()).fold(print, print);
+      .onError<ControlError<L>>((e, s) => Either.left(e.error));
 }
