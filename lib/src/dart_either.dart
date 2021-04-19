@@ -29,7 +29,7 @@ abstract class Either<L, R> {
   /// Should not catch [ControlError] in [effect].
   factory Either.binding(R Function(EitherEffect<L, R>) effect) {
     try {
-      return Either.right(effect(const _EitherEffectImpl()));
+      return Either.right(effect(_EitherEffectImpl<L, R>()));
     } on ControlError<L> catch (e) {
       return Either.left(e._value);
     }
@@ -42,7 +42,7 @@ abstract class Either<L, R> {
   /// Should not catch [ControlError] in [effect].
   static Future<Either<L, R>> bindingFuture<L, R>(
           FutureOr<R> Function(EitherEffect<L, R>) effect) =>
-      Future.sync(() => effect(const _EitherEffectImpl()))
+      Future.sync(() => effect(_EitherEffectImpl<L, R>()))
           .then((value) => Either<L, R>.right(value))
           .onError<ControlError<L>>((e, s) => Either.left(e._value));
 
@@ -283,8 +283,6 @@ class ControlError<T> {
 }
 
 class _EitherEffectImpl<L, R> implements EitherEffect<L, R> {
-  const _EitherEffectImpl();
-
   @override
   R bind(Either<L, R> either) =>
       either.getOrHandle((v) => throw ControlError._(v));
