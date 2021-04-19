@@ -14,19 +14,33 @@ abstract class Either<L, R> {
 
   const factory Either.right(R right) = Right;
 
-  static Either<void, R> fromNullable<R>(R? value) =>
-      value == null ? Either.left(null) : Either.right(value);
-
-  static Either<L, R> catchError<L, R>(
-    ErrorMapper<L> errorMapper,
-    R Function() f,
-  ) {
+  /// Invoke [f] and wrap result in [Right]
+  factory Either.catchError(ErrorMapper<L> errorMapper, R Function() f) {
     try {
       return Either.right(f());
     } catch (e, s) {
       return Either.left(errorMapper(e, s));
     }
   }
+
+  /// Should not catch [ControlError] in [effect].
+  factory Either.binding(R Function(EitherEffect<L, R>) effect) {
+    try {
+      return Either.right(effect(const _EitherEffectImpl()));
+    } on ControlError<L> catch (e) {
+      return Either.left(e._value);
+    }
+  }
+
+  static Either<void, R> fromNullable<R>(R? value) =>
+      value == null ? Either.left(null) : Either.right(value);
+
+  /// Should not catch [ControlError] in [effect].
+  static Future<Either<L, R>> bindingFuture<L, R>(
+          FutureOr<R> Function(EitherEffect<L, R>) effect) =>
+      Future.sync(() => effect(const _EitherEffectImpl()))
+          .then((value) => Either<L, R>.right(value))
+          .onError<ControlError<L>>((e, s) => Either.left(e._value));
 
   static Future<Either<L, R>> catchFutureError<L, R>(
     ErrorMapper<L> errorMapper,
@@ -245,33 +259,18 @@ extension EitherEffectExtensions<L, R> on EitherEffect<L, R> {
 /// Error thrown by [EitherEffect]. Should not be catch.
 @sealed
 class ControlError<T> {
-  final T error;
+  final T _value;
 
-  ControlError(this.error);
+  const ControlError._(this._value);
 }
 
 class _EitherEffectImpl<L, R> implements EitherEffect<L, R> {
+  const _EitherEffectImpl();
+
   @override
   R bind(Either<L, R> either) =>
-      either.getOrHandle((v) => throw ControlError(v));
+      either.getOrHandle((v) => throw ControlError._(v));
 
   @override
   Future<R> bindFuture(Future<Either<L, R>> future) => future.then(bind);
-}
-
-/// Should not catch [ControlError] in [effect].
-Either<L, R> eitherBinding<L, R>(R Function(EitherEffect<L, R>) effect) {
-  try {
-    return Either.right(effect(_EitherEffectImpl<L, R>()));
-  } on ControlError<L> catch (e) {
-    return Either.left(e.error);
-  }
-}
-
-/// Should not catch [ControlError] in [effect].
-Future<Either<L, R>> eitherBindingFuture<L extends Object, R>(
-    FutureOr<R> Function(EitherEffect<L, R>) effect) {
-  return Future.sync(() => effect(_EitherEffectImpl<L, R>()))
-      .then((value) => Either<L, R>.right(value))
-      .onError<ControlError<L>>((e, s) => Either.left(e.error));
 }
