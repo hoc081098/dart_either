@@ -30,7 +30,7 @@ abstract class Either<L, R> {
 
   static Future<Either<L, R>> catchFutureError<L, R>(
     ErrorMapper<L> errorMapper,
-    Future<R> Function() f,
+    FutureOr<R> Function() f,
   ) =>
       Future.sync(f)
           .then((value) => Either<L, R>.right(value))
