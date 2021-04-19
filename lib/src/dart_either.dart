@@ -5,13 +5,16 @@ import 'package:meta/meta.dart';
 /// Map [error] and [stackTrace] to [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 
+/// TODO
 @immutable
 @sealed
 abstract class Either<L, R> {
   const Either._();
 
+  /// TODO
   const factory Either.left(L left) = Left;
 
+  /// TODO
   const factory Either.right(R right) = Right;
 
   /// Invoke [f] and wrap result in [Right]
@@ -32,6 +35,7 @@ abstract class Either<L, R> {
     }
   }
 
+  /// TODO
   static Either<void, R> fromNullable<R>(R? value) =>
       value == null ? Either.left(null) : Either.right(value);
 
@@ -42,6 +46,7 @@ abstract class Either<L, R> {
           .then((value) => Either<L, R>.right(value))
           .onError<ControlError<L>>((e, s) => Either.left(e._value));
 
+  /// TODO
   static Future<Either<L, R>> catchFutureError<L, R>(
     ErrorMapper<L> errorMapper,
     FutureOr<R> Function() f,
@@ -50,6 +55,7 @@ abstract class Either<L, R> {
           .then((value) => Either<L, R>.right(value))
           .onError<Object>((e, s) => Either.left(errorMapper(e, s)));
 
+  /// TODO
   static Stream<Either<L, R>> catchStreamError<L, R>(
     ErrorMapper<L> errorMapper,
     Stream<R> stream,
@@ -93,6 +99,7 @@ abstract class Either<L, R> {
         : ifRight((self as Right<R>).value);
   }
 
+  /// TODO
   C foldLeft<C>(C initial, C Function(C, R) rightOperation) =>
       fold((_) => initial, (r) => rightOperation(initial, r));
 
@@ -125,6 +132,7 @@ abstract class Either<L, R> {
   Either<C, R> mapLeft<C>(C Function(L) f) =>
       fold((l) => Either.left(f(l)), (r) => Either.right(r));
 
+  /// TODO
   Either<L, C> flatMap<C>(Either<L, C> Function(R) f) =>
       fold((l) => Either.left(l), f);
 
@@ -183,8 +191,10 @@ abstract class Either<L, R> {
 
 /// The left side of the disjoint union, as opposed to the [Right] side.
 class Left<T> extends Either<T, Never> {
+  /// TODO
   final T value;
 
+  /// TODO
   const Left(this.value) : super._();
 
   @override
@@ -207,8 +217,10 @@ class Left<T> extends Either<T, Never> {
 
 /// The right side of the disjoint union, as opposed to the [Left] side.
 class Right<T> extends Either<Never, T> {
+  /// TODO
   final T value;
 
+  /// TODO
   const Right(this.value) : super._();
 
   @override
@@ -231,11 +243,15 @@ class Right<T> extends Either<Never, T> {
   String toString() => 'Either.Right($value)';
 }
 
+/// TODO
 extension EitherExtensions<L extends Object, R> on Either<L, R> {
+  /// TODO
   Future<R> asFuture() => fold((e) => Future.error(e), (v) => Future.value(v));
 }
 
+/// TODO
 extension ToEitherStreamExtension<R> on Stream<R> {
+  /// TODO
   Stream<Either<L, R>> asEitherStream<L>(ErrorMapper<L> errorMapper) =>
       Either.catchStreamError<L, R>(errorMapper, this);
 }
@@ -252,7 +268,9 @@ abstract class EitherEffect<L, R> {
   Future<R> bindFuture(Future<Either<L, R>> future);
 }
 
+/// TODO
 extension EitherEffectExtensions<L, R> on EitherEffect<L, R> {
+  /// TODO
   R operator <<(Either<L, R> either) => bind(either);
 }
 
