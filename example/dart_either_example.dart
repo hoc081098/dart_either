@@ -41,7 +41,7 @@ Stream<Either<Object, int>> getStream() {
 }
 
 Future<Either<Object, int>> monadComprehensions() {
-  return eitherBindingFuture<Object, int>((e) async {
+  return Either.bindingFuture<Object, int>((e) async {
     final v1 = e << Right(999);
     print('after v1 $v1');
 
