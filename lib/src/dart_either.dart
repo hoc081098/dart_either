@@ -242,6 +242,8 @@ extension EitherEffectExtensions<L, R> on EitherEffect<L, R> {
   R operator <<(Either<L, R> either) => bind(either);
 }
 
+/// Error thrown by [EitherEffect]. Should not be catch.
+@sealed
 class ControlError<T> {
   final T error;
 
@@ -257,6 +259,7 @@ class _EitherEffectImpl<L, R> implements EitherEffect<L, R> {
   Future<R> bindFuture(Future<Either<L, R>> future) => future.then(bind);
 }
 
+/// Should not catch [ControlError] in [effect].
 Either<L, R> eitherBinding<L, R>(R Function(EitherEffect<L, R>) effect) {
   try {
     return Either.right(effect(_EitherEffectImpl<L, R>()));
@@ -265,8 +268,9 @@ Either<L, R> eitherBinding<L, R>(R Function(EitherEffect<L, R>) effect) {
   }
 }
 
+/// Should not catch [ControlError] in [effect].
 Future<Either<L, R>> eitherBindingFuture<L extends Object, R>(
-    Future<R> Function(EitherEffect<L, R>) effect) {
+    FutureOr<R> Function(EitherEffect<L, R>) effect) {
   return Future.sync(() => effect(_EitherEffectImpl<L, R>()))
       .then((value) => Either<L, R>.right(value))
       .onError<ControlError<L>>((e, s) => Either.left(e.error));
