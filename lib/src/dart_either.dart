@@ -274,7 +274,7 @@ extension EitherEffectExtensions<L, R> on EitherEffect<L, R> {
   R operator <<(Either<L, R> either) => bind(either);
 }
 
-/// Error thrown by [EitherEffect]. Should not be catch.
+/// Error thrown by [EitherEffect]. Should not be caught.
 @sealed
 class ControlError<T> {
   final T _value;
