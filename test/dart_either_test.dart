@@ -2,9 +2,12 @@ import 'package:test/test.dart';
 import 'package:dart_either/dart_either.dart';
 
 void main() {
+  final takeOnlyError = (Object error, StackTrace stackTrace) => error;
+
   group('Either', () {
     const left = Left(1);
     const right = Right(1);
+    final exception = Exception();
 
     test('isLeft', () {
       expect(left.isLeft, isTrue);
@@ -35,8 +38,58 @@ void main() {
 
       test('Either.catchError', () {
         expect(
-          Either.catchError((error, stackTrace) => error, () => 1),
+          Either<Object, int>.catchError(takeOnlyError, () => 1),
           right,
+        );
+
+        expect(
+          Either<Object, String>.catchError(
+              takeOnlyError, () => throw exception),
+          Left<Object>(exception),
+        );
+      });
+
+      test('Either.binding', () {
+        // single return
+        expect(
+          Either<Object, int>.binding((e) => 1),
+          right,
+        );
+
+        // rethrow exception
+        expect(
+          () => Either<Object, int>.binding((e) => throw exception),
+          throwsException,
+        );
+
+        // 2 success bind
+        expect(
+          Either<Object, int>.binding((e) {
+            final a = e.bind(Right(1));
+            final b = e.bind(Right(2));
+            return a + b;
+          }),
+          Right(3),
+        );
+
+        // 2 success <<
+        expect(
+          Either<Object, int>.binding((e) {
+            final a = e << Right(1);
+            final b = e << Right(2);
+            return a + b;
+          }),
+          Right(3),
+        );
+
+        // 1 success bind + 1 failure bind
+        expect(
+          Either<Object, int>.binding((e) {
+            final a = e << Right(1);
+            final b = e << Left(exception);
+            return a + b;
+          }),
+          Left<Object>(exception),
         );
       });
     });
