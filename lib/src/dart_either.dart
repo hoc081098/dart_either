@@ -5,6 +5,17 @@ import 'package:meta/meta.dart';
 /// Map [error] and [stackTrace] to [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 
+@pragma('vm:prefer-inline')
+@pragma('dart2js:tryInline')
+extension on Object {
+  Object throwIfFatal() {
+    if (this is ControlError) {
+      throw this;
+    }
+    return this;
+  }
+}
+
 /// TODO
 @immutable
 @sealed
@@ -22,7 +33,7 @@ abstract class Either<L, R> {
     try {
       return Either.right(f());
     } catch (e, s) {
-      return Either.left(errorMapper(e, s));
+      return Either.left(errorMapper(e.throwIfFatal(), s));
     }
   }
 
@@ -51,9 +62,8 @@ abstract class Either<L, R> {
     ErrorMapper<L> errorMapper,
     FutureOr<R> Function() f,
   ) =>
-      Future.sync(f)
-          .then((value) => Either<L, R>.right(value))
-          .onError<Object>((e, s) => Either.left(errorMapper(e, s)));
+      Future.sync(f).then((value) => Either<L, R>.right(value)).onError<Object>(
+          (e, s) => Either.left(errorMapper(e.throwIfFatal(), s)));
 
   /// TODO
   static Stream<Either<L, R>> catchStreamError<L, R>(
@@ -63,7 +73,8 @@ abstract class Either<L, R> {
       stream.transform(
         StreamTransformer<R, Either<L, R>>.fromHandlers(
           handleData: (data, sink) => sink.add(Either.right(data)),
-          handleError: (e, s, sink) => sink.add(Either.left(errorMapper(e, s))),
+          handleError: (e, s, sink) =>
+              sink.add(Either.left(errorMapper(e.throwIfFatal(), s))),
         ),
       );
 
@@ -259,6 +270,8 @@ extension ToEitherStreamExtension<R> on Stream<R> {
 /// Used for monad comprehensions.
 @sealed
 abstract class EitherEffect<L, R> {
+  EitherEffect._();
+
   /// Attempt to get right value of either.
   /// Or throws a [ControlError].
   R bind(Either<L, R> either);
