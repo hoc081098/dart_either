@@ -14,9 +14,15 @@
 
 A simple usage example:
 
+### Import
+
 ```dart
 import 'package:dart_either/dart_either.dart';
+```
 
+### Catch synchronous errors
+
+```dart
 Either<Object, String> catchObject() {
   return Either.catchError(
     (e, s) => e,
@@ -30,7 +36,11 @@ Either<Exception, String> catchException() {
     () => throw 'A string',
   );
 }
+```
 
+### Catch asynchronous errors
+
+```dart
 Future<Either<Object, String>> catchObjectAsync() {
   return Either.catchFutureError(
     (e, s) => e,
@@ -56,7 +66,11 @@ Stream<Either<Object, int>> getStream() {
       .map((v) => v == 3 ? throw Exception('Error...') : v)
       .asEitherStream((e, s) => e);
 }
+```
 
+### Monad comprehensions (binding)
+
+```dart
 Future<Either<Object, int>> monadComprehensions() {
   return Either.bindingFuture<Object, int>((e) async {
     final v1 = e << Right(999);
@@ -74,7 +88,11 @@ Future<Either<Object, int>> monadComprehensions() {
     return v1 + v2 + v3;
   });
 }
+```
 
+### Main
+
+```dart
 void main() async {
   (await monadComprehensions()).fold((e) => print('Error: $e'), print);
 
