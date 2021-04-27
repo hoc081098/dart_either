@@ -93,5 +93,18 @@ void main() {
         );
       });
     });
+
+    group('static construction', () {
+      test('fromNullable', () {
+        expect(
+          Either.fromNullable<Object>(null),
+          Left<void>(null),
+        );
+        expect(
+          Either.fromNullable(2),
+          Right(2),
+        );
+      });
+    });
   });
 }

@@ -47,8 +47,8 @@ abstract class Either<L, R> {
   }
 
   /// TODO
-  static Either<void, R> fromNullable<R>(R? value) =>
-      value == null ? Either.left(null) : Either.right(value);
+  static Either<void, R> fromNullable<R extends Object>(R? value) =>
+      value == null ? const Either.left(null) : Either.right(value);
 
   /// Should not catch [ControlError] in [effect].
   static Future<Either<L, R>> bindingFuture<L, R>(
