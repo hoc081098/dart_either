@@ -38,7 +38,7 @@ Either<Exception, String> catchException() {
 }
 ```
 
-### Catch asynchronous errors
+### Catch asynchronous errors (Future and Stream)
 
 ```dart
 Future<Either<Object, String>> catchObjectAsync() {
