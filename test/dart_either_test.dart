@@ -1,5 +1,5 @@
-import 'package:test/test.dart';
 import 'package:dart_either/dart_either.dart';
+import 'package:test/test.dart';
 
 void main() {
   final takeOnlyError = (Object error, StackTrace stackTrace) => error;
@@ -105,6 +105,14 @@ void main() {
           Right(2),
         );
       });
+    });
+
+    test('extension .left() and .right()', () {
+      expect(1.left(), left);
+      expect(1.left(), Either.left(1));
+
+      expect(1.right(), right);
+      expect(1.right(), Either.right(1));
     });
   });
 }
