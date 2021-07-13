@@ -267,6 +267,15 @@ extension ToEitherStreamExtension<R> on Stream<R> {
       Either.catchStreamError<L, R>(errorMapper, this);
 }
 
+/// TODO
+extension ToEitherObjectExtension<T> on T {
+  /// TODO
+  Either<T, Never> left() => Either.left(this);
+
+  /// TODO
+  Either<Never, T> right() => Either.right(this);
+}
+
 /// Used for monad comprehensions.
 @sealed
 abstract class EitherEffect<L, R> {
