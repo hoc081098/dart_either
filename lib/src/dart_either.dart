@@ -316,6 +316,9 @@ class ControlError<T> extends Error {
   final T _value;
 
   ControlError._(this._value, this._token);
+
+  @override
+  String toString() => 'ControlError($_value, $_token)';
 }
 
 /// Class that represents a unique token by hash comparison **/
