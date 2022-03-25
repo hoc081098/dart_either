@@ -310,12 +310,12 @@ extension EitherEffectExtensions<L, R> on EitherEffect<L, R> {
 
 /// Error thrown by [EitherEffect]. Should not be caught.
 @sealed
-class ControlError<T> {
+class ControlError<T> extends Error {
   final _Token _token;
 
   final T _value;
 
-  const ControlError._(this._value, this._token);
+  ControlError._(this._value, this._token);
 }
 
 /// Class that represents a unique token by hash comparison **/
