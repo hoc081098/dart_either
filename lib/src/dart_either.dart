@@ -38,11 +38,17 @@ abstract class Either<L, R> {
   }
 
   /// Should not catch [ControlError] in [effect].
-  factory Either.binding(R Function(EitherEffect<L, R>) effect) {
+  factory Either.binding(R Function(EitherEffect<L, R>) block) {
+    final eitherEffect = _EitherEffectImpl<L, R>(_Token());
+
     try {
-      return Either.right(effect(_EitherEffectImpl<L, R>()));
+      return Either.right(block(eitherEffect));
     } on ControlError<L> catch (e) {
-      return Either.left(e._value);
+      if (identical(eitherEffect._token, e._token)) {
+        return Either.left(e._value);
+      } else {
+        rethrow;
+      }
     }
   }
 
@@ -52,10 +58,16 @@ abstract class Either<L, R> {
 
   /// Should not catch [ControlError] in [effect].
   static Future<Either<L, R>> bindingFuture<L, R>(
-          FutureOr<R> Function(EitherEffect<L, R>) effect) =>
-      Future.sync(() => effect(_EitherEffectImpl<L, R>()))
-          .then((value) => Either<L, R>.right(value))
-          .onError<ControlError<L>>((e, s) => Either.left(e._value));
+      FutureOr<R> Function(EitherEffect<L, R>) block) {
+    final eitherEffect = _EitherEffectImpl<L, R>(_Token());
+
+    return Future.sync(() => block(eitherEffect))
+        .then((value) => Either<L, R>.right(value))
+        .onError<ControlError<L>>(
+          (e, s) => Either.left(e._value),
+          test: (e) => identical(eitherEffect._token, e._token),
+        );
+  }
 
   /// TODO
   static Future<Either<L, R>> catchFutureError<L, R>(
@@ -299,15 +311,27 @@ extension EitherEffectExtensions<L, R> on EitherEffect<L, R> {
 /// Error thrown by [EitherEffect]. Should not be caught.
 @sealed
 class ControlError<T> {
+  final _Token _token;
+
   final T _value;
 
-  const ControlError._(this._value);
+  const ControlError._(this._value, this._token);
+}
+
+/// Class that represents a unique token by hash comparison **/
+class _Token {
+  @override
+  String toString() => 'Token(${hashCode.toRadixString(16)})';
 }
 
 class _EitherEffectImpl<L, R> implements EitherEffect<L, R> {
+  final _Token _token;
+
+  _EitherEffectImpl(this._token);
+
   @override
   R bind(Either<L, R> either) =>
-      either.getOrHandle((v) => throw ControlError._(v));
+      either.getOrHandle((v) => throw ControlError._(v, _token));
 
   @override
   Future<R> bindFuture(Future<Either<L, R>> future) => future.then(bind);

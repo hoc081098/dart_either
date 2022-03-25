@@ -19,6 +19,20 @@ void main() {
       expect(right.isRight, isTrue);
     });
 
+    group('Right', () {
+      test('==', () {
+        expect(Right<int>(1) == Either<Never, int>.right(1), isTrue);
+        expect(Right<int>(1) == Right<num>(1), isFalse);
+      });
+    });
+
+    group('Left', () {
+      test('==', () {
+        expect(Left<int>(1) == Either<int, Never>.left(1), isTrue);
+        expect(Left<int>(1) == Left<num>(1), isFalse);
+      });
+    });
+
     group('constructors', () {
       test('Either.left', () {
         expect(Either<int, Never>.left(1), left);
