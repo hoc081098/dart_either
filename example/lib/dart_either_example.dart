@@ -3,14 +3,14 @@ import 'package:dart_either/dart_either.dart';
 Either<Object, String> catchObject() {
   return Either.catchError(
     (e, s) => e,
-    () => throw Exception('Test'),
+    () => throw Exception('Demo exception'),
   );
 }
 
 Either<Exception, String> catchException() {
   return Either.catchError(
     (e, s) => e is Exception ? e : throw e,
-    () => throw 'A string',
+    () => throw 'Error string',
   );
 }
 
@@ -19,7 +19,7 @@ Future<Either<Object, String>> catchObjectAsync() {
     (e, s) => e,
     () async {
       await Future<void>.delayed(const Duration(seconds: 1));
-      throw Exception('Test 2');
+      throw Exception('Demo exception');
     },
   );
 }
@@ -29,14 +29,14 @@ Future<Either<Exception, String>> catchExceptionAsync() {
     (e, s) => e is Exception ? e : throw e,
     () async {
       await Future<void>.delayed(const Duration(seconds: 1));
-      throw 'A string';
+      throw 'Error string';
     },
   );
 }
 
 Stream<Either<Object, int>> getStream() {
   return Stream.fromIterable([1, 2, 3, 4])
-      .map((v) => v == 3 ? throw Exception('Error...') : v)
+      .map((v) => v == 3 ? throw Exception('Demo exception') : v)
       .asEitherStream((e, s) => e);
 }
 
@@ -50,7 +50,7 @@ Future<Either<Object, int>> monadComprehensions() {
 
     final v3 = await e.bindFuture(Either.catchFutureError(
       (e, s) => e,
-      () async => throw Exception('Hihi'),
+      () async => throw Exception('Demo exception'),
     ));
     print('after v3 $v3');
 

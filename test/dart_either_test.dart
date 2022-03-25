@@ -1,9 +1,9 @@
 import 'package:dart_either/dart_either.dart';
 import 'package:test/test.dart';
 
-void main() {
-  final takeOnlyError = (Object error, StackTrace stackTrace) => error;
+Object takeOnlyError(Object error, StackTrace stackTrace) => error;
 
+void main() {
   group('Either', () {
     const left = Left(1);
     const right = Right(1);
@@ -21,19 +21,19 @@ void main() {
 
     group('constructors', () {
       test('Either.left', () {
-        expect(Either.left(1), left);
-        expect(Either.left(1), isA<Left<int>>());
-        expect(Either.left(1), isA<Either<int, Never>>());
-        expect(Either.left(1), isA<Either<int, String>>());
-        expect(Either.left(1), isA<Either<int, Object>>());
+        expect(Either<int, Never>.left(1), left);
+        expect(Either<int, Never>.left(1), isA<Left<int>>());
+        expect(Either<int, Never>.left(1), isA<Either<int, Never>>());
+        expect(Either<int, Never>.left(1), isA<Either<int, String>>());
+        expect(Either<int, Never>.left(1), isA<Either<int, Object>>());
       });
 
       test('Either.right', () {
-        expect(Either.right(1), right);
-        expect(Either.right(1), isA<Right<int>>());
-        expect(Either.right(1), isA<Either<Never, int>>());
-        expect(Either.right(1), isA<Either<String, int>>());
-        expect(Either.right(1), isA<Either<Object, int>>());
+        expect(Either<Never, int>.right(1), right);
+        expect(Either<Never, int>.right(1), isA<Right<int>>());
+        expect(Either<Never, int>.right(1), isA<Either<Never, int>>());
+        expect(Either<Never, int>.right(1), isA<Either<String, int>>());
+        expect(Either<Never, int>.right(1), isA<Either<Object, int>>());
       });
 
       test('Either.catchError', () {
@@ -109,10 +109,10 @@ void main() {
 
     test('extension .left() and .right()', () {
       expect(1.left(), left);
-      expect(1.left(), Either.left(1));
+      expect(1.left(), Either<int, Never>.left(1));
 
       expect(1.right(), right);
-      expect(1.right(), Either.right(1));
+      expect(1.right(), Either<Never, int>.right(1));
     });
   });
 }

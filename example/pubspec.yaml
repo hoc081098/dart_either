@@ -1,0 +1,14 @@
+name: dart_either_example
+description: dart_either_example
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: '>=2.12.0 <3.0.0'
+
+dependencies:
+  dart_either:
+
+dependency_overrides:
+  dart_either:
+    path: ../../dart_either
