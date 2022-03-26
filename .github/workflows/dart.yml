@@ -47,10 +47,10 @@ jobs:
         run: pub global activate coverage
 
       - name: Run tests
-        run: pub run test test/rxdart_ext_test.dart --chain-stack-traces
+        run: pub run test test/dart_either_test.dart --chain-stack-traces
 
       - name: Start Observatory
-        run: dart --disable-service-auth-codes --enable-vm-service=8111 --pause-isolates-on-exit --enable-asserts test/rxdart_ext_test.dart &
+        run: dart --disable-service-auth-codes --enable-vm-service=8111 --pause-isolates-on-exit --enable-asserts test/dart_either_test.dart &
 
       - name: Collect coverage
         run: nohup pub global run coverage:collect_coverage --port=8111 --out=coverage.json --wait-paused --resume-isolates
