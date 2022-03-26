@@ -22,13 +22,14 @@ extension on Object {
 abstract class Either<L, R> {
   const Either._();
 
-  /// TODO
+  /// Create a [Left].
   const factory Either.left(L left) = Left;
 
-  /// TODO
+  /// Create a [Right].
   const factory Either.right(R right) = Right;
 
-  /// Invoke [f] and wrap result in [Right]
+  /// Evaluates the specified [f], wrap result in a [Right].
+  /// If exception is thrown, invoke [errorMapper] and wrap result in a [Left].
   factory Either.catchError(ErrorMapper<L> errorMapper, R Function() f) {
     try {
       return Either.right(f());
@@ -37,7 +38,7 @@ abstract class Either<L, R> {
     }
   }
 
-  /// Should not catch [ControlError] in [effect].
+  /// Must not catch [ControlError] in [block].
   factory Either.binding(R Function(EitherEffect<L, R>) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
 
