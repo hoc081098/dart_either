@@ -426,6 +426,12 @@ extension BindEitherExtension<L, R> on Either<L, R> {
   R bind(EitherEffect<L, R> effect) => effect.bind(this);
 }
 
+/// TODO
+extension BindEitherFutureExtension<L, R> on Future<Either<L, R>> {
+  /// TODO
+  Future<R> bind(EitherEffect<L, R> effect) => effect.bindFuture(this);
+}
+
 /// Error thrown by [EitherEffect]. Should not be caught.
 @sealed
 class ControlError<T> extends Error {
