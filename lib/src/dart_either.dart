@@ -5,9 +5,9 @@ import 'package:meta/meta.dart';
 /// Map [error] and [stackTrace] to [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 
-@pragma('vm:prefer-inline')
-@pragma('dart2js:tryInline')
 extension on Object {
+  @pragma('vm:prefer-inline')
+  @pragma('dart2js:tryInline')
   Object throwIfFatal() {
     if (this is ControlError) {
       throw this;
@@ -15,6 +15,10 @@ extension on Object {
     return this;
   }
 }
+
+T _identity<T>(T t) => t;
+
+T Function(Object?) _const<T>(T t) => (_) => t;
 
 /// TODO
 @immutable
@@ -28,16 +32,17 @@ abstract class Either<L, R> {
   /// Create a [Right].
   const factory Either.right(R right) = Right;
 
-  /// Evaluates the specified [f], wrap result in a [Right].
+  /// Evaluates the specified [block], wrap result in a [Right].
   /// If exception is thrown, invoke [errorMapper] and wrap result in a [Left].
-  factory Either.catchError(ErrorMapper<L> errorMapper, R Function() f) {
+  factory Either.catchError(ErrorMapper<L> errorMapper, R Function() block) {
     try {
-      return Either.right(f());
+      return Either.right(block());
     } catch (e, s) {
       return Either.left(errorMapper(e.throwIfFatal(), s));
     }
   }
 
+  /// TODO
   /// Must not catch [ControlError] in [block].
   factory Either.binding(R Function(EitherEffect<L, R>) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
@@ -57,6 +62,7 @@ abstract class Either<L, R> {
   static Either<void, R> fromNullable<R extends Object>(R? value) =>
       value == null ? const Either.left(null) : Either.right(value);
 
+  /// TODO
   /// Should not catch [ControlError] in [effect].
   static Future<Either<L, R>> bindingFuture<L, R>(
       FutureOr<R> Function(EitherEffect<L, R>) block) {
@@ -103,62 +109,104 @@ abstract class Either<L, R> {
   ///
   /// Example:
   /// ```
-  /// final Either<Exception, Value> result = possiblyFailingOperation()
+  /// final Either<Exception, Value> result = possiblyFailingOperation();
   /// result.fold(
-  ///   (value) => print('operation failed with $value') ,
-  ///   (value) => print('operation succeeded with $value'),
-  /// )
+  ///   ifLeft: (value) => print('operation failed with $value') ,
+  ///   ifRight: (value) => print('operation succeeded with $value'),
+  /// );
   /// ```
   ///
   /// [ifLeft] is the function to apply if this is a [Left].
   /// [ifRight] is the function to apply if this is a [Right].
   /// Returns the results of applying the function.
-  C fold<C>(
-    C Function(L) ifLeft,
-    C Function(R) ifRight,
-  ) {
+  @pragma('vm:prefer-inline')
+  @pragma('dart2js:tryInline')
+  C fold<C>({
+    required C Function(L) ifLeft,
+    required C Function(R) ifRight,
+  }) {
     final self = this;
-    return self is Left<L>
-        ? ifLeft(self.value)
-        : ifRight((self as Right<R>).value);
+    if (self is Left<L>) {
+      return ifLeft(self.value);
+    }
+    if (self is Right<R>) {
+      return ifRight(self.value);
+    }
+    throw _InvalidEitherError<L, R>(self);
   }
 
-  /// TODO
-  C foldLeft<C>(C initial, C Function(C, R) rightOperation) =>
-      fold((_) => initial, (r) => rightOperation(initial, r));
+  /// If this is a [Right], applies [ifRight] with [initial] and [Right.value].
+  /// Returns [initial] otherwise.
+  ///
+  /// Example:
+  /// ```
+  /// final Either<Exception, Value> result = possiblyFailingOperation();
+  /// final Value initial;
+  /// Value combine(Value acc, Value v) {};
+  ///
+  /// result.foldLeft(initial, combine);
+  /// ```
+  C foldLeft<C>(C initial, C Function(C, R) rightOperation) => fold(
+        ifLeft: _const(initial),
+        ifRight: (r) => rightOperation(initial, r),
+      );
 
   /// If this is a `Left`, then return the left value in `Right` or vice versa.
   ///
   /// Example:
   /// ```
-  /// Left('left').swap()   // Result: Right('left')
-  /// Right('right').swap() // Result: Left('right')
+  /// Left('left').swap();   // Result: Right('left')
+  /// Right('right').swap(); // Result: Left('right')
   /// ```
-  Either<R, L> swap() => fold((l) => Either.right(l), (r) => Either.left(r));
+  Either<R, L> swap() => fold(
+        ifLeft: (l) => Either.right(l),
+        ifRight: (r) => Either.left(r),
+      );
 
   /// The given function is applied if this is a `Right`.
   ///
   /// Example:
   /// ```
-  /// Right(12).map((_) => 'flower') // Result: Right('flower')
-  /// Left(12).map((_) => 'flower')  // Result: Left(12)
+  /// Right(12).map((_) => 'flower'); // Result: Right('flower')
+  /// Left(12).map((_) => 'flower');  // Result: Left(12)
   /// ```
-  Either<L, C> map<C>(C Function(R) f) =>
-      fold((l) => Either.left(l), (r) => Either.right(f(r)));
+  Either<L, C> map<C>(C Function(R) f) => when(
+        ifLeft: _identity,
+        ifRight: (r) => Either.right(f(r.value)),
+      );
 
   /// The given function is applied if this is a `Left`.
   ///
   /// Example:
   /// ```
-  /// Right(12).mapLeft((_) => 'flower') // Result: Right(12)
-  /// Left(12).mapLeft((_) => 'flower')  // Result: Left('flower')
+  /// Right(12).mapLeft((_) => 'flower'); // Result: Right(12)
+  /// Left(12).mapLeft((_) => 'flower');  // Result: Left('flower')
   /// ```
-  Either<C, R> mapLeft<C>(C Function(L) f) =>
-      fold((l) => Either.left(f(l)), (r) => Either.right(r));
+  Either<C, R> mapLeft<C>(C Function(L) f) => when(
+        ifLeft: (l) => Either.left(f(l.value)),
+        ifRight: _identity,
+      );
 
-  /// TODO
-  Either<L, C> flatMap<C>(Either<L, C> Function(R) f) =>
-      fold((l) => Either.left(l), f);
+  /// Binds the given function across [Right].
+  ///
+  /// If this is a [Right], returns the result of applying [f] to this [Right.value].
+  /// Otherwise, returns itself.
+  ///
+  /// Slightly different from [map] in that [f] is expected to
+  /// return an [Either] (which could be a [Left]).
+  ///
+  /// Example:
+  /// ```
+  /// Right(12).map((v) => Either.right('flower $v')); // Result: Right('flower 12')
+  /// Right(12).map((v) => Either.left('flower $v')); // Result: Left('flower 12')
+  ///
+  /// Left(12).map((_) => Either.right('flower $v'));  // Result: Left(12)
+  /// Left(12).map((_) => Either.left('flower $v'));  // Result: Left(12)
+  /// ```
+  Either<L, C> flatMap<C>(Either<L, C> Function(R) f) => when(
+        ifLeft: _identity,
+        ifRight: (r) => f(r.value),
+      );
 
   /// Map over Left and Right of this Either
   Either<C, D> bimap<C, D>(
@@ -166,8 +214,8 @@ abstract class Either<L, R> {
     D Function(R) rightOperation,
   ) =>
       fold(
-        (l) => Either.left(leftOperation(l)),
-        (r) => Either.right(rightOperation(r)),
+        ifLeft: (l) => Either.left(leftOperation(l)),
+        ifRight: (r) => Either.right(rightOperation(r)),
       );
 
   /// Returns `false` if [Left] or returns the result of the application of
@@ -175,50 +223,96 @@ abstract class Either<L, R> {
   ///
   /// Example:
   /// ```
-  /// Right(12).exists((v) => v > 10) // Result: true
-  /// Right(7).exists((v) => v > 10)  // Result: false
+  /// Right(12).exists((v) => v > 10); // Result: true
+  /// Right(7).exists((v) => v > 10);  // Result: false
   ///
-  /// final Either<int, int> left = Left(12)
-  /// left.exists((v) => v > 10)      // Result: false
+  /// final Either<int, int> left = Left(12);
+  /// left.exists((v) => v > 10);      // Result: false
   /// ```
-  bool exists(bool Function(R) predicate) => fold((l) => false, predicate);
+  bool exists(bool Function(R) predicate) => fold(
+        ifLeft: _const(false),
+        ifRight: predicate,
+      );
 
   /// Returns the value from this [Right] or the given argument if this is a [Left].
   ///
   /// Example:
   /// ```
-  /// Right(12).getOrElse(() => 17) // Result: 12
-  /// Left(12).getOrElse(() => 17)  // Result: 17
+  /// Right(12).getOrElse(() => 17); // Result: 12
+  /// Left(12).getOrElse(() => 17);  // Result: 17
   /// ```
-  R getOrElse(R Function() defaultValue) =>
-      fold((l) => defaultValue(), (r) => r);
+  R getOrElse(R Function() defaultValue) => fold(
+        ifLeft: (_) => defaultValue(),
+        ifRight: _identity,
+      );
 
   /// Returns the right value if it exists, otherwise `null`
   ///
   /// Example:
   /// ```
-  /// final Either<int, int> right = Right(12).orNull() // Result: 12
-  /// final Either<int, int> left = Left(12).orNull()   // Result: null
+  /// final Either<int, int> right = Right(12).orNull(); // Result: 12
+  /// final Either<int, int> left = Left(12).orNull();   // Result: null
   /// ```
-  R? orNull() => fold((l) => null, (r) => r);
+  R? orNull() => fold(
+        ifLeft: _const(null),
+        ifRight: _identity,
+      );
 
   /// Returns the value from this [Either.Right] or allows clients to transform [Either.Left] to [Either.Right] while providing access to
   /// the value of [Either.Left].
   ///
   /// Example:
   /// ```
-  /// Right(12).getOrHandle((v) => 17) // Result: 12
-  /// Left(12).getOrHandle((v) => v + 5) // Result: 17
+  /// Right(12).getOrHandle((v) => 17); // Result: 12
+  /// Left(12).getOrHandle((v) => v + 5); // Result: 17
   /// ```
-  R getOrHandle(R Function(L) defaultValue) => fold(defaultValue, (r) => r);
+  R getOrHandle(R Function(L) defaultValue) => fold(
+        ifLeft: defaultValue,
+        ifRight: _identity,
+      );
+
+  /// Applies [ifLeft] if this is a [Left] or [ifRight] if this is a [Right].
+  ///
+  /// This is quite similar to [fold], but with [fold], arguments will
+  /// be called with [Right.value] or [Left.value], while the arguments of [when]
+  /// will be called with [Right] or [Left] itself.
+  ///
+  /// Example:
+  /// ```
+  /// final Either<Exception, Value> result = possiblyFailingOperation();
+  /// result.when(
+  ///   ifLeft: (left) => print('operation failed with ${left.value}') ,
+  ///   ifRight: (right) => print('operation succeeded with ${right.value}'),
+  /// );
+  /// ```
+  ///
+  /// [ifLeft] is the function to apply if this is a [Left].
+  /// [ifRight] is the function to apply if this is a [Right].
+  /// Returns the results of applying the function.
+  @pragma('vm:prefer-inline')
+  @pragma('dart2js:tryInline')
+  C when<C>({
+    required C Function(Left<L>) ifLeft,
+    required C Function(Right<R>) ifRight,
+  }) {
+    final self = this;
+    if (self is Left<L>) {
+      return ifLeft(self);
+    }
+    if (self is Right<R>) {
+      return ifRight(self);
+    }
+    throw _InvalidEitherError<L, R>(self);
+  }
 }
 
 /// The left side of the disjoint union, as opposed to the [Right] side.
+@sealed
 class Left<T> extends Either<T, Never> {
-  /// TODO
+  /// The value inside [Left].
   final T value;
 
-  /// TODO
+  /// Construct a [Left] with [value].
   const Left(this.value) : super._();
 
   @override
@@ -240,11 +334,12 @@ class Left<T> extends Either<T, Never> {
 }
 
 /// The right side of the disjoint union, as opposed to the [Left] side.
+@sealed
 class Right<T> extends Either<Never, T> {
-  /// TODO
+  /// The value inside [Right].
   final T value;
 
-  /// TODO
+  /// Construct a [Right] with [value].
   const Right(this.value) : super._();
 
   @override
@@ -267,10 +362,28 @@ class Right<T> extends Either<Never, T> {
   String toString() => 'Either.Right($value)';
 }
 
+class _InvalidEitherError<L, R> extends Error {
+  final Either<L, R> invalid;
+
+  _InvalidEitherError(this.invalid);
+
+  @override
+  String toString() =>
+      'Unknown $invalid. $invalid must be either a Right<$R> or Left<$L>.'
+      ' You cannot implement or extend Either class';
+}
+
+//
+// Extensions
+//
+
 /// TODO
 extension EitherExtensions<L extends Object, R> on Either<L, R> {
   /// TODO
-  Future<R> asFuture() => fold((e) => Future.error(e), (v) => Future.value(v));
+  Future<R> asFuture() => fold(
+        ifLeft: (e) => Future.error(e),
+        ifRight: (v) => Future.value(v),
+      );
 }
 
 /// TODO
@@ -289,6 +402,10 @@ extension ToEitherObjectExtension<T> on T {
   Either<Never, T> right() => Either.right(this);
 }
 
+//
+// Binding
+//
+
 /// Used for monad comprehensions.
 @sealed
 abstract class EitherEffect<L, R> {
@@ -304,9 +421,9 @@ abstract class EitherEffect<L, R> {
 }
 
 /// TODO
-extension EitherEffectExtensions<L, R> on EitherEffect<L, R> {
+extension BindEitherExtension<L, R> on Either<L, R> {
   /// TODO
-  R operator <<(Either<L, R> either) => bind(either);
+  R bind(EitherEffect<L, R> effect) => effect.bind(this);
 }
 
 /// Error thrown by [EitherEffect]. Should not be caught.

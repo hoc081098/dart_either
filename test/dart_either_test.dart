@@ -86,11 +86,11 @@ void main() {
           Right(3),
         );
 
-        // 2 success <<
+        // 2 success either.bind
         expect(
           Either<Object, int>.binding((e) {
-            final a = e << Right(1);
-            final b = e << Right(2);
+            final a = Either<Object, int>.right(1).bind(e);
+            final b = Either<Object, int>.right(2).bind(e);
             return a + b;
           }),
           Right(3),
@@ -99,8 +99,8 @@ void main() {
         // 1 success bind + 1 failure bind
         expect(
           Either<Object, int>.binding((e) {
-            final a = e << Right(1);
-            final b = e << Left(exception);
+            final a = Either<Object, int>.right(1).bind(e);
+            final b = Either<Object, int>.left(exception).bind(e);
             return a + b;
           }),
           Left<Object>(exception),

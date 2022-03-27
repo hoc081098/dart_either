@@ -42,16 +42,18 @@ Stream<Either<Object, int>> getStream() {
 
 Future<Either<Object, int>> monadComprehensions() {
   return Either.bindingFuture<Object, int>((e) async {
-    final v1 = e << Right(999);
+    final v1 = Right(999).bind(e);
     print('after v1 $v1');
 
-    final v2 = e << Either.catchError((e, s) => e, () => 99);
+    final v2 = Either.catchError((e, s) => e, () => 99).bind(e);
     print('after v2 $v2');
 
-    final v3 = await e.bindFuture(Either.catchFutureError(
-      (e, s) => e,
-      () async => throw Exception('Demo exception'),
-    ));
+    final v3 = await e.bindFuture(
+      Either.catchFutureError(
+        (e, s) => e,
+        () async => throw Exception('Demo exception'),
+      ),
+    );
     print('after v3 $v3');
 
     return v1 + v2 + v3;
@@ -59,18 +61,33 @@ Future<Either<Object, int>> monadComprehensions() {
 }
 
 void main() async {
-  (await monadComprehensions()).fold((e) => print('Error: $e'), print);
+  (await monadComprehensions()).fold(
+    ifLeft: (e) => print('Error: $e'),
+    ifRight: print,
+  );
 
-  catchObject().fold((e) => print('Error: $e'), print);
-  (await catchObjectAsync()).fold((e) => print('Error: $e'), print);
+  catchObject().fold(
+    ifLeft: (e) => print('Error: $e'),
+    ifRight: print,
+  );
+  (await catchObjectAsync()).fold(
+    ifLeft: (e) => print('Error: $e'),
+    ifRight: print,
+  );
 
   try {
-    catchException().fold((e) => print('Error: $e'), print);
+    catchException().fold(
+      ifLeft: (e) => print('Error: $e'),
+      ifRight: print,
+    );
   } catch (e) {
     print('Unhandled $e');
   }
   try {
-    (await catchExceptionAsync()).fold((e) => print('Error: $e'), print);
+    (await catchExceptionAsync()).fold(
+      ifLeft: (e) => print('Error: $e'),
+      ifRight: print,
+    );
   } catch (e) {
     print('Unhandled $e');
   }
