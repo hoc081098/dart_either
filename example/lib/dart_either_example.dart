@@ -59,6 +59,23 @@ Future<Either<Object, int>> monadComprehensions() {
 }
 
 void main() async {
+  final res = Either<String, int>.binding((e) {
+    e.ensure(true, () => "");
+    print("ensure(true) passes");
+    e.ensure(false, () => "failed");
+    return 1;
+  });
+  print(res);
+
+  final res2 = Either<String, int>.binding((e) {
+    int? x = 1;
+    e.ensureNotNull(x, () => "passes");
+    print(x);
+    e.ensureNotNull(null, () => "failed");
+    return 1;
+  });
+  print(res2);
+
   (await monadComprehensions()).fold(
     ifLeft: (e) => print('Error: $e'),
     ifRight: print,
