@@ -1,9 +1,9 @@
 import 'package:dart_either/dart_either.dart';
 
-Either<Object, String> catchObject() {
+Either<Object, String> catchObject(String message) {
   return Either.catchError(
     (e, s) => e,
-    () => throw Exception('Demo exception'),
+    () => throw Exception(message),
   );
 }
 
@@ -37,11 +37,11 @@ Future<Either<Exception, String>> catchExceptionAsync() {
 Stream<Either<Object, int>> getStream() {
   return Stream.fromIterable([1, 2, 3, 4])
       .map((v) => v == 3 ? throw Exception('Demo exception') : v)
-      .asEitherStream((e, s) => e);
+      .toEitherStream((e, s) => e);
 }
 
 Future<Either<Object, int>> monadComprehensions() {
-  return Either.bindingFuture<Object, int>((e) async {
+  return Either.futureBinding<Object, int>((e) async {
     final v1 = Either.right(999).bind(e);
     print('after v1 $v1');
 
@@ -59,6 +59,8 @@ Future<Either<Object, int>> monadComprehensions() {
 }
 
 void main() async {
+  print('ENSURE');
+
   final res = Either<String, int>.binding((e) {
     e.ensure(true, () => "");
     print("ensure(true) passes");
@@ -76,12 +78,18 @@ void main() async {
   });
   print(res2);
 
+  print('-' * 10);
+  print('BINDING');
+
   (await monadComprehensions()).fold(
     ifLeft: (e) => print('Error: $e'),
     ifRight: print,
   );
 
-  catchObject().fold(
+  print('-' * 10);
+  print('CATCH 1');
+
+  catchObject('catchObject [1]').fold(
     ifLeft: (e) => print('Error: $e'),
     ifRight: print,
   );
@@ -89,6 +97,9 @@ void main() async {
     ifLeft: (e) => print('Error: $e'),
     ifRight: print,
   );
+
+  print('-' * 10);
+  print('CATCH 2');
 
   try {
     catchException().fold(
@@ -107,5 +118,9 @@ void main() async {
     print('Unhandled $e');
   }
 
+  print('-' * 10);
+  print('ASYNC');
+
+  await catchObject('catchObject [2]').toFuture().then(print).catchError(print);
   getStream().listen(print);
 }

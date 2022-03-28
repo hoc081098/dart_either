@@ -20,7 +20,40 @@ T _identity<T>(T t) => t;
 
 T Function(Object?) _const<T>(T t) => (_) => t;
 
-/// TODO
+/// In day-to-day programming, it is fairly common to find ourselves writing functions that can fail.
+/// For instance, querying a service may result in a connection issue, or some unexpected JSON response.
+///
+/// To communicate these errors, it has become common practice to throw exceptions; however,
+/// exceptions are not tracked in any way, shape, or form by the compiler. To see what
+/// kind of exceptions (if any) a function may throw, we have to dig through the source code.
+/// Then, to handle these exceptions, we have to make sure we catch them at the call site. This
+/// all becomes even more unwieldy when we try to compose exception-throwing procedures.
+///
+/// ```
+/// double throwsSomeStuff(int i) => throw UnimplementedError();
+///
+/// String throwsOtherThings(double d) => throw UnimplementedError();
+///
+/// List<int> moreThrowing(String s) => throw UnimplementedError();
+///
+/// List<int> magic(int i) => moreThrowing( throwsOtherThings( throwsSomeStuff(i) ) );
+/// ```
+///
+/// Assume we happily throw exceptions in our code. Looking at the types of the functions above,
+/// any could throw a number of exceptions -- we do not know. When we compose, exceptions from any of the constituent
+/// functions can be thrown. Moreover, they may throw the same kind of exception
+/// (e.g., `ArgumentError`) and, thus, it gets tricky tracking exactly where an exception came from.
+///
+/// How then do we communicate an error? By making it explicit in the data type we return.
+///
+/// ## Either
+///
+/// `Either` is used to short-circuit a computation upon the first error.
+/// By convention, the right side of an `Either` is used to hold successful values.
+///
+/// Because `Either` is right-biased, it is possible to define a `Monad` instance for it.
+/// Since we only ever want the computation to continue in the case of [Right] (as captured by the right-bias nature),
+/// we fix the left type parameter and leave the right one free. So, the map and flatMap methods are right-biased.
 @immutable
 @sealed
 abstract class Either<L, R> {
@@ -42,7 +75,7 @@ abstract class Either<L, R> {
     }
   }
 
-  /// TODO
+  /// TODO(binding)
   /// Must not catch [ControlError] in [block].
   factory Either.binding(R Function(EitherEffect<L, R>) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
@@ -58,13 +91,14 @@ abstract class Either<L, R> {
     }
   }
 
-  /// TODO
+  /// Returns a [Right] if [value] is not null.
+  /// Returns a [Left] containing `null` otherwise.
   static Either<void, R> fromNullable<R extends Object>(R? value) =>
       value == null ? const Either.left(null) : Either.right(value);
 
-  /// TODO
+  /// TODO(futureBinding)
   /// Should not catch [ControlError] in [effect].
-  static Future<Either<L, R>> bindingFuture<L, R>(
+  static Future<Either<L, R>> futureBinding<L, R>(
       FutureOr<R> Function(EitherEffect<L, R>) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
 
@@ -76,15 +110,18 @@ abstract class Either<L, R> {
         );
   }
 
-  /// TODO
+  /// Evaluates the specified [block], wrap result in a [Right].
+  /// If exception is thrown, invoke [errorMapper] and wrap result in a [Left].
   static Future<Either<L, R>> catchFutureError<L, R>(
     ErrorMapper<L> errorMapper,
-    FutureOr<R> Function() f,
+    FutureOr<R> Function() block,
   ) =>
-      Future.sync(f).then((value) => Either<L, R>.right(value)).onError<Object>(
-          (e, s) => Either.left(errorMapper(e.throwIfFatal(), s)));
+      Future.sync(block)
+          .then((value) => Either<L, R>.right(value))
+          .onError<Object>(
+              (e, s) => Either.left(errorMapper(e.throwIfFatal(), s)));
 
-  /// TODO
+  /// TODO(catchStreamError)
   static Stream<Either<L, R>> catchStreamError<L, R>(
     ErrorMapper<L> errorMapper,
     Stream<R> stream,
@@ -370,35 +407,53 @@ class _InvalidEitherError<L, R> extends Error {
   @override
   String toString() =>
       'Unknown $invalid. $invalid must be either a Right<$R> or Left<$L>.'
-      ' You cannot implement or extend Either class';
+      ' Cannot implement or extend Either class';
 }
 
 //
 // Extensions
 //
 
-/// TODO
-extension EitherExtensions<L extends Object, R> on Either<L, R> {
-  /// TODO
-  Future<R> asFuture() => fold(
+/// Provide [toFuture] extension on [Either].
+extension AsFutureEitherExtension<L extends Object, R> on Either<L, R> {
+  /// Convert this [Either] to a [Future].
+  /// If [this] is [Right], the Future will complete with [Right.value].
+  /// If [this] is [Left], the Future will complete with [Left.value] as an error.
+  Future<R> toFuture() => fold(
         ifLeft: (e) => Future.error(e),
         ifRight: (v) => Future.value(v),
       );
 }
 
-/// TODO
+/// Provide [toEitherStream] extension on [Stream].
 extension ToEitherStreamExtension<R> on Stream<R> {
-  /// TODO
-  Stream<Either<L, R>> asEitherStream<L>(ErrorMapper<L> errorMapper) =>
+  /// TODO(catchStreamError)
+  Stream<Either<L, R>> toEitherStream<L>(ErrorMapper<L> errorMapper) =>
       Either.catchStreamError<L, R>(errorMapper, this);
 }
 
-/// TODO
+/// Provide [left] and [right] extensions on any types.
 extension ToEitherObjectExtension<T> on T {
-  /// TODO
+  /// Return a [Left] that contains [this] value.
+  /// Can cast returned result to any `Either<T, ...>` type.
+  ///
+  /// For example:
+  /// ```
+  /// Either<int, Never> e1 = 1.left();
+  /// Either<int, String> e2 = 1.left();
+  /// Either<int, dynamic> e3 = 1.left();
+  /// ``
   Either<T, Never> left() => Either.left(this);
 
-  /// TODO
+  /// Return a [Right] that contains [this] value.
+  /// Can cast returned result to any `Either<..., T>` type.
+  ///
+  /// For example:
+  /// ```
+  /// Either<Never, int> e1 = 1.right();
+  /// Either<String, int> e2 = 1.right();
+  /// Either<dynamic, int> e3 = 1.right();
+  /// ``
   Either<Never, T> right() => Either.right(this);
 }
 
@@ -478,7 +533,9 @@ extension BindEitherFutureExtension<L, R> on Future<Either<L, R>> {
   Future<R> bind(EitherEffect<L, R> effect) => effect.bindFuture(this);
 }
 
-/// Error thrown by [EitherEffect]. Should not be caught.
+/// Error thrown by [EitherEffect].
+/// Must be not caught.
+/// Cannot implement or extend this class.
 @sealed
 class ControlError<T> extends Error {
   final _Token _token;
