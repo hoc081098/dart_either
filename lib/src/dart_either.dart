@@ -99,8 +99,8 @@ abstract class Either<L, R> {
   /// Either<ExampleErr, int> provideZ(int x, int y) { ... }
   ///
   /// Either<ExampleErr, int> result = Either<ExampleErr, int>.binding((e) {
-  ///   int x = provideX().bind(e);
-  ///   int y = provideY().bind(e);
+  ///   int x = provideX().bind(e);       // use either.bind(e)
+  ///   int y = e.bind(provideY());       // use e.bind(either)
   ///   int z = provideZ(x, y).bind(e);
   ///   return z;
   /// });
