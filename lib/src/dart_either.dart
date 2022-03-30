@@ -571,6 +571,7 @@ extension BindEitherFutureExtension<L, R> on Future<Either<L, R>> {
 class ControlError<T> extends Error {
   final _Token _token;
 
+  /// The value inside [Left].
   final T _value;
 
   ControlError._(this._value, this._token);

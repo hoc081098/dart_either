@@ -3,6 +3,11 @@ import 'package:test/test.dart';
 
 Object takeOnlyError(Object error, StackTrace stackTrace) => error;
 
+class MyControlError<L> implements ControlError<L> {
+  @override
+  StackTrace? get stackTrace => null;
+}
+
 void main() {
   group('Either', () {
     const left = Left(1);
@@ -51,15 +56,35 @@ void main() {
       });
 
       test('Either.catchError', () {
+        // block does not throw
         expect(
           Either<Object, int>.catchError(takeOnlyError, () => 1),
           right,
         );
 
+        // catch exception
         expect(
           Either<Object, String>.catchError(
               takeOnlyError, () => throw exception),
           Left<Object>(exception),
+        );
+
+        // ErrorMapper throws
+        expect(
+          () => Either<Object, String>.catchError(
+            (e, s) => throw e,
+            () => throw exception,
+          ),
+          throwsException,
+        );
+
+        // block throws [ControlError].
+        expect(
+          () => Either<Object, String>.catchError(
+            takeOnlyError,
+            () => throw MyControlError<Object>(),
+          ),
+          throwsA(isA<MyControlError>()),
         );
       });
 
