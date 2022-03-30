@@ -101,6 +101,14 @@ void main() {
           throwsException,
         );
 
+        // block throws [ControlError].
+        expect(
+          () => Either<Object, String>.binding(
+            (e) => throw MyControlError<Object>(),
+          ),
+          throwsA(isA<NoSuchMethodError>()),
+        );
+
         // 2 success bind
         expect(
           Either<Object, int>.binding((e) {
