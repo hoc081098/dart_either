@@ -93,7 +93,6 @@ abstract class Either<L, R> {
   /// the binding block will terminate with that bind and return that failed-to-bind [Left].
   ///
   /// You can also use [BindEitherExtension.bind] instead of [EitherEffect.bind] for more convenience.
-  /// **NOTE: Must not catch [ControlError] in [block].**
   ///
   /// Example:
   /// ```
@@ -106,6 +105,24 @@ abstract class Either<L, R> {
   ///   int y = e.bind(provideY());       // use e.bind(either)
   ///   int z = provideZ(x, y).bind(e);
   ///   return z;
+  /// });
+  /// ```
+  /// **NOTE: Must not catch [ControlError] in [block].**.
+  /// **NOTE: Must not throw any errors inside [block]. Use [Either.catchError], [Either.catchFutureError] or [Either.catchStreamError] to catch error**
+  ///
+  /// ```
+  /// int canThrowError() { ... }
+  ///
+  /// // DONT
+  /// Either<ExampleErr, int> result = Either<ExampleErr, int>.binding((e) {
+  ///   int value = canThrowError();
+  /// });
+  ///
+  /// // DO
+  /// Either<ExampleErr, int> result = Either<ExampleErr, int>.binding((e) {
+  ///   ExampleErr toExampleErr(Object e, StackTrace st) { ... }
+  ///
+  ///   int value = Either<ExampleErr, int>.catchError(toExampleErr, canThrowError).bind(e);
   /// });
   /// ```
   factory Either.binding(R Function(EitherEffect<L, R>) block) {
