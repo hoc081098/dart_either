@@ -75,11 +75,22 @@ abstract class Either<L, R> {
     }
   }
 
+  /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).
+  /// [Syntactic sugar do-notation](https://en.wikipedia.org/wiki/Monad_(functional_programming)#Syntactic_sugar_do-notation).
+  /// Although using [flatMap] openly often makes sense, many programmers prefer a syntax
+  /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`, `computation expressions` in `F#`, and `for comprehension` in `Scala`).
+  /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
+  ///
+  // Translating the add function from the Maybe into Haskell can show this feature in action. A non-monadic version of add in Haskell looks like this:
+  ///
   /// Calls the specified function [block] with [EitherEffect] as its parameter and returns its [Either].
   ///
   /// When inside a [Either.binding] block, calling the [EitherEffect.bind] function will attempt to unwrap the [Either]
   /// and locally return its [Right.value]. If the [Either] is a [Left],
   /// the binding block will terminate with that bind and return that failed-to-bind [Left].
+  ///
+  /// You can also use [BindEitherExtension.bind] instead of [EitherEffect.bind] for more convenience.
+  /// **NOTE: Must not catch [ControlError] in [block].**
   ///
   /// Example:
   /// ```
@@ -94,8 +105,6 @@ abstract class Either<L, R> {
   ///   return z;
   /// });
   /// ```
-  ///
-  /// NOTE: Must not catch [ControlError] in [block].
   factory Either.binding(R Function(EitherEffect<L, R>) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
 
