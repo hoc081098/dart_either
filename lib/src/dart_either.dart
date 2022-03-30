@@ -75,8 +75,27 @@ abstract class Either<L, R> {
     }
   }
 
-  /// TODO(binding)
-  /// Must not catch [ControlError] in [block].
+  /// Calls the specified function [block] with [EitherEffect] as its parameter and returns its [Either].
+  ///
+  /// When inside a [Either.binding] block, calling the [EitherEffect.bind] function will attempt to unwrap the [Either]
+  /// and locally return its [Right.value]. If the [Either] is a [Left],
+  /// the binding block will terminate with that bind and return that failed-to-bind [Left].
+  ///
+  /// Example:
+  /// ```
+  /// Either<ExampleErr, int> provideX() { ... }
+  /// Either<ExampleErr, int> provideY() { ... }
+  /// Either<ExampleErr, int> provideZ(int x, int y) { ... }
+  ///
+  /// Either<ExampleErr, int> result = Either<ExampleErr, int>.binding((e) {
+  ///   int x = provideX().bind(e);
+  ///   int y = provideY().bind(e);
+  ///   int z = provideZ(x, y).bind(e);
+  ///   return z;
+  /// });
+  /// ```
+  ///
+  /// NOTE: Must not catch [ControlError] in [block].
   factory Either.binding(R Function(EitherEffect<L, R>) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
 
