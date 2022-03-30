@@ -9,11 +9,11 @@ class MyControlError<L> implements ControlError<L> {
 }
 
 void main() {
-  group('Either', () {
-    const leftOf1 = Left(1);
-    const rightOf1 = Right(1);
-    final exception = Exception();
+  const leftOf1 = Left(1);
+  const rightOf1 = Right(1);
+  final exception = Exception();
 
+  group('Either', () {
     test('isLeft', () {
       expect(leftOf1.isLeft, isTrue);
       expect(rightOf1.isLeft, isFalse);
@@ -29,12 +29,34 @@ void main() {
         expect(Right<int>(1) == Either<Never, int>.right(1), isTrue);
         expect(Right<int>(1) == Right<num>(1), isFalse);
       });
+
+      test('hashCode', () {
+        expect(Right<int>(1).hashCode == Either<Never, int>.right(1).hashCode,
+            isTrue);
+        expect(Right<int>(1).hashCode == Right<num>(1).hashCode, isTrue);
+      });
+
+      test('toString', () {
+        expect('Either.Right(1)', rightOf1.toString());
+        expect('Either.Right([1, 2, 3])', Right([1, 2, 3]).toString());
+      });
     });
 
     group('Left', () {
       test('==', () {
         expect(Left<int>(1) == Either<int, Never>.left(1), isTrue);
         expect(Left<int>(1) == Left<num>(1), isFalse);
+      });
+
+      test('hashCode', () {
+        expect(Left<int>(1).hashCode == Either<int, Never>.left(1).hashCode,
+            isTrue);
+        expect(Left<int>(1).hashCode == Left<num>(1).hashCode, isTrue);
+      });
+
+      test('toString', () {
+        expect('Either.Left(1)', leftOf1.toString());
+        expect('Either.Left([1, 2, 3])', Left([1, 2, 3]).toString());
       });
     });
 
