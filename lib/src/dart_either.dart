@@ -81,8 +81,6 @@ abstract class Either<L, R> {
   /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`, `computation expressions` in `F#`, and `for comprehension` in `Scala`).
   /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
   ///
-  // Translating the add function from the Maybe into Haskell can show this feature in action. A non-monadic version of add in Haskell looks like this:
-  ///
   /// Calls the specified function [block] with [EitherEffect] as its parameter and returns its [Either].
   ///
   /// When inside a [Either.binding] block, calling the [EitherEffect.bind] function will attempt to unwrap the [Either]
