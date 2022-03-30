@@ -10,18 +10,18 @@ class MyControlError<L> implements ControlError<L> {
 
 void main() {
   group('Either', () {
-    const left = Left(1);
-    const right = Right(1);
+    const leftOf1 = Left(1);
+    const rightOf1 = Right(1);
     final exception = Exception();
 
     test('isLeft', () {
-      expect(left.isLeft, isTrue);
-      expect(right.isLeft, isFalse);
+      expect(leftOf1.isLeft, isTrue);
+      expect(rightOf1.isLeft, isFalse);
     });
 
     test('isRight', () {
-      expect(left.isRight, isFalse);
-      expect(right.isRight, isTrue);
+      expect(leftOf1.isRight, isFalse);
+      expect(rightOf1.isRight, isTrue);
     });
 
     group('Right', () {
@@ -40,7 +40,7 @@ void main() {
 
     group('constructors', () {
       test('Either.left', () {
-        expect(Either<int, Never>.left(1), left);
+        expect(Either<int, Never>.left(1), leftOf1);
         expect(Either<int, Never>.left(1), isA<Left<int>>());
         expect(Either<int, Never>.left(1), isA<Either<int, Never>>());
         expect(Either<int, Never>.left(1), isA<Either<int, String>>());
@@ -48,7 +48,7 @@ void main() {
       });
 
       test('Either.right', () {
-        expect(Either<Never, int>.right(1), right);
+        expect(Either<Never, int>.right(1), rightOf1);
         expect(Either<Never, int>.right(1), isA<Right<int>>());
         expect(Either<Never, int>.right(1), isA<Either<Never, int>>());
         expect(Either<Never, int>.right(1), isA<Either<String, int>>());
@@ -59,7 +59,7 @@ void main() {
         // block does not throw
         expect(
           Either<Object, int>.catchError(takeOnlyError, () => 1),
-          right,
+          rightOf1,
         );
 
         // catch exception
@@ -92,7 +92,7 @@ void main() {
         // single return
         expect(
           Either<Object, int>.binding((e) => 1),
-          right,
+          rightOf1,
         );
 
         // rethrow exception
@@ -157,12 +157,12 @@ void main() {
         // single return
         await expectLater(
           Either.futureBinding<Object, int>((e) => 1),
-          completion(right),
+          completion(rightOf1),
         );
 
         await expectLater(
           Either.futureBinding<Object, int>((e) async => 1),
-          completion(right),
+          completion(rightOf1),
         );
 
         // rethrow exception
@@ -292,11 +292,31 @@ void main() {
     });
 
     test('extension .left() and .right()', () {
-      expect(1.left(), left);
+      expect(1.left(), leftOf1);
       expect(1.left(), Either<int, Never>.left(1));
 
-      expect(1.right(), right);
+      expect(1.right(), rightOf1);
       expect(1.right(), Either<Never, int>.right(1));
+    });
+
+    test('fold', () {
+      expect(
+        3,
+        // ignore: unnecessary_cast
+        (rightOf1 as Either<Object, int>).fold<int>(
+          ifLeft: (v) => throw v,
+          ifRight: (v) => v + 2,
+        ),
+      );
+
+      expect(
+        2,
+        // ignore: unnecessary_cast
+        (leftOf1 as Either<int, Object>).fold<int>(
+          ifLeft: (v) => v + 1,
+          ifRight: (v) => throw v,
+        ),
+      );
     });
   });
 }
