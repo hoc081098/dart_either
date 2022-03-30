@@ -152,6 +152,143 @@ void main() {
           Right(2),
         );
       });
+
+      test('Either.futureBinding', () async {
+        // single return
+        await expectLater(
+          Either.futureBinding<Object, int>((e) => 1),
+          completion(right),
+        );
+
+        await expectLater(
+          Either.futureBinding<Object, int>((e) async => 1),
+          completion(right),
+        );
+
+        // rethrow exception
+        await expectLater(
+          Either.futureBinding<Object, int>((e) => throw exception),
+          throwsException,
+        );
+
+        // rethrow exception from bindFuture
+        await expectLater(
+          Either.futureBinding<Object, int>(
+            (e) => e.bindFuture(Future.error(exception)),
+          ),
+          throwsException,
+        );
+
+        // rethrow exception from bind
+        await expectLater(
+          Either.futureBinding<Object, int>(
+            (e) => Future<Either<Object, int>>.error(exception).bind(e),
+          ),
+          throwsException,
+        );
+
+        // block throws [ControlError].
+        expect(
+          Either.futureBinding<Object, String>(
+            (e) => throw MyControlError<Object>(),
+          ),
+          throwsA(isA<NoSuchMethodError>()),
+        );
+
+        // 2 success bind (sync) - without async modifier
+        expect(
+          Either.futureBinding<Object, int>((e) {
+            final a = e.bind(Right(1));
+            final b = e.bind(Right(2));
+            return a + b;
+          }),
+          completion(Right(3)),
+        );
+
+        // 2 success bind (sync) - with async modifier
+        expect(
+          Either.futureBinding<Object, int>((e) async {
+            final a = e.bind(Right(1));
+            final b = e.bind(Right(2));
+            return a + b;
+          }),
+          completion(Right(3)),
+        );
+
+        // 2 success bind (async) - with async modifier
+        expect(
+          Either.futureBinding<Object, int>((e) async {
+            final a =
+                await Future.sync(() => Either<Object, int>.right(1)).bind(e);
+            final b = await e.bindFuture(Future.value(Right(2)));
+            return a + b;
+          }),
+          completion(Right(3)),
+        );
+
+        // 1 success bind (sync) + 1 success bind (async) - with async modifier
+        expect(
+          Either.futureBinding<Object, int>((e) async {
+            final a =
+                await Future.sync(() => Either<Object, int>.right(1)).bind(e);
+            final b = e.bind(Right(2));
+            return a + b;
+          }),
+          completion(Right(3)),
+        );
+
+        // 1 success bind (sync) + 1 success bind (async) - without async modifier
+        expect(
+          Either.futureBinding<Object, int>(
+            (e) => Future.sync(() => Either<Object, int>.right(1))
+                .bind(e)
+                .then((a) => a + e.bind(Right(2))),
+          ),
+          completion(Right(3)),
+        );
+
+        // 2 success bind (async) either.bind - with async modifier
+        expect(
+          Either.futureBinding<Object, int>((e) async {
+            final a = await Future.value(Either<Object, int>.right(1)).bind(e);
+            final b = await Future.value(Either<Object, int>.right(2)).bind(e);
+            return a + b;
+          }),
+          completion(Right(3)),
+        );
+
+        // 1 success bind (async) + 1 failure bind (sync) - with async modifier
+        expect(
+          Either.futureBinding<Object, int>((e) async {
+            final a = await Future.delayed(
+              const Duration(milliseconds: 100),
+              () => Either<Object, int>.right(1),
+            ).bind(e);
+
+            final b = Either<Object, int>.left(exception).bind(e);
+
+            return a + b;
+          }),
+          completion(Left<Object>(exception)),
+        );
+
+        // 1 success bind (async) + 1 failure bind (async) - with async modifier
+        expect(
+          Either.futureBinding<Object, int>((e) async {
+            final a = await Future.delayed(
+              const Duration(milliseconds: 100),
+              () => Either<Object, int>.right(1),
+            ).bind(e);
+
+            final b =
+                await Future.sync(() => Either<Object, int>.left(exception))
+                    .bind(e);
+
+            return a + b;
+          }),
+          completion(Left<Object>(exception)),
+        );
+      });
     });
 
     test('extension .left() and .right()', () {
