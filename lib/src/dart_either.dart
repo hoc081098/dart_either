@@ -510,6 +510,7 @@ extension ToEitherObjectExtension<T> on T {
 //
 
 /// Used for monad comprehensions.
+/// Cannot implement or extend this class.
 @sealed
 abstract class EitherEffect<L, R> {
   EitherEffect._();
@@ -603,10 +604,10 @@ class _Token {
   String toString() => 'Token(${hashCode.toRadixString(16)})';
 }
 
-class _EitherEffectImpl<L, R> implements EitherEffect<L, R> {
+class _EitherEffectImpl<L, R> extends EitherEffect<L, R> {
   final _Token _token;
 
-  _EitherEffectImpl(this._token);
+  _EitherEffectImpl(this._token) : super._();
 
   @override
   R bind(Either<L, R> either) =>
