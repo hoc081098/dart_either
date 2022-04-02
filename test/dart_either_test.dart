@@ -1,5 +1,6 @@
 import 'package:dart_either/dart_either.dart';
 import 'package:test/test.dart';
+import 'semaphore_test.dart' as semaphore_test;
 
 Object takeOnlyError(Object error, StackTrace stackTrace) => error;
 
@@ -9,6 +10,8 @@ class MyControlError<L> implements ControlError<L> {
 }
 
 void main() {
+  semaphore_test.main();
+
   const leftOf1 = Left(1);
   const rightOf1 = Right(1);
   final exception = Exception();

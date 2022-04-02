@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:meta/meta.dart';
 
+import 'utils/semaphore.dart';
+
 /// Map [error] and [stackTrace] to [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 
@@ -116,7 +118,7 @@ abstract class Either<L, R> {
   /// ```
   /// int canThrowError() { ... }
   ///
-  /// // DONT
+  /// // DON'T
   /// Either<ExampleErr, int> result = Either<ExampleErr, int>.binding((e) {
   ///   int value = canThrowError();
   /// });
@@ -184,6 +186,68 @@ abstract class Either<L, R> {
               sink.add(Either.left(errorMapper(e.throwIfFatal(), s))),
         ),
       );
+
+  /// TODO(traverse)
+  static Either<L, List<R>> traverse<T, L, R>(
+    Iterable<T> values,
+    Either<L, R> Function(T value) mapper,
+  ) =>
+      sequence<L, R>(values.map(mapper));
+
+  /// TODO(sequence)
+  static Either<L, List<R>> sequence<L, R>(Iterable<Either<L, R>> values) {
+    final result = <R>[];
+
+    for (final either in values) {
+      if (either is Left<L>) {
+        return either;
+      }
+      if (either is Right<R>) {
+        result.add((either).value);
+      } else {
+        throw _InvalidEitherError<L, R>(either);
+      }
+    }
+
+    return Right(result);
+  }
+
+  /// TODO(parTraverseN)
+  static Future<Either<L, List<R>>> parTraverseN<T, L, R>(
+    Iterable<T> values,
+    Future<Either<L, R>> Function() Function(T value) mapper,
+    int? n,
+  ) =>
+      parSequenceN<L, R>(values.map(mapper), n);
+
+  /// TODO(parSequenceN)
+  static Future<Either<L, List<R>>> parSequenceN<L, R>(
+    Iterable<Future<Either<L, R>> Function()> functions,
+    int? n,
+  ) async {
+    final futureFunctions = functions.toList(growable: false);
+    final semaphore = Semaphore(n ?? futureFunctions.length);
+    final token = _Token();
+
+    Future<R> Function() run(Future<Either<L, R>> Function() f) {
+      return () => Future.sync(f).then(
+            (e) => e.getOrHandle((l) => throw ControlError<L>._(l, token)),
+          );
+    }
+
+    Future<R> runWithPermit(Future<Either<L, R>> Function() f) =>
+        semaphore.withPermit(run(f));
+
+    return Future.wait(
+      futureFunctions.map(runWithPermit),
+      eagerError: true,
+    )
+        .then((values) => Either<L, List<R>>.right(values))
+        .onError<ControlError<L>>(
+          (e, s) => Left(e._value),
+          test: (e) => identical(e._token, token),
+        );
+  }
 
   /// Returns `true` if this is a [Left], `false` otherwise.
   /// Used only for performance instead of fold.

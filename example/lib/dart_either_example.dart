@@ -58,7 +58,43 @@ Future<Either<Object, int>> monadComprehensions() {
   });
 }
 
+class Res {
+  final int n;
+
+  Res(this.n);
+
+  @override
+  String toString() => 'Res $n';
+}
+
 void main() async {
+  final t1 = Either.traverse<int, Never, int>(
+    [1, 2, 3, 4],
+    (value) => Either.right(value),
+  );
+  print(t1);
+
+  final t2 = Either.traverse<int, String, int>(
+    [1, 2, 3, 4],
+    (value) => value == 2 ? Either.left('left') : Either.right(value),
+  );
+  print(t2);
+
+  final pt1 = await Either.parTraverseN<int, String, Res>(
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    (i) => () async {
+      final duration = Duration(seconds: (4 - i) + 3 - i % 3 + 1);
+      print('Start $i... delay ${duration.inSeconds}');
+
+      await Future<void>.delayed(duration);
+
+      print('Done $i');
+      return i == 5 ? 'Throws at $i'.left() : Res(i).right();
+    },
+    3,
+  );
+  print(pt1);
+
   print('ENSURE');
 
   final res = Either<String, int>.binding((e) {
