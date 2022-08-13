@@ -377,68 +377,102 @@ void main() {
 
     test('fold', () {
       expect(
-        3,
         (rightOf1 as Either<Object, int>).fold<int>(
           ifLeft: (v) => throw v,
           ifRight: (v) => v + 2,
         ),
+        3,
       );
 
       expect(
-        2,
         (leftOf1 as Either<int, Object>).fold<int>(
           ifLeft: (v) => v + 1,
           ifRight: (v) => throw v,
         ),
+        2,
       );
     });
 
     test('foldLeft', () {
       expect(
-        1,
         (rightOf1 as Either<Object, int>).foldLeft<int>(0, (acc, e) => acc + e),
+        1,
       );
 
       expect(
-        0,
         (leftOf1 as Either<Object, int>).foldLeft<int>(0, (acc, e) => acc + e),
+        0,
       );
     });
 
     test('swap', () {
-      expect(leftOf1, rightOf1.swap());
-      expect(rightOf1, leftOf1.swap());
+      expect(rightOf1.swap(), leftOf1);
+      expect(leftOf1.swap(), rightOf1);
     });
 
     test('map', () {
-      expect(Right<Never, int>(2), rightOf1.map((value) => value + 1));
-      expect(leftOf1, (leftOf1 as Either<int, int>).map((value) => value + 1));
+      expect(
+        rightOf1.map((value) => value + 1),
+        Right<Never, int>(2),
+      );
+
+      expect(
+        (leftOf1 as Either<int, int>).map((value) => value + 1),
+        leftOf1,
+      );
     });
 
     test('mapLeft', () {
-      expect(rightOf1,
-          (rightOf1 as Either<int, int>).mapLeft((value) => value + 1));
-      expect(Left<int, Never>(2), leftOf1.mapLeft((value) => value + 1));
+      expect(
+        (rightOf1 as Either<int, int>).mapLeft((value) => value + 1),
+        rightOf1,
+      );
+
+      expect(
+        leftOf1.mapLeft((value) => value + 1),
+        Left<int, Never>(2),
+      );
     });
 
     test('flatMap', () {
       // right -> right
       expect(
-          Right<Never, int>(2), rightOf1.flatMap((value) => Right(value + 1)));
+        rightOf1.flatMap((value) => Right(value + 1)),
+        Right<Never, int>(2),
+      );
 
       // right -> left
-      expect(Left<int, Never>(2),
-          1.right<int>().flatMap<bool>((value) => Either.left(2)));
+      expect(
+        1.right<int>().flatMap<bool>((value) => Either.left(2)),
+        Left<int, Never>(2),
+      );
 
       // left -> right
-      expect(leftOf1,
-          (leftOf1 as Either<int, int>).flatMap((value) => Right(value + 1)));
+      expect(
+        (leftOf1 as Either<int, int>).flatMap((value) => Right(value + 1)),
+        leftOf1,
+      );
 
       // left -> left
       expect(
-          leftOf1,
-          (leftOf1 as Either<int, int>)
-              .flatMap((value) => Left<int, int>(value + 1)));
+        (leftOf1 as Either<int, int>)
+            .flatMap((value) => Left<int, int>(value + 1)),
+        leftOf1,
+      );
+    });
+
+    test('bimap', () {
+      expect(
+        (rightOf1 as Either<int, int>)
+            .bimap((value) => value + 1, (value) => value + 2),
+        Right<Never, int>(3),
+      );
+
+      expect(
+        (leftOf1 as Either<int, int>)
+            .bimap((value) => value + 1, (value) => value + 2),
+        Left<int, Never>(2),
+      );
     });
   });
 }
