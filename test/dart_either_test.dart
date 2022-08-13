@@ -1,5 +1,3 @@
-// ignore_for_file: unnecessary_cast
-
 import 'package:dart_either/dart_either.dart';
 import 'package:test/test.dart';
 import 'semaphore_test.dart' as semaphore_test;
@@ -14,8 +12,8 @@ class MyControlError<L> implements ControlError<L> {
 void main() {
   semaphore_test.main();
 
-  const Either<int, Never> leftOf1 = Left(1);
-  const Either<Never, int> rightOf1 = Right(1);
+  const Either<int, int> leftOf1 = Left(1);
+  const Either<int, int> rightOf1 = Right(1);
 
   final exception = Exception();
   final exceptionLeft = Left<Object, Never>(exception);
@@ -377,7 +375,7 @@ void main() {
 
     test('fold', () {
       expect(
-        (rightOf1 as Either<Object, int>).fold<int>(
+        rightOf1.fold<int>(
           ifLeft: (v) => throw v,
           ifRight: (v) => v + 2,
         ),
@@ -385,7 +383,7 @@ void main() {
       );
 
       expect(
-        (leftOf1 as Either<int, Object>).fold<int>(
+        leftOf1.fold<int>(
           ifLeft: (v) => v + 1,
           ifRight: (v) => throw v,
         ),
@@ -395,12 +393,12 @@ void main() {
 
     test('foldLeft', () {
       expect(
-        (rightOf1 as Either<Object, int>).foldLeft<int>(0, (acc, e) => acc + e),
+        rightOf1.foldLeft<int>(0, (acc, e) => acc + e),
         1,
       );
 
       expect(
-        (leftOf1 as Either<Object, int>).foldLeft<int>(0, (acc, e) => acc + e),
+        leftOf1.foldLeft<int>(0, (acc, e) => acc + e),
         0,
       );
     });
@@ -417,14 +415,14 @@ void main() {
       );
 
       expect(
-        (leftOf1 as Either<int, int>).map((value) => value + 1),
+        leftOf1.map((value) => value + 1),
         leftOf1,
       );
     });
 
     test('mapLeft', () {
       expect(
-        (rightOf1 as Either<int, int>).mapLeft((value) => value + 1),
+        rightOf1.mapLeft((value) => value + 1),
         rightOf1,
       );
 
@@ -449,29 +447,75 @@ void main() {
 
       // left -> right
       expect(
-        (leftOf1 as Either<int, int>).flatMap((value) => Right(value + 1)),
+        leftOf1.flatMap((value) => Right(value + 1)),
         leftOf1,
       );
 
       // left -> left
       expect(
-        (leftOf1 as Either<int, int>)
-            .flatMap((value) => Left<int, int>(value + 1)),
+        leftOf1.flatMap((value) => Left<int, int>(value + 1)),
         leftOf1,
       );
     });
 
     test('bimap', () {
       expect(
-        (rightOf1 as Either<int, int>)
-            .bimap((value) => value + 1, (value) => value + 2),
+        rightOf1.bimap((value) => value + 1, (value) => value + 2),
         Right<Never, int>(3),
       );
 
       expect(
-        (leftOf1 as Either<int, int>)
-            .bimap((value) => value + 1, (value) => value + 2),
+        leftOf1.bimap((value) => value + 1, (value) => value + 2),
         Left<int, Never>(2),
+      );
+    });
+
+    test('exists', () {
+      expect(rightOf1.exists((value) => value > 0), isTrue);
+      expect(rightOf1.exists((value) => value > 1), isFalse);
+
+      expect(
+        leftOf1.exists((value) => value > 0),
+        isFalse,
+      );
+      expect(
+        leftOf1.exists((value) => value > 1),
+        isFalse,
+      );
+    });
+
+    test('getOrElse', () {
+      expect(rightOf1.getOrElse(() => 2), 1);
+      expect(leftOf1.getOrElse(() => 2), 2);
+    });
+
+    test('orNull', () {
+      expect(rightOf1.orNull(), 1);
+      expect(leftOf1.orNull(), isNull);
+    });
+
+    test('getOrHandle', () {
+      expect(rightOf1.getOrHandle((l) => l + 1), 1);
+      expect(leftOf1.getOrHandle((l) => l + 1), 2);
+    });
+
+    test('when', () {
+      expect(
+        rightOf1.when(ifLeft: (value) => null, ifRight: (value) => value),
+        rightOf1,
+      );
+      expect(
+        leftOf1.when(ifLeft: (value) => null, ifRight: (value) => value),
+        isNull,
+      );
+
+      expect(
+        leftOf1.when(ifLeft: (value) => value, ifRight: (value) => null),
+        leftOf1,
+      );
+      expect(
+        rightOf1.when(ifLeft: (value) => value, ifRight: (value) => null),
+        isNull,
       );
     });
   });
