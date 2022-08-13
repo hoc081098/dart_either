@@ -27,7 +27,7 @@ jobs:
         run: dart --version
 
       - name: Install dependencies
-        run: pub get
+        run: dart pub get
 
       - name: Run example/lib/dart_either_example.dart
         run: dart run lib/dart_either_example.dart
