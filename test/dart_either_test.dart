@@ -14,7 +14,9 @@ void main() {
 
   const leftOf1 = Left(1);
   const rightOf1 = Right(1);
+
   final exception = Exception();
+  final exceptionLeft = Left<Object>(exception);
 
   group('Either', () {
     test('isLeft', () {
@@ -91,7 +93,7 @@ void main() {
         expect(
           Either<Object, String>.catchError(
               takeOnlyError, () => throw exception),
-          Left<Object>(exception),
+          exceptionLeft,
         );
 
         // ErrorMapper throws
@@ -161,7 +163,7 @@ void main() {
             final b = Either<Object, int>.left(exception).bind(e);
             return a + b;
           }),
-          Left<Object>(exception),
+          exceptionLeft,
         );
       });
     });
@@ -294,7 +296,7 @@ void main() {
 
             return a + b;
           }),
-          completion(Left<Object>(exception)),
+          completion(exceptionLeft),
         );
 
         // 1 success bind (async) + 1 failure bind (async) - with async modifier
@@ -311,7 +313,47 @@ void main() {
 
             return a + b;
           }),
-          completion(Left<Object>(exception)),
+          completion(exceptionLeft),
+        );
+      });
+
+      test('Either.catchFutureError', () async {
+        // single return
+        await expectLater(
+          Either.catchFutureError<Object, int>(takeOnlyError, () => 1),
+          completion(rightOf1),
+        );
+
+        await expectLater(
+          Either.catchFutureError<Object, int>(takeOnlyError, () async => 1),
+          completion(rightOf1),
+        );
+
+        await expectLater(
+          Either.catchFutureError<Object, int>(takeOnlyError, () async {
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+            return 1;
+          }),
+          completion(rightOf1),
+        );
+
+        await expectLater(
+          Either.catchFutureError<Object, int>(
+              takeOnlyError, () => Future.value(1)),
+          completion(rightOf1),
+        );
+
+        // catch exception
+        await expectLater(
+          Either.catchFutureError<Object, int>(
+              takeOnlyError, () => throw exception),
+          completion(exceptionLeft),
+        );
+
+        await expectLater(
+          Either.catchFutureError<Object, int>(
+              takeOnlyError, () async => throw exception),
+          completion(exceptionLeft),
         );
       });
     });
