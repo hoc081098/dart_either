@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'dart:collection';
 
+import 'package:meta/meta.dart';
+
 /// A counting semaphore for coroutines that logically maintains a number of available permits.
 /// Each [acquire] takes a single permit or suspends until it is available.
 /// Each [release] adds a permit, potentially releasing a suspended acquirer.
@@ -10,6 +12,7 @@ import 'dart:collection';
 /// Semaphores are mostly used to limit the number of coroutines that have an access to particular resource.
 /// Semaphore with `permits = 1` is essentially a [Mutex].
 ///
+@experimental
 abstract class Semaphore {
   /// Creates new [Semaphore] instance.
   /// [permits] is the number of permits available in this semaphore.
@@ -67,11 +70,13 @@ class _SemaphoreImpl implements Semaphore {
 /// and releasing it after the [action] is completed.
 ///
 /// Returns the return value of the [action].
+@experimental
 extension SemaphoreExtension on Semaphore {
   /// Executes the given [action], acquiring a permit from this semaphore at the beginning
   /// and releasing it after the [action] is completed.
   ///
   /// Returns the return value of the [action].
+  @experimental
   Future<T> withPermit<T>(Future<T> Function() action) async {
     await acquire();
     try {

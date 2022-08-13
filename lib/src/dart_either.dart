@@ -188,6 +188,7 @@ abstract class Either<L, R> {
       );
 
   /// TODO(traverse)
+  @experimental
   static Either<L, List<R>> traverse<T, L, R>(
     Iterable<T> values,
     Either<L, R> Function(T value) mapper,
@@ -195,6 +196,7 @@ abstract class Either<L, R> {
       sequence<L, R>(values.map(mapper));
 
   /// TODO(sequence)
+  @experimental
   static Either<L, List<R>> sequence<L, R>(Iterable<Either<L, R>> values) {
     final result = <R>[];
 
@@ -213,6 +215,7 @@ abstract class Either<L, R> {
   }
 
   /// TODO(parTraverseN)
+  @experimental
   static Future<Either<L, List<R>>> parTraverseN<T, L, R>(
     Iterable<T> values,
     Future<Either<L, R>> Function() Function(T value) mapper,
@@ -221,6 +224,7 @@ abstract class Either<L, R> {
       parSequenceN<L, R>(values.map(mapper), n);
 
   /// TODO(parSequenceN)
+  @experimental
   static Future<Either<L, List<R>>> parSequenceN<L, R>(
     Iterable<Future<Either<L, R>> Function()> functions,
     int? n,
