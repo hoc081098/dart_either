@@ -3,14 +3,14 @@ import 'package:dart_either/dart_either.dart';
 Either<Object, String> catchObject(String message) {
   return Either.catchError(
     (e, s) => e,
-    () => throw Exception(message),
+    () => throw Exception('catchObject ' + message),
   );
 }
 
 Either<Exception, String> catchException() {
   return Either.catchError(
     (e, s) => e is Exception ? e : throw e,
-    () => throw 'Error string',
+    () => throw 'Error catchException string',
   );
 }
 
@@ -19,7 +19,7 @@ Future<Either<Object, String>> catchObjectAsync() {
     (e, s) => e,
     () async {
       await Future<void>.delayed(const Duration(seconds: 1));
-      throw Exception('Demo exception');
+      throw Exception('Demo catchObjectAsync exception');
     },
   );
 }
@@ -29,28 +29,28 @@ Future<Either<Exception, String>> catchExceptionAsync() {
     (e, s) => e is Exception ? e : throw e,
     () async {
       await Future<void>.delayed(const Duration(seconds: 1));
-      throw 'Error string';
+      throw 'Error catchExceptionAsync string';
     },
   );
 }
 
 Stream<Either<Object, int>> getStream() {
   return Stream.fromIterable([1, 2, 3, 4])
-      .map((v) => v == 3 ? throw Exception('Demo exception') : v)
+      .map((v) => v == 3 ? throw Exception('Demo getStream exception') : v)
       .toEitherStream((e, s) => e);
 }
 
 Future<Either<Object, int>> monadComprehensions() {
   return Either.futureBinding<Object, int>((e) async {
-    final v1 = Either.right(999).bind(e);
+    final v1 = Either<Object, int>.right(999).bind(e);
     print('after v1 $v1');
 
-    final v2 = Either.catchError((e, s) => e, () => 99).bind(e);
+    final v2 = Either<Object, int>.catchError((e, s) => e, () => 99).bind(e);
     print('after v2 $v2');
 
     final v3 = await Either.catchFutureError<Object, int>(
       (e, s) => e,
-      () async => throw Exception('Demo exception'),
+      () async => throw Exception('Demo monadComprehensions exception'),
     ).bind(e);
     print('after v3 $v3');
 

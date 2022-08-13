@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_cast
+
 import 'package:dart_either/dart_either.dart';
 import 'package:test/test.dart';
 import 'semaphore_test.dart' as semaphore_test;
@@ -12,11 +14,11 @@ class MyControlError<L> implements ControlError<L> {
 void main() {
   semaphore_test.main();
 
-  const leftOf1 = Left(1);
-  const rightOf1 = Right(1);
+  const Either<int, Never> leftOf1 = Left(1);
+  const Either<Never, int> rightOf1 = Right(1);
 
   final exception = Exception();
-  final exceptionLeft = Left<Object>(exception);
+  final exceptionLeft = Left<Object, Never>(exception);
 
   group('Either', () {
     test('isLeft', () {
@@ -31,44 +33,51 @@ void main() {
 
     group('Right', () {
       test('==', () {
-        expect(Right<int>(1) == Either<Never, int>.right(1), isTrue);
-        expect(Right<int>(1) == Right<num>(1), isFalse);
+        expect(Right<Never, int>(1) == Either<Never, int>.right(1), isTrue);
+        expect(Right<Never, int>(1) == Right<Never, num>(1), isTrue);
       });
 
       test('hashCode', () {
-        expect(Right<int>(1).hashCode == Either<Never, int>.right(1).hashCode,
+        expect(
+            Right<Never, int>(1).hashCode ==
+                Either<Never, int>.right(1).hashCode,
             isTrue);
-        expect(Right<int>(1).hashCode == Right<num>(1).hashCode, isTrue);
+        expect(Right<Never, int>(1).hashCode == Right<Never, num>(1).hashCode,
+            isTrue);
       });
 
       test('toString', () {
         expect('Either.Right(1)', rightOf1.toString());
-        expect('Either.Right([1, 2, 3])', Right([1, 2, 3]).toString());
+        expect('Either.Right([1, 2, 3])',
+            Right<Never, List<int>>([1, 2, 3]).toString());
       });
     });
 
     group('Left', () {
       test('==', () {
-        expect(Left<int>(1) == Either<int, Never>.left(1), isTrue);
-        expect(Left<int>(1) == Left<num>(1), isFalse);
+        expect(Left<int, Never>(1) == Either<int, Never>.left(1), isTrue);
+        expect(Left<int, Never>(1) == Left<num, Never>(1), isTrue);
       });
 
       test('hashCode', () {
-        expect(Left<int>(1).hashCode == Either<int, Never>.left(1).hashCode,
+        expect(
+            Left<int, Never>(1).hashCode == Either<int, Never>.left(1).hashCode,
             isTrue);
-        expect(Left<int>(1).hashCode == Left<num>(1).hashCode, isTrue);
+        expect(Left<int, Never>(1).hashCode == Left<num, Never>(1).hashCode,
+            isTrue);
       });
 
       test('toString', () {
         expect('Either.Left(1)', leftOf1.toString());
-        expect('Either.Left([1, 2, 3])', Left([1, 2, 3]).toString());
+        expect('Either.Left([1, 2, 3])',
+            Left<List<int>, Never>([1, 2, 3]).toString());
       });
     });
 
     group('constructors', () {
       test('Either.left', () {
         expect(Either<int, Never>.left(1), leftOf1);
-        expect(Either<int, Never>.left(1), isA<Left<int>>());
+        expect(Either<int, Never>.left(1), isA<Left<int, Never>>());
         expect(Either<int, Never>.left(1), isA<Either<int, Never>>());
         expect(Either<int, Never>.left(1), isA<Either<int, String>>());
         expect(Either<int, Never>.left(1), isA<Either<int, Object>>());
@@ -76,7 +85,7 @@ void main() {
 
       test('Either.right', () {
         expect(Either<Never, int>.right(1), rightOf1);
-        expect(Either<Never, int>.right(1), isA<Right<int>>());
+        expect(Either<Never, int>.right(1), isA<Right<Never, int>>());
         expect(Either<Never, int>.right(1), isA<Either<Never, int>>());
         expect(Either<Never, int>.right(1), isA<Either<String, int>>());
         expect(Either<Never, int>.right(1), isA<Either<Object, int>>());
@@ -143,7 +152,7 @@ void main() {
             final b = e.bind(Right(2));
             return a + b;
           }),
-          Right(3),
+          Right<Never, int>(3),
         );
 
         // 2 success either.bind
@@ -153,7 +162,7 @@ void main() {
             final b = Either<Object, int>.right(2).bind(e);
             return a + b;
           }),
-          Right(3),
+          Right<Never, int>(3),
         );
 
         // 1 success bind + 1 failure bind
@@ -172,11 +181,11 @@ void main() {
       test('fromNullable', () {
         expect(
           Either.fromNullable<Object>(null),
-          Left<void>(null),
+          Left<void, Never>(null),
         );
         expect(
           Either.fromNullable(2),
-          Right(2),
+          Right<Never, int>(2),
         );
       });
 
@@ -229,7 +238,7 @@ void main() {
             final b = e.bind(Right(2));
             return a + b;
           }),
-          completion(Right(3)),
+          completion(Right<Never, int>(3)),
         );
 
         // 2 success bind (sync) - with async modifier
@@ -239,7 +248,7 @@ void main() {
             final b = e.bind(Right(2));
             return a + b;
           }),
-          completion(Right(3)),
+          completion(Right<Never, int>(3)),
         );
 
         // 2 success bind (async) - with async modifier
@@ -250,7 +259,7 @@ void main() {
             final b = await e.bindFuture(Future.value(Right(2)));
             return a + b;
           }),
-          completion(Right(3)),
+          completion(Right<Never, int>(3)),
         );
 
         // 1 success bind (sync) + 1 success bind (async) - with async modifier
@@ -261,7 +270,7 @@ void main() {
             final b = e.bind(Right(2));
             return a + b;
           }),
-          completion(Right(3)),
+          completion(Right<Never, int>(3)),
         );
 
         // 1 success bind (sync) + 1 success bind (async) - without async modifier
@@ -271,7 +280,7 @@ void main() {
                 .bind(e)
                 .then((a) => a + e.bind(Right(2))),
           ),
-          completion(Right(3)),
+          completion(Right<Never, int>(3)),
         );
 
         // 2 success bind (async) either.bind - with async modifier
@@ -281,7 +290,7 @@ void main() {
             final b = await Future.value(Either<Object, int>.right(2)).bind(e);
             return a + b;
           }),
-          completion(Right(3)),
+          completion(Right<Never, int>(3)),
         );
 
         // 1 success bind (async) + 1 failure bind (sync) - with async modifier
@@ -359,17 +368,16 @@ void main() {
     });
 
     test('extension .left() and .right()', () {
-      expect(1.left(), leftOf1);
-      expect(1.left(), Either<int, Never>.left(1));
+      expect(1.left<Never>(), leftOf1);
+      expect(1.left<Never>(), Either<int, Never>.left(1));
 
-      expect(1.right(), rightOf1);
-      expect(1.right(), Either<Never, int>.right(1));
+      expect(1.right<Never>(), rightOf1);
+      expect(1.right<Never>(), Either<Never, int>.right(1));
     });
 
     test('fold', () {
       expect(
         3,
-        // ignore: unnecessary_cast
         (rightOf1 as Either<Object, int>).fold<int>(
           ifLeft: (v) => throw v,
           ifRight: (v) => v + 2,
@@ -378,12 +386,59 @@ void main() {
 
       expect(
         2,
-        // ignore: unnecessary_cast
         (leftOf1 as Either<int, Object>).fold<int>(
           ifLeft: (v) => v + 1,
           ifRight: (v) => throw v,
         ),
       );
+    });
+
+    test('foldLeft', () {
+      expect(
+        1,
+        (rightOf1 as Either<Object, int>).foldLeft<int>(0, (acc, e) => acc + e),
+      );
+
+      expect(
+        0,
+        (leftOf1 as Either<Object, int>).foldLeft<int>(0, (acc, e) => acc + e),
+      );
+    });
+
+    test('swap', () {
+      expect(leftOf1, rightOf1.swap());
+      expect(rightOf1, leftOf1.swap());
+    });
+
+    test('map', () {
+      expect(Right<Never, int>(2), rightOf1.map((value) => value + 1));
+      expect(leftOf1, (leftOf1 as Either<int, int>).map((value) => value + 1));
+    });
+
+    test('mapLeft', () {
+      expect(rightOf1,
+          (rightOf1 as Either<int, int>).mapLeft((value) => value + 1));
+      expect(Left<int, Never>(2), leftOf1.mapLeft((value) => value + 1));
+    });
+
+    test('flatMap', () {
+      // right -> right
+      expect(
+          Right<Never, int>(2), rightOf1.flatMap((value) => Right(value + 1)));
+
+      // right -> left
+      expect(Left<int, Never>(2),
+          1.right<int>().flatMap<bool>((value) => Either.left(2)));
+
+      // left -> right
+      expect(leftOf1,
+          (leftOf1 as Either<int, int>).flatMap((value) => Right(value + 1)));
+
+      // left -> left
+      expect(
+          leftOf1,
+          (leftOf1 as Either<int, int>)
+              .flatMap((value) => Left<int, int>(value + 1)));
     });
   });
 }

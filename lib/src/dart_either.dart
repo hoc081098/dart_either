@@ -130,7 +130,7 @@ abstract class Either<L, R> {
   ///   int value = Either<ExampleErr, int>.catchError(toExampleErr, canThrowError).bind(e);
   /// });
   /// ```
-  factory Either.binding(R Function(EitherEffect<L, R>) block) {
+  factory Either.binding(R Function(EitherEffect<L, R> effect) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
 
     try {
@@ -152,7 +152,7 @@ abstract class Either<L, R> {
   /// TODO(futureBinding)
   /// Should not catch [ControlError] in [effect].
   static Future<Either<L, R>> futureBinding<L, R>(
-      FutureOr<R> Function(EitherEffect<L, R>) block) {
+      FutureOr<R> Function(EitherEffect<L, R> effect) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
 
     return Future.sync(() => block(eitherEffect))
@@ -201,10 +201,10 @@ abstract class Either<L, R> {
     final result = <R>[];
 
     for (final either in values) {
-      if (either is Left<L>) {
-        return either;
+      if (either is Left<L, R>) {
+        return Either<L, List<R>>.left(either.value);
       }
-      if (either is Right<R>) {
+      if (either is Right<L, R>) {
         result.add((either).value);
       } else {
         throw _InvalidEitherError<L, R>(either);
@@ -278,14 +278,14 @@ abstract class Either<L, R> {
   @pragma('vm:prefer-inline')
   @pragma('dart2js:tryInline')
   C fold<C>({
-    required C Function(L) ifLeft,
-    required C Function(R) ifRight,
+    required C Function(L value) ifLeft,
+    required C Function(R value) ifRight,
   }) {
     final self = this;
-    if (self is Left<L>) {
+    if (self is Left<L, R>) {
       return ifLeft(self.value);
     }
-    if (self is Right<R>) {
+    if (self is Right<L, R>) {
       return ifRight(self.value);
     }
     throw _InvalidEitherError<L, R>(self);
@@ -302,7 +302,7 @@ abstract class Either<L, R> {
   ///
   /// result.foldLeft(initial, combine);
   /// ```
-  C foldLeft<C>(C initial, C Function(C, R) rightOperation) => fold(
+  C foldLeft<C>(C initial, C Function(C acc, R element) rightOperation) => fold(
         ifLeft: _const(initial),
         ifRight: (r) => rightOperation(initial, r),
       );
@@ -326,9 +326,9 @@ abstract class Either<L, R> {
   /// Right(12).map((_) => 'flower'); // Result: Right('flower')
   /// Left(12).map((_) => 'flower');  // Result: Left(12)
   /// ```
-  Either<L, C> map<C>(C Function(R) f) => when(
-        ifLeft: _identity,
-        ifRight: (r) => Either.right(f(r.value)),
+  Either<L, C> map<C>(C Function(R value) f) => fold(
+        ifLeft: (l) => Either<L, C>.left(l),
+        ifRight: (r) => Either<L, C>.right(f(r)),
       );
 
   /// The given function is applied if this is a `Left`.
@@ -338,9 +338,9 @@ abstract class Either<L, R> {
   /// Right(12).mapLeft((_) => 'flower'); // Result: Right(12)
   /// Left(12).mapLeft((_) => 'flower');  // Result: Left('flower')
   /// ```
-  Either<C, R> mapLeft<C>(C Function(L) f) => when(
-        ifLeft: (l) => Either.left(f(l.value)),
-        ifRight: _identity,
+  Either<C, R> mapLeft<C>(C Function(L value) f) => fold(
+        ifLeft: (l) => Either<C, R>.left(f(l)),
+        ifRight: (r) => Either<C, R>.right(r),
       );
 
   /// Binds the given function across [Right].
@@ -359,15 +359,15 @@ abstract class Either<L, R> {
   /// Left(12).map((_) => Either.right('flower $v'));  // Result: Left(12)
   /// Left(12).map((_) => Either.left('flower $v'));  // Result: Left(12)
   /// ```
-  Either<L, C> flatMap<C>(Either<L, C> Function(R) f) => when(
-        ifLeft: _identity,
-        ifRight: (r) => f(r.value),
+  Either<L, C> flatMap<C>(Either<L, C> Function(R value) f) => fold(
+        ifLeft: (l) => Either<L, C>.left(l),
+        ifRight: (r) => f(r),
       );
 
   /// Map over Left and Right of this Either
   Either<C, D> bimap<C, D>(
-    C Function(L) leftOperation,
-    D Function(R) rightOperation,
+    C Function(L value) leftOperation,
+    D Function(R value) rightOperation,
   ) =>
       fold(
         ifLeft: (l) => Either.left(leftOperation(l)),
@@ -385,7 +385,7 @@ abstract class Either<L, R> {
   /// final Either<int, int> left = Left(12);
   /// left.exists((v) => v > 10);      // Result: false
   /// ```
-  bool exists(bool Function(R) predicate) => fold(
+  bool exists(bool Function(R value) predicate) => fold(
         ifLeft: _const(false),
         ifRight: predicate,
       );
@@ -422,7 +422,7 @@ abstract class Either<L, R> {
   /// Right(12).getOrHandle((v) => 17); // Result: 12
   /// Left(12).getOrHandle((v) => v + 5); // Result: 17
   /// ```
-  R getOrHandle(R Function(L) defaultValue) => fold(
+  R getOrHandle(R Function(L value) defaultValue) => fold(
         ifLeft: defaultValue,
         ifRight: _identity,
       );
@@ -448,14 +448,14 @@ abstract class Either<L, R> {
   @pragma('vm:prefer-inline')
   @pragma('dart2js:tryInline')
   C when<C>({
-    required C Function(Left<L>) ifLeft,
-    required C Function(Right<R>) ifRight,
+    required C Function(Left<L, R> left) ifLeft,
+    required C Function(Right<L, R> right) ifRight,
   }) {
     final self = this;
-    if (self is Left<L>) {
+    if (self is Left<L, R>) {
       return ifLeft(self);
     }
-    if (self is Right<R>) {
+    if (self is Right<L, R>) {
       return ifRight(self);
     }
     throw _InvalidEitherError<L, R>(self);
@@ -464,9 +464,9 @@ abstract class Either<L, R> {
 
 /// The left side of the disjoint union, as opposed to the [Right] side.
 @sealed
-class Left<T> extends Either<T, Never> {
+class Left<L, R> extends Either<L, R> {
   /// The value inside [Left].
-  final T value;
+  final L value;
 
   /// Construct a [Left] with [value].
   const Left(this.value) : super._();
@@ -479,8 +479,7 @@ class Left<T> extends Either<T, Never> {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Left && runtimeType == other.runtimeType && value == other.value;
+      identical(this, other) || (other is Left && value == other.value);
 
   @override
   int get hashCode => value.hashCode;
@@ -491,9 +490,9 @@ class Left<T> extends Either<T, Never> {
 
 /// The right side of the disjoint union, as opposed to the [Left] side.
 @sealed
-class Right<T> extends Either<Never, T> {
+class Right<L, R> extends Either<L, R> {
   /// The value inside [Right].
-  final T value;
+  final R value;
 
   /// Construct a [Right] with [value].
   const Right(this.value) : super._();
@@ -506,10 +505,7 @@ class Right<T> extends Either<Never, T> {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Right &&
-          runtimeType == other.runtimeType &&
-          value == other.value;
+      identical(this, other) || (other is Right && value == other.value);
 
   @override
   int get hashCode => value.hashCode;
@@ -525,8 +521,8 @@ class _InvalidEitherError<L, R> extends Error {
 
   @override
   String toString() =>
-      'Unknown $invalid. $invalid must be either a Right<$R> or Left<$L>.'
-      ' Cannot implement or extend Either class';
+      'Unknown $invalid. $invalid must be either a `Right<$L, $R>` or `Left<$L, $R>`.'
+      ' Cannot implement or extend `Either` class';
 }
 
 //
@@ -562,7 +558,7 @@ extension ToEitherObjectExtension<T> on T {
   /// Either<int, String> e2 = 1.left();
   /// Either<int, dynamic> e3 = 1.left();
   /// ``
-  Either<T, Never> left() => Either.left(this);
+  Either<T, R> left<R>() => Either<T, R>.left(this);
 
   /// Return a [Right] that contains [this] value.
   /// Can cast returned result to any `Either<..., T>` type.
@@ -573,7 +569,7 @@ extension ToEitherObjectExtension<T> on T {
   /// Either<String, int> e2 = 1.right();
   /// Either<dynamic, int> e3 = 1.right();
   /// ``
-  Either<Never, T> right() => Either.right(this);
+  Either<L, T> right<L>() => Either<L, T>.right(this);
 }
 
 //
