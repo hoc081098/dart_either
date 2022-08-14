@@ -16,6 +16,9 @@ extension on Object {
     if (this is ControlError) {
       throw this;
     }
+    if (this is _InvalidEitherError) {
+      throw this;
+    }
     return this;
   }
 }
