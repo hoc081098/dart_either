@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:meta/meta.dart';
 
+import 'binding.dart';
 import 'utils/semaphore.dart';
 
 /// Map [error] and [stackTrace] to [T] value.
@@ -525,56 +526,11 @@ class _InvalidEitherError<L, R> extends Error {
       ' Cannot implement or extend `Either` class';
 }
 
-//
-// Extensions
-//
-
-/// Provide [toFuture] extension on [Either].
-extension AsFutureEitherExtension<L extends Object, R> on Either<L, R> {
-  /// Convert this [Either] to a [Future].
-  /// If [this] is [Right], the Future will complete with [Right.value].
-  /// If [this] is [Left], the Future will complete with [Left.value] as an error.
-  Future<R> toFuture() => fold(
-        ifLeft: (e) => Future.error(e),
-        ifRight: (v) => Future.value(v),
-      );
-}
-
-/// Provide [toEitherStream] extension on [Stream].
-extension ToEitherStreamExtension<R> on Stream<R> {
-  /// TODO(catchStreamError)
-  Stream<Either<L, R>> toEitherStream<L>(ErrorMapper<L> errorMapper) =>
-      Either.catchStreamError<L, R>(errorMapper, this);
-}
-
-/// Provide [left] and [right] extensions on any types.
-extension ToEitherObjectExtension<T> on T {
-  /// Return a [Left] that contains [this] value.
-  /// Can cast returned result to any `Either<T, ...>` type.
-  ///
-  /// For example:
-  /// ```
-  /// Either<int, Never> e1 = 1.left();
-  /// Either<int, String> e2 = 1.left();
-  /// Either<int, dynamic> e3 = 1.left();
-  /// ``
-  Either<T, R> left<R>() => Either<T, R>.left(this);
-
-  /// Return a [Right] that contains [this] value.
-  /// Can cast returned result to any `Either<..., T>` type.
-  ///
-  /// For example:
-  /// ```
-  /// Either<Never, int> e1 = 1.right();
-  /// Either<String, int> e2 = 1.right();
-  /// Either<dynamic, int> e3 = 1.right();
-  /// ``
-  Either<L, T> right<L>() => Either<L, T>.right(this);
-}
-
+// -----------------------------------------------------------------------------
 //
 // Binding
 //
+// -----------------------------------------------------------------------------
 
 /// Used for monad comprehensions.
 /// Cannot implement or extend this class.
@@ -589,64 +545,6 @@ abstract class EitherEffect<L, R> {
   /// Attempt to get right value of [eitherFuture].
   /// Or return a [Future] that completes with a [ControlError].
   Future<R> bindFuture(Future<Either<L, R>> eitherFuture);
-}
-
-/// Provide [ensure] extension on [EitherEffect].
-extension EnsureEitherEffectExtension<L, R> on EitherEffect<L, R> {
-  /// Ensure check if the [value] is `true`,
-  /// and if it is it allows the `Either.binding(...)` to continue.
-  /// In case it is `false`, then it short-circuits the binding and returns
-  /// the provided value by [orLeft] inside a [Left].
-  ///
-  /// ```
-  ///   final res = Either<String, int>.binding((e) {
-  ///     e.ensure(true, () => "");
-  ///     print("ensure(true) passes");
-  ///     e.ensure(false, () => "failed");
-  ///     return 1;
-  ///   });
-  /// // print: "ensure(true) passes"
-  /// // res: Either.Left("failed")
-  /// ```
-  void ensure(bool value, L Function() orLeft) =>
-      value ? null : bind(orLeft().left());
-}
-
-/// Provide [ensureNotNull] extension on [EitherEffect].
-extension EnsureNotNullEitherEffectExtension<L, R extends Object>
-    on EitherEffect<L, R> {
-  /// Ensures that [value] is not null.
-  /// When the value is not null, then it will be returned as non null and the check value is now smart-checked to non-null.
-  /// Otherwise, if the [value] is null then the `Either.binding(...)` will short-circuit with [orLeft] inside of [Left].
-  ///
-  /// ```
-  ///   final res = Either<String, int>.binding((e) {
-  ///     int? x = 1;
-  ///     e.ensureNotNull(x, () => "passes");
-  ///     print(x);
-  ///     e.ensureNotNull(null, () => "failed");
-  ///     return 1;
-  ///   });
-  ///   print(res);
-  /// // println: "1"
-  /// // res: Either.Left("failed")
-  /// ```
-  R ensureNotNull(R? value, L Function() orLeft) =>
-      value ?? bind(orLeft().left());
-}
-
-/// Provide [bind] extension on an [Either].
-extension BindEitherExtension<L, R> on Either<L, R> {
-  /// Attempt to get right value of [this].
-  /// Or throws a [ControlError].
-  R bind(EitherEffect<L, R> effect) => effect.bind(this);
-}
-
-/// Provide [bind] extension on a [Future] of [Either].
-extension BindEitherFutureExtension<L, R> on Future<Either<L, R>> {
-  /// Attempt to get right value of [this].
-  /// Or return a [Future] that completes with a [ControlError].
-  Future<R> bind(EitherEffect<L, R> effect) => effect.bindFuture(this);
 }
 
 /// Error thrown by [EitherEffect].
@@ -665,7 +563,7 @@ class ControlError<T> extends Error {
   String toString() => 'ControlError($_value, $_token)';
 }
 
-/// Class that represents a unique token by hash comparison **/
+/// Class that represents a unique token by hash comparison.
 class _Token {
   @override
   String toString() => 'Token(${hashCode.toRadixString(16)})';

@@ -43,3 +43,5 @@
 library dart_either;
 
 export 'src/dart_either.dart';
+export 'src/binding.dart';
+export 'src/extensions.dart';
