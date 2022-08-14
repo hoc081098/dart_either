@@ -590,5 +590,41 @@ void main() {
       await expectLater(rightOf1.toFuture(), completion(1));
       await expectLater(leftOf1.toFuture(), throwsA(1));
     });
+
+    test('EitherEffect.ensure', () {
+      expect(
+        Either<String, int>.binding((effect) {
+          effect.ensure(<Object>[].isEmpty, () => 'Error'); // passed
+          return 1;
+        }),
+        Right<String, int>(1),
+      );
+
+      expect(
+        Either<String, int>.binding((effect) {
+          effect.ensure([0].isEmpty, () => 'Error'); // failed
+          return 1;
+        }),
+        Left<String, int>('Error'),
+      );
+    });
+
+    test('EitherEffect.ensureNotNull', () {
+      expect(
+        Either<String, int>.binding((effect) {
+          final int v = effect.ensureNotNull(2, () => 'Error'); // passed
+          return v + 1;
+        }),
+        Right<String, int>(3),
+      );
+
+      expect(
+        Either<String, int>.binding((effect) {
+          final int v = effect.ensureNotNull(null, () => 'Error'); // failed
+          return v + 1;
+        }),
+        Left<String, int>('Error'),
+      );
+    });
   });
 }

@@ -532,6 +532,17 @@ class _InvalidEitherError<L, R> extends Error {
 //
 // -----------------------------------------------------------------------------
 
+/// Monad comprehensions is the name for a programming idiom available
+/// in multiple languages like `JavaScript`, `F#`, `Scala`, or `Haskell`.
+/// The purpose of monad comprehensions is to compose sequential chains
+/// of actions in a style that feels natural for programmers of all backgrounds.
+/// They’re similar to `coroutines` or `async`/`await`, but extensible to existing and new types!
+const monadComprehension = _MonadComprehension();
+
+class _MonadComprehension {
+  const _MonadComprehension();
+}
+
 /// Used for monad comprehensions.
 /// Cannot implement or extend this class.
 @sealed
@@ -540,10 +551,12 @@ abstract class EitherEffect<L, R> {
 
   /// Attempt to get right value of [either].
   /// Or throws a [ControlError].
+  @monadComprehension
   R bind(Either<L, R> either);
 
   /// Attempt to get right value of [eitherFuture].
   /// Or return a [Future] that completes with a [ControlError].
+  @monadComprehension
   Future<R> bindFuture(Future<Either<L, R>> eitherFuture);
 }
 
