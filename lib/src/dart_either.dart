@@ -106,34 +106,44 @@ abstract class Either<L, R> {
   /// You can also use [BindEitherExtension.bind] instead of [EitherEffect.bind] for more convenience.
   ///
   /// Example:
-  /// ```
-  /// Either<ExampleErr, int> provideX() { ... }
-  /// Either<ExampleErr, int> provideY() { ... }
-  /// Either<ExampleErr, int> provideZ(int x, int y) { ... }
+  /// ```dart
+  /// class ExampleError {}
   ///
-  /// Either<ExampleErr, int> result = Either<ExampleErr, int>.binding((e) {
-  ///   int x = provideX().bind(e);       // use either.bind(e)
-  ///   int y = e.bind(provideY());       // use e.bind(either)
-  ///   int z = provideZ(x, y).bind(e);
+  /// Either<ExampleError, int> provideX() { ... }
+  /// Either<ExampleError, int> provideY() { ... }
+  /// Either<ExampleError, int> provideZ(int x, int y) { ... }
+  ///
+  /// Either<ExampleError, int> result = Either<ExampleError, int>.binding((e) {
+  ///   int x = provideX().bind(e);       // or use `e.bind(provideX())`.
+  ///   int y = e.bind(provideY());       // or use `provideY().bind(e)`.
+  ///   int z = provideZ(x, y).bind(e);   // or use `e.bind(provideZ(x, y))`.
   ///   return z;
   /// });
   /// ```
-  /// **NOTE: Must not catch [ControlError] in [block].**.
-  /// **NOTE: Must not throw any errors inside [block]. Use [Either.catchError], [Either.catchFutureError] or [Either.catchStreamError] to catch error**
   ///
-  /// ```
-  /// int canThrowError() { ... }
+  /// ### NOTE
+  /// - Do NOT catch [ControlError] in [block].
+  /// - Do NOT throw any errors inside [block].
+  /// - Use [Either.catchError], [Either.catchFutureError] or [Either.catchStreamError] to catch error,
+  ///   then use [EitherEffect.bind] to unwrap the [Either].
+  ///
+  /// ```dart
+  /// /// This function can throw an error.
+  /// int canThrowAnError() { ... }
   ///
   /// // DON'T
-  /// Either<ExampleErr, int> result = Either<ExampleErr, int>.binding((e) {
-  ///   int value = canThrowError();
+  /// Either<ExampleError, int> result = Either<ExampleError, int>.binding((e) {
+  ///   int value = canThrowAnError();
   /// });
   ///
   /// // DO
-  /// Either<ExampleErr, int> result = Either<ExampleErr, int>.binding((e) {
-  ///   ExampleErr toExampleErr(Object e, StackTrace st) { ... }
+  /// ExampleError toExampleError(Object e, StackTrace st) { ... }
   ///
-  ///   int value = Either<ExampleErr, int>.catchError(toExampleErr, canThrowError).bind(e);
+  /// Either<ExampleError, int> result = Either<ExampleError, int>.binding((e) {
+  ///   int value = Either<ExampleError, int>.catchError(
+  ///     toExampleError,
+  ///     canThrowAnError
+  ///   ).bind(e);
   /// });
   /// ```
   factory Either.binding(
@@ -184,7 +194,7 @@ abstract class Either<L, R> {
           .onError<Object>(
               (e, s) => Either.left(errorMapper(e.throwIfFatal(), s)));
 
-  /// Transform data events to [Right]s and error events to [Left]s.
+  /// Transforms data events to [Right]s and error events to [Left]s.
   ///
   /// When the source stream emits a data event, the result stream will emit
   /// a [Right] wrapping that data event.
