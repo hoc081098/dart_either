@@ -1,4 +1,5 @@
 import 'package:dart_either/dart_either.dart';
+import 'package:rxdart_ext/single.dart';
 import 'package:test/test.dart';
 import 'semaphore_test.dart' as semaphore_test;
 
@@ -363,6 +364,72 @@ void main() {
           completion(exceptionLeft),
         );
       });
+
+      test('Either.catchStreamError', () async {
+        // single value
+        await expectLater(
+          Either.catchStreamError(takeOnlyError, Stream.value(1)),
+          emitsInOrder(<Object>[Right<Never, int>(1), emitsDone]),
+        );
+        await expectLater(
+          Either.catchStreamError(takeOnlyError, Single.value(1)),
+          emitsInOrder(<Object>[Right<Never, int>(1), emitsDone]),
+        );
+        await expectLater(
+          Single.value(1).toEitherStream(takeOnlyError),
+          emitsInOrder(<Object>[Right<Never, int>(1), emitsDone]),
+        );
+
+        // single error
+        await expectLater(
+          Either.catchStreamError(takeOnlyError, Stream<int>.error(exception)),
+          emitsInOrder(<Object>[exceptionLeft, emitsDone]),
+        );
+        await expectLater(
+          Either.catchStreamError(takeOnlyError, Single<int>.error(exception)),
+          emitsInOrder(<Object>[exceptionLeft, emitsDone]),
+        );
+        await expectLater(
+          Single<int>.error(exception).toEitherStream(takeOnlyError),
+          emitsInOrder(<Object>[exceptionLeft, emitsDone]),
+        );
+
+        // one value + one error
+        await expectLater(
+          Either.catchStreamError(
+            takeOnlyError,
+            Rx.concat<int>([
+              Single.value(1),
+              Single.error(exception),
+            ]),
+          ),
+          emitsInOrder(<Object>[
+            Right<Never, int>(1),
+            exceptionLeft,
+            emitsDone,
+          ]),
+        );
+
+        // value + error + value + error
+        await expectLater(
+          Either.catchStreamError(
+            takeOnlyError,
+            Rx.concat<int>([
+              Single.value(1),
+              Single.error(exception),
+              Stream.value(2),
+              Single.error('Error'),
+            ]),
+          ),
+          emitsInOrder(<Object>[
+            Right<Never, int>(1),
+            exceptionLeft,
+            Right<Object, int>(2),
+            Left<String, Never>('Error'),
+            emitsDone,
+          ]),
+        );
+      });
     });
 
     test('extension .left() and .right()', () {
@@ -517,6 +584,11 @@ void main() {
         rightOf1.when(ifLeft: (value) => value, ifRight: (value) => null),
         isNull,
       );
+    });
+
+    test('toFuture', () async {
+      await expectLater(rightOf1.toFuture(), completion(1));
+      await expectLater(leftOf1.toFuture(), throwsA(1));
     });
   });
 }

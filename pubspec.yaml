@@ -12,5 +12,6 @@ dependencies:
   meta: ^1.7.0
 
 dev_dependencies:
+  rxdart_ext: ^0.2.5
   lints: ^1.0.1
   test: ^1.17.12
