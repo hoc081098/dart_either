@@ -132,7 +132,7 @@ abstract class Either<L, R> {
   /// });
   /// ```
   factory Either.binding(
-      @monadComprehension R Function(EitherEffect<L, R> effect) block) {
+      @monadComprehensions R Function(EitherEffect<L, R> effect) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
 
     try {
@@ -154,7 +154,7 @@ abstract class Either<L, R> {
   /// TODO(futureBinding)
   /// Should not catch [ControlError] in [effect].
   static Future<Either<L, R>> futureBinding<L, R>(
-      @monadComprehension
+      @monadComprehensions
           FutureOr<R> Function(EitherEffect<L, R> effect) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
 
@@ -539,10 +539,10 @@ class _InvalidEitherError<L, R> extends Error {
 /// The purpose of monad comprehensions is to compose sequential chains
 /// of actions in a style that feels natural for programmers of all backgrounds.
 /// They’re similar to `coroutines` or `async`/`await`, but extensible to existing and new types!
-const monadComprehension = _MonadComprehension();
+const monadComprehensions = _MonadComprehensions();
 
-class _MonadComprehension {
-  const _MonadComprehension();
+class _MonadComprehensions {
+  const _MonadComprehensions();
 }
 
 /// Used for monad comprehensions.
@@ -553,12 +553,12 @@ abstract class EitherEffect<L, R> {
 
   /// Attempt to get right value of [either].
   /// Or throws a [ControlError].
-  @monadComprehension
+  @monadComprehensions
   R bind(Either<L, R> either);
 
   /// Attempt to get right value of [eitherFuture].
   /// Or return a [Future] that completes with a [ControlError].
-  @monadComprehension
+  @monadComprehensions
   Future<R> bindFuture(Future<Either<L, R>> eitherFuture);
 }
 

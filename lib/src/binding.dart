@@ -18,7 +18,7 @@ extension EnsureEitherEffectExtension<L, R> on EitherEffect<L, R> {
   /// // print: "ensure(true) passes"
   /// // res: Either.Left("failed")
   /// ```
-  @monadComprehension
+  @monadComprehensions
   void ensure(bool value, L Function() orLeft) =>
       value ? null : bind(orLeft().left());
 }
@@ -42,7 +42,7 @@ extension EnsureNotNullEitherEffectExtension<L, R extends Object>
   /// // println: "1"
   /// // res: Either.Left("failed")
   /// ```
-  @monadComprehension
+  @monadComprehensions
   R ensureNotNull(R? value, L Function() orLeft) =>
       value ?? bind(orLeft().left());
 }
@@ -51,7 +51,7 @@ extension EnsureNotNullEitherEffectExtension<L, R extends Object>
 extension BindEitherExtension<L, R> on Either<L, R> {
   /// Attempt to get right value of [this].
   /// Or throws a [ControlError].
-  @monadComprehension
+  @monadComprehensions
   R bind(EitherEffect<L, R> effect) => effect.bind(this);
 }
 
@@ -59,6 +59,6 @@ extension BindEitherExtension<L, R> on Either<L, R> {
 extension BindEitherFutureExtension<L, R> on Future<Either<L, R>> {
   /// Attempt to get right value of [this].
   /// Or return a [Future] that completes with a [ControlError].
-  @monadComprehension
+  @monadComprehensions
   Future<R> bind(EitherEffect<L, R> effect) => effect.bindFuture(this);
 }
