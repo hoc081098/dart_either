@@ -80,8 +80,9 @@ abstract class Either<L, R> {
   /// Create a [Right].
   const factory Either.right(R right) = Right;
 
-  /// Evaluates the specified [block], wrap result in a [Right].
-  /// If exception is thrown, invoke [errorMapper] and wrap result in a [Left].
+  /// Evaluates the specified [block] and wrap the result in a [Right].
+  ///
+  /// If an error is thrown, invoke [errorMapper] with that error and wrap the result in a [Left].
   factory Either.catchError(ErrorMapper<L> errorMapper, R Function() block) {
     try {
       return Either.right(block());
@@ -170,8 +171,10 @@ abstract class Either<L, R> {
         );
   }
 
-  /// Evaluates the specified [block], wrap result in a [Right].
-  /// If exception is thrown, invoke [errorMapper] and wrap result in a [Left].
+  /// Evaluates the specified [block] and wrap the result in a [Right].
+  ///
+  /// If an error is thrown or [block] returns a future that completes with an error,
+  /// invoke [errorMapper] with that error and wrap the result in a [Left].
   static Future<Either<L, R>> catchFutureError<L, R>(
     ErrorMapper<L> errorMapper,
     FutureOr<R> Function() block,
