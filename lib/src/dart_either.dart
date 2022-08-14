@@ -161,7 +161,7 @@ abstract class Either<L, R> {
     }
   }
 
-  /// Returns a [Right] if [value] is not null.
+  /// Returns a [Right] if [value] is not `null`.
   /// Returns a [Left] containing `null` otherwise.
   static Either<void, R> fromNullable<R extends Object>(R? value) =>
       value == null ? const Either.left(null) : Either.right(value);
