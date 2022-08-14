@@ -194,7 +194,7 @@ abstract class Either<L, R> {
         ),
       );
 
-  /// Traverses the [Iterable] and runs [mapper] on each element.
+  /// Traverses the [values] iterable and runs [mapper] on each element.
   ///
   /// If one of the [mapper] returns a [Left], then it will short-circuit the operation,
   /// and returning the first encountered [Left].
