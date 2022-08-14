@@ -1,11 +1,12 @@
 import 'dart:async';
 
+import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
 
 import 'binding.dart';
 import 'utils/semaphore.dart';
 
-/// Map [error] and [stackTrace] to [T] value.
+/// Map [error] and [stackTrace] to a [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 
 extension on Object {
@@ -191,30 +192,28 @@ abstract class Either<L, R> {
       );
 
   /// TODO(traverse)
-  @experimental
-  static Either<L, List<R>> traverse<T, L, R>(
+  static Either<L, BuiltList<R>> traverse<T, L, R>(
     Iterable<T> values,
     Either<L, R> Function(T value) mapper,
   ) =>
       sequence<L, R>(values.map(mapper));
 
   /// TODO(sequence)
-  @experimental
-  static Either<L, List<R>> sequence<L, R>(Iterable<Either<L, R>> values) {
-    final result = <R>[];
+  static Either<L, BuiltList<R>> sequence<L, R>(Iterable<Either<L, R>> values) {
+    final result = ListBuilder<R>();
 
     for (final either in values) {
       if (either is Left<L, R>) {
-        return Either<L, List<R>>.left(either.value);
+        return Either<L, BuiltList<R>>.left(either.value);
       }
       if (either is Right<L, R>) {
-        result.add((either).value);
+        result.add(either.value);
       } else {
         throw _InvalidEitherError<L, R>(either);
       }
     }
 
-    return Right(result);
+    return Right(result.build());
   }
 
   /// TODO(parTraverseN)

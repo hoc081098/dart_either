@@ -1,3 +1,4 @@
+import 'package:built_collection/built_collection.dart';
 import 'package:dart_either/dart_either.dart';
 import 'package:rxdart_ext/single.dart';
 import 'package:test/test.dart';
@@ -429,6 +430,85 @@ void main() {
             emitsDone,
           ]),
         );
+      });
+
+      group('Either.sequence', () {
+        test('right path', () {
+          final List<int> range =
+              Iterable.generate(20000, (i) => i).toList(growable: false);
+          final values = <int>[];
+
+          expect(
+            Either.sequence(
+              range.map((e) {
+                values.add(e);
+                return Either<int, int>.right(e);
+              }),
+            ),
+            Right<int, BuiltList<int>>(range.build()),
+          );
+          expect(values, range);
+        });
+
+        test('left path', () {
+          final values = <int>[];
+          const anchor = 100;
+
+          expect(
+            Either.sequence(
+              Iterable.generate(20000, (i) => i).map((e) {
+                values.add(e);
+
+                return e < anchor
+                    ? Either<int, int>.right(e)
+                    : Either<int, int>.left(e);
+              }),
+            ),
+            Left<int, BuiltList<int>>(anchor),
+          );
+
+          expect(values.length, anchor + 1);
+          expect(values, Iterable.generate(anchor + 1, (i) => i).toList());
+        });
+      });
+
+      group('Either.traverse', () {
+        test('right path', () {
+          final List<int> range =
+              Iterable.generate(20000, (i) => i).toList(growable: false);
+          final values = <int>[];
+
+          expect(
+            Either.traverse(
+              range,
+              (int e) {
+                values.add(e);
+                return Either<int, int>.right(e);
+              },
+            ),
+            Right<int, BuiltList<int>>(range.build()),
+          );
+          expect(values, range);
+        });
+
+        test('left path', () {
+          final values = <int>[];
+          const anchor = 100;
+
+          expect(
+            Either.traverse(Iterable.generate(20000, (i) => i), (int e) {
+              values.add(e);
+
+              return e < anchor
+                  ? Either<int, int>.right(e)
+                  : Either<int, int>.left(e);
+            }),
+            Left<int, BuiltList<int>>(anchor),
+          );
+
+          expect(values.length, anchor + 1);
+          expect(values, Iterable.generate(anchor + 1, (i) => i).toList());
+        });
       });
     });
 
