@@ -131,7 +131,8 @@ abstract class Either<L, R> {
   ///   int value = Either<ExampleErr, int>.catchError(toExampleErr, canThrowError).bind(e);
   /// });
   /// ```
-  factory Either.binding(R Function(EitherEffect<L, R> effect) block) {
+  factory Either.binding(
+      @monadComprehension R Function(EitherEffect<L, R> effect) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
 
     try {
@@ -153,7 +154,8 @@ abstract class Either<L, R> {
   /// TODO(futureBinding)
   /// Should not catch [ControlError] in [effect].
   static Future<Either<L, R>> futureBinding<L, R>(
-      FutureOr<R> Function(EitherEffect<L, R> effect) block) {
+      @monadComprehension
+          FutureOr<R> Function(EitherEffect<L, R> effect) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
 
     return Future.sync(() => block(eitherEffect))
