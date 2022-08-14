@@ -184,7 +184,24 @@ abstract class Either<L, R> {
           .onError<Object>(
               (e, s) => Either.left(errorMapper(e.throwIfFatal(), s)));
 
-  /// TODO(catchStreamError)
+  /// Transform data events to [Right]s and error events to [Left]s.
+  ///
+  /// When the source stream emits a data event, the result stream will emit
+  /// a [Right] wrapping that data event.
+  ///
+  /// When the source stream emits a error event, calling [errorMapper] with that error
+  /// and the result stream will emits a [Left] wrapping the result.
+  ///
+  /// The done events will be forwarded.
+  ///
+  /// Example:
+  /// ```dart
+  /// final Stream<int> s = Stream.fromIterable([1, 2, 3, 4]);
+  /// final Stream<Either<Object, int>> eitherStream = Either.catchStreamError((e, s) => e, s);
+  ///
+  /// eitherStream.listen(print); // prints Either.Right(1), Either.Right(2),
+  ///                             // Either.Right(3), Either.Right(4),
+  /// ```
   static Stream<Either<L, R>> catchStreamError<L, R>(
     ErrorMapper<L> errorMapper,
     Stream<R> stream,
