@@ -576,7 +576,7 @@ abstract class EitherEffect<L, R> {
 }
 
 /// Error thrown by [EitherEffect].
-/// Must be not caught.
+/// Must not be caught.
 /// Cannot implement or extend this class.
 @sealed
 class ControlError<T> extends Error {
