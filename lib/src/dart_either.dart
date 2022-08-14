@@ -44,7 +44,7 @@ T Function(Object?) _const<T>(T t) => (_) => t;
 /// Then, to handle these exceptions, we have to make sure we catch them at the call site. This
 /// all becomes even more unwieldy when we try to compose exception-throwing procedures.
 ///
-/// ```
+/// ```dart
 /// double throwsSomeStuff(int i) => throw UnimplementedError();
 ///
 /// String throwsOtherThings(double d) => throw UnimplementedError();
@@ -310,7 +310,7 @@ abstract class Either<L, R> {
   /// Applies [ifLeft] if this is a [Left] or [ifRight] if this is a [Right].
   ///
   /// Example:
-  /// ```
+  /// ```dart
   /// final Either<Exception, Value> result = possiblyFailingOperation();
   /// result.fold(
   ///   ifLeft: (value) => print('operation failed with $value') ,
@@ -341,7 +341,7 @@ abstract class Either<L, R> {
   /// Returns [initial] otherwise.
   ///
   /// Example:
-  /// ```
+  /// ```dart
   /// final Either<Exception, Value> result = possiblyFailingOperation();
   /// final Value initial;
   /// Value combine(Value acc, Value v) {};
@@ -356,7 +356,7 @@ abstract class Either<L, R> {
   /// If this is a `Left`, then return the left value in `Right` or vice versa.
   ///
   /// Example:
-  /// ```
+  /// ```dart
   /// Left('left').swap();   // Result: Right('left')
   /// Right('right').swap(); // Result: Left('right')
   /// ```
@@ -368,7 +368,7 @@ abstract class Either<L, R> {
   /// The given function is applied if this is a `Right`.
   ///
   /// Example:
-  /// ```
+  /// ```dart
   /// Right(12).map((_) => 'flower'); // Result: Right('flower')
   /// Left(12).map((_) => 'flower');  // Result: Left(12)
   /// ```
@@ -380,7 +380,7 @@ abstract class Either<L, R> {
   /// The given function is applied if this is a `Left`.
   ///
   /// Example:
-  /// ```
+  /// ```dart
   /// Right(12).mapLeft((_) => 'flower'); // Result: Right(12)
   /// Left(12).mapLeft((_) => 'flower');  // Result: Left('flower')
   /// ```
@@ -398,7 +398,7 @@ abstract class Either<L, R> {
   /// return an [Either] (which could be a [Left]).
   ///
   /// Example:
-  /// ```
+  /// ```dart
   /// Right(12).map((v) => Either.right('flower $v')); // Result: Right('flower 12')
   /// Right(12).map((v) => Either.left('flower $v')); // Result: Left('flower 12')
   ///
@@ -424,7 +424,7 @@ abstract class Either<L, R> {
   /// the given [predicate] to the [Right] value.
   ///
   /// Example:
-  /// ```
+  /// ```dart
   /// Right(12).exists((v) => v > 10); // Result: true
   /// Right(7).exists((v) => v > 10);  // Result: false
   ///
@@ -439,7 +439,7 @@ abstract class Either<L, R> {
   /// Returns the value from this [Right] or the given argument if this is a [Left].
   ///
   /// Example:
-  /// ```
+  /// ```dart
   /// Right(12).getOrElse(() => 17); // Result: 12
   /// Left(12).getOrElse(() => 17);  // Result: 17
   /// ```
@@ -451,7 +451,7 @@ abstract class Either<L, R> {
   /// Returns the right value if it exists, otherwise `null`
   ///
   /// Example:
-  /// ```
+  /// ```dart
   /// final Either<int, int> right = Right(12).orNull(); // Result: 12
   /// final Either<int, int> left = Left(12).orNull();   // Result: null
   /// ```
@@ -464,7 +464,7 @@ abstract class Either<L, R> {
   /// the value of [Either.Left].
   ///
   /// Example:
-  /// ```
+  /// ```dart
   /// Right(12).getOrHandle((v) => 17); // Result: 12
   /// Left(12).getOrHandle((v) => v + 5); // Result: 17
   /// ```
@@ -480,7 +480,7 @@ abstract class Either<L, R> {
   /// will be called with [Right] or [Left] itself.
   ///
   /// Example:
-  /// ```
+  /// ```dart
   /// final Either<Exception, Value> result = possiblyFailingOperation();
   /// result.when(
   ///   ifLeft: (left) => print('operation failed with ${left.value}') ,

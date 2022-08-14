@@ -41,21 +41,21 @@ extension ToEitherObjectExtension<T> on T {
   /// Can cast returned result to any `Either<T, ...>` type.
   ///
   /// For example:
-  /// ```
+  /// ```dart
   /// Either<int, Never> e1 = 1.left();
   /// Either<int, String> e2 = 1.left();
   /// Either<int, dynamic> e3 = 1.left();
-  /// ``
+  /// ```
   Either<T, R> left<R>() => Either<T, R>.left(this);
 
   /// Return a [Right] that contains [this] value.
   /// Can cast returned result to any `Either<..., T>` type.
   ///
   /// For example:
-  /// ```
+  /// ```dart
   /// Either<Never, int> e1 = 1.right();
   /// Either<String, int> e2 = 1.right();
   /// Either<dynamic, int> e3 = 1.right();
-  /// ``
+  /// ```
   Either<L, T> right<L>() => Either<L, T>.right(this);
 }

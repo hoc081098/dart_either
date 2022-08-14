@@ -8,7 +8,7 @@ extension EnsureEitherEffectExtension<L, R> on EitherEffect<L, R> {
   /// In case it is `false`, then it short-circuits the binding and returns
   /// the provided value by [orLeft] inside a [Left].
   ///
-  /// ```
+  /// ```dart
   ///   final res = Either<String, int>.binding((e) {
   ///     e.ensure(true, () => "");
   ///     print("ensure(true) passes");
@@ -30,7 +30,7 @@ extension EnsureNotNullEitherEffectExtension<L, R extends Object>
   /// When the value is not null, then it will be returned as non null and the check value is now smart-checked to non-null.
   /// Otherwise, if the [value] is null then the `Either.binding(...)` will short-circuit with [orLeft] inside of [Left].
   ///
-  /// ```
+  /// ```dart
   ///   final res = Either<String, int>.binding((e) {
   ///     int? x = 1;
   ///     e.ensureNotNull(x, () => "passes");
