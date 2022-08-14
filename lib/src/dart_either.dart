@@ -194,14 +194,25 @@ abstract class Either<L, R> {
         ),
       );
 
-  /// TODO(traverse)
+  /// Traverses the [Iterable] and runs [mapper] on each element.
+  ///
+  /// If one of the [mapper] returns a [Left], then it will short-circuit the operation,
+  /// and returning the first encountered [Left].
+  ///
+  /// Otherwise, collects all values and wrap them in a [Right].
+  ///
+  /// This is a shorthand for `Either.sequence<L, R>(values.map(mapper))`.
   static Either<L, BuiltList<R>> traverse<T, L, R>(
     Iterable<T> values,
     Either<L, R> Function(T value) mapper,
   ) =>
       sequence<L, R>(values.map(mapper));
 
-  /// TODO(sequence)
+  /// Sequences all [Either] values.
+  /// If one of them is a [Left], then it will short-circuit the operation,
+  /// and returning the first encountered [Left].
+  ///
+  /// Otherwise, collects all values and wrap them in a [Right].
   static Either<L, BuiltList<R>> sequence<L, R>(Iterable<Either<L, R>> values) {
     final result = ListBuilder<R>();
 
