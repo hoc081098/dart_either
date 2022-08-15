@@ -403,6 +403,21 @@ abstract class Either<L, R> {
   /// and returning the first encountered [Left].
   ///
   /// Otherwise, collects all values and wrap them in a [Right].
+  ///
+  /// Example:
+  /// ```dart
+  /// // Result: Left('3')
+  /// Either.traverse<int, String, int>(
+  ///   [1, 2, 3, 4, 5, 6],
+  ///   (int i) => i < 3 ? i.toString().right() : i.left(),
+  /// );
+  ///
+  /// // Result: Right(BuiltList.of(['1', '2', '3', '4', '5', '6']))
+  /// Either.traverse<int, String, int>(
+  ///   [1, 2, 3, 4, 5, 6],
+  ///   (int i) => i.toString().right(),
+  /// );
+  /// ```
   static Either<L, BuiltList<R>> sequence<L, R>(Iterable<Either<L, R>> values) {
     final result = ListBuilder<R>();
 

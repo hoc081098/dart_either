@@ -3,7 +3,7 @@ import 'package:dart_either/dart_either.dart';
 Either<Object, String> catchObject(String message) {
   return Either.catchError(
     (e, s) => e,
-    () => throw Exception('catchObject ' + message),
+    () => throw Exception('catchObject $message'),
   );
 }
 
@@ -68,13 +68,13 @@ class Res {
 }
 
 void main() async {
-  final t1 = Either.traverse<int, Never, int>(
+  final t1 = Either.traverse<Never, int, int>(
     [1, 2, 3, 4],
     (value) => Either.right(value),
   );
   print(t1);
 
-  final t2 = Either.traverse<int, String, int>(
+  final t2 = Either.traverse<String, int, int>(
     [1, 2, 3, 4],
     (value) => value == 2 ? Either.left('left') : Either.right(value),
   );
@@ -98,18 +98,19 @@ void main() async {
   print('ENSURE');
 
   final res = Either<String, int>.binding((e) {
-    e.ensure(true, () => "");
-    print("ensure(true) passes");
-    e.ensure(false, () => "failed");
+    e.ensure(true, () => '');
+    print('ensure(true) passes');
+    e.ensure(false, () => 'failed');
     return 1;
   });
   print(res);
 
   final res2 = Either<String, int>.binding((e) {
+    // ignore: prefer_final_locals
     int? x = 1;
-    e.ensureNotNull(x, () => "passes");
+    e.ensureNotNull(x, () => 'passes');
     print(x);
-    e.ensureNotNull(null, () => "failed");
+    e.ensureNotNull(null, () => 'failed');
     return 1;
   });
   print(res2);
