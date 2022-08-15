@@ -408,11 +408,11 @@ abstract class Either<L, R> {
   /// ```dart
   /// // Result: Left('3')
   /// Either.sequence<int, String>([1, 2, 3, 4, 5, 6]
-  //       .map((int i) => i < 3 ? i.toString().right() : i.left()));
+  ///     .map((int i) => i < 3 ? i.toString().right() : i.left()));
   ///
   /// // Result: Right(BuiltList.of(['1', '2', '3', '4', '5', '6']))
   /// Either.sequence<int, String>(
-  //       [1, 2, 3, 4, 5, 6].map((int i) => i.toString().right()));
+  ///     [1, 2, 3, 4, 5, 6].map((int i) => i.toString().right()));
   /// ```
   static Either<L, BuiltList<R>> sequence<L, R>(Iterable<Either<L, R>> values) {
     final result = ListBuilder<R>();
