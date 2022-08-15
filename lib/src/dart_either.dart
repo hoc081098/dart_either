@@ -108,7 +108,8 @@ abstract class Either<L, R> {
   /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).
   /// [Syntactic sugar do-notation](https://en.wikipedia.org/wiki/Monad_(functional_programming)#Syntactic_sugar_do-notation).
   /// Although using [flatMap] openly often makes sense, many programmers prefer a syntax
-  /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`, `computation expressions` in `F#`, and `for comprehension` in `Scala`).
+  /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`,
+  /// `computation expressions` in `F#`, and `for comprehension` in `Scala`).
   /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
   ///
   /// Calls the specified function [block] with [EitherEffect] as its parameter and returns its [Either].
@@ -200,7 +201,8 @@ abstract class Either<L, R> {
   /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).
   /// [Syntactic sugar do-notation](https://en.wikipedia.org/wiki/Monad_(functional_programming)#Syntactic_sugar_do-notation).
   /// Although using [flatMap] openly often makes sense, many programmers prefer a syntax
-  /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`, `computation expressions` in `F#`, and `for comprehension` in `Scala`).
+  /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`,
+  /// `computation expressions` in `F#`, and `for comprehension` in `Scala`).
   /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
   ///
   /// Calls the specified function [block] with [EitherEffect] as its parameter and returns its [Either] wrapped in a [Future].
