@@ -163,7 +163,7 @@ abstract class Either<L, R> {
   /// ```
   factory Either.binding(
       @monadComprehensions R Function(EitherEffect<L> effect) block) {
-    final eitherEffect = _EitherEffectImpl<L, R>(_Token());
+    final eitherEffect = _EitherEffectImpl<L>(_Token());
 
     try {
       return Either.right(block(eitherEffect));
@@ -281,7 +281,7 @@ abstract class Either<L, R> {
   /// ```
   static Future<Either<L, R>> futureBinding<L, R>(
       @monadComprehensions FutureOr<R> Function(EitherEffect<L> effect) block) {
-    final eitherEffect = _EitherEffectImpl<L, R>(_Token());
+    final eitherEffect = _EitherEffectImpl<L>(_Token());
 
     return Future.sync(() => block(eitherEffect))
         .then((value) => Either<L, R>.right(value))
@@ -829,7 +829,7 @@ class _Token {
   String toString() => 'Token(${hashCode.toRadixString(16)})';
 }
 
-class _EitherEffectImpl<L, R> extends EitherEffect<L> {
+class _EitherEffectImpl<L> extends EitherEffect<L> {
   final _Token _token;
 
   _EitherEffectImpl(this._token) : super._();
