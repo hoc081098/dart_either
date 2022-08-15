@@ -30,13 +30,15 @@ T Function(Object?) _const<T>(T t) => (_) => t;
 ///
 /// ### Author: [Petrus Nguyễn Thái Học](https://github.com/hoc081098).
 ///
-/// [Either] is a type that represents either [Right] (usually represent a "desired" value) or [Left] (usually represent a "undesired" value or error value).
+/// [Either] is a type that represents either [Right] (usually represent a "desired" value)
+/// or [Left] (usually represent a "undesired" value or error value).
+///
 /// [Elm Result](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Result).
 /// [Haskell Data.Either](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Either.html).
 /// [Rust Result](https://doc.rust-lang.org/std/result/enum.Result.html).
 ///
 /// In day-to-day programming, it is fairly common to find ourselves writing functions that can fail.
-/// For instance, querying a service may result in a connection issue, or some unexpected JSON response.
+/// For instance, querying a service may result in a connection issue, or some unexpected `JSON` response.
 ///
 /// To communicate these errors, it has become common practice to throw exceptions; however,
 /// exceptions are not tracked in any way, shape, or form by the compiler. To see what
@@ -185,8 +187,13 @@ abstract class Either<L, R> {
   //
   // -----------------------------------------------------------------------------
 
-  /// Returns a [Right] if [value] is not `null`.
-  /// Returns a [Left] containing `null` otherwise.
+  /// Returns a [Right] if [value] is not `null`, otherwise a [Left] containing `null`.
+  ///
+  /// Example:
+  /// ```dart
+  /// Either.fromNullable<String>(null);        // Result: Left(null)
+  /// Either.fromNullable<String>('hoc081098'); // Result: Right('hoc081098')
+  /// ```
   static Either<void, R> fromNullable<R extends Object>(R? value) =>
       value == null ? const Either.left(null) : Either.right(value);
 
@@ -259,7 +266,7 @@ abstract class Either<L, R> {
   ///
   ///   int value2 = await Either.catchFutureError<ExampleError, int>(
   ///     toExampleError,
-  //      canReturnAnErrorFuture
+  ///     canReturnAnErrorFuture
   ///   ).bind(e);
   ///
   ///   int value3 = await Either.catchFutureError<ExampleError, int>(
