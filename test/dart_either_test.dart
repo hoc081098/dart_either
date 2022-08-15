@@ -617,12 +617,18 @@ void main() {
 
     test('bimap', () {
       expect(
-        rightOf1.bimap((value) => value + 1, (value) => value + 2),
+        rightOf1.bimap(
+          leftOperation: (value) => value + 1,
+          rightOperation: (value) => value + 2,
+        ),
         Right<Never, int>(3),
       );
 
       expect(
-        leftOf1.bimap((value) => value + 1, (value) => value + 2),
+        leftOf1.bimap(
+          leftOperation: (value) => value + 1,
+          rightOperation: (value) => value + 2,
+        ),
         Left<int, Never>(2),
       );
     });

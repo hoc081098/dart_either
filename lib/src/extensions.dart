@@ -12,7 +12,7 @@ extension ToEitherStreamExtension<R> on Stream<R> {
   ///
   /// The done events will be forwarded.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
   /// final Stream<int> s = Stream.fromIterable([1, 2, 3, 4]);
   /// final Stream<Either<Object, int>> eitherStream = s.toEitherStream((e, s) => e);
@@ -29,7 +29,8 @@ extension ToEitherFutureExtension<R> on Future<R> {
   /// Transform data value to [Right] or error value to [Left].
   /// If this Future completes with a value, returns a [Right] containing that value.
   /// Otherwise, calling [errorMapper] with the error value and wrap the result in a [Left].
-  /// Example:
+  ///
+  /// ### Example
   /// ```dart
   /// final Future<int> f = Future.value(1);
   /// final Future<Either<Object, int>> eitherFuture = f.toEitherFuture((e, s) => e);
@@ -43,24 +44,22 @@ extension ToEitherFutureExtension<R> on Future<R> {
 /// Provide [left] and [right] extensions on any types.
 extension ToEitherObjectExtension<T> on T {
   /// Return a [Left] that contains [this] value.
-  /// Can cast returned result to any `Either<T, ...>` type.
+  /// This is a shorthand for [Either.left].
   ///
-  /// For example:
+  /// ### Example
   /// ```dart
-  /// Either<int, Never> e1 = 1.left();
-  /// Either<int, String> e2 = 1.left();
-  /// Either<int, dynamic> e3 = 1.left();
+  /// Either<int, Never> e1 = 1.left<Never>();
+  /// Either<int, String> e2 = 1.left<String>();
   /// ```
   Either<T, R> left<R>() => Either<T, R>.left(this);
 
   /// Return a [Right] that contains [this] value.
-  /// Can cast returned result to any `Either<..., T>` type.
+  /// This is a shorthand for [Either.right].
   ///
-  /// For example:
+  /// ### Example
   /// ```dart
-  /// Either<Never, int> e1 = 1.right();
-  /// Either<String, int> e2 = 1.right();
-  /// Either<dynamic, int> e3 = 1.right();
+  /// Either<Never, int> e1 = 1.right<Never>();
+  /// Either<String, int> e2 = 1.right<String>();
   /// ```
   Either<L, T> right<L>() => Either<L, T>.right(this);
 }

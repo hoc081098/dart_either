@@ -92,7 +92,7 @@ abstract class Either<L, R> {
   ///
   /// If an error is thrown, calling [errorMapper] with that error and wrap the result in a [Left].
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
   /// Either<Object, int>.catchError((e, s) => e, () => throw Exception()); // Result: Left(Exception())
   /// Either<Object, String>.catchError((e, s) => e, () => 'hoc081098');    // Result: Right('hoc081098')
@@ -120,7 +120,7 @@ abstract class Either<L, R> {
   ///
   /// You can also use [BindEitherExtension.bind] instead of [EitherEffect.bind] for more convenience.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
   /// class ExampleError {}
   ///
@@ -190,7 +190,7 @@ abstract class Either<L, R> {
 
   /// Returns a [Right] if [value] is not `null`, otherwise a [Left] containing `null`.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
   /// Either.fromNullable<String>(null);        // Result: Left(null)
   /// Either.fromNullable<String>('hoc081098'); // Result: Right('hoc081098')
@@ -220,7 +220,7 @@ abstract class Either<L, R> {
   /// You can also use [BindEitherExtension.bind] instead of [EitherEffect.bind],
   /// [BindEitherFutureExtension.bind] instead of [EitherEffect.bindFuture] for more convenience.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
   /// class ExampleError {}
   ///
@@ -297,7 +297,7 @@ abstract class Either<L, R> {
   /// If an error is thrown or [block] returns a future that completes with an error,
   /// calling [errorMapper] with that error and wrap the result in a [Left].
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
   /// // Result: Left(Exception())
   /// await Either.catchFutureError<Object, String>(
@@ -342,7 +342,7 @@ abstract class Either<L, R> {
   ///
   /// The done events will be forwarded.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
   /// final Stream<int> s = Stream.fromIterable([1, 2, 3, 4]);
   /// final Stream<Either<Object, int>> eitherStream = Either.catchStreamError((e, s) => e, s);
@@ -378,7 +378,7 @@ abstract class Either<L, R> {
   ///
   /// This is a shorthand for `Either.sequence<L, R>(values.map(mapper))`.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
   /// // Result: Left('3')
   /// Either.traverse<int, String, int>(
@@ -404,7 +404,7 @@ abstract class Either<L, R> {
   ///
   /// Otherwise, collects all values and wrap them in a [Right].
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
   /// // Result: Left('3')
   /// Either.sequence<int, String>([1, 2, 3, 4, 5, 6]
@@ -486,18 +486,21 @@ abstract class Either<L, R> {
 
   /// Applies [ifLeft] if this is a [Left] or [ifRight] if this is a [Right].
   ///
-  /// Example:
+  /// [ifLeft] is the function to apply if this is a [Left].
+  /// [ifRight] is the function to apply if this is a [Right].
+  ///
+  /// Returns the results of applying the function.
+  ///
+  /// ### Example
   /// ```dart
-  /// final Either<Exception, Value> result = possiblyFailingOperation();
+  /// final Either<Exception, String> result = Either.right('hoc081098');
+  ///
+  /// // Prints operation succeeded with hoc081098
   /// result.fold(
   ///   ifLeft: (value) => print('operation failed with $value') ,
   ///   ifRight: (value) => print('operation succeeded with $value'),
   /// );
   /// ```
-  ///
-  /// [ifLeft] is the function to apply if this is a [Left].
-  /// [ifRight] is the function to apply if this is a [Right].
-  /// Returns the results of applying the function.
   @pragma('vm:prefer-inline')
   @pragma('dart2js:tryInline')
   C fold<C>({
@@ -517,13 +520,13 @@ abstract class Either<L, R> {
   /// If this is a [Right], applies [ifRight] with [initial] and [Right.value].
   /// Returns [initial] otherwise.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
-  /// final Either<Exception, Value> result = possiblyFailingOperation();
-  /// final Value initial;
-  /// Value combine(Value acc, Value v) {};
+  /// final Either<Exception, String> result = Either.right('hoc081098');
+  /// final String initial = 'dart_either';
+  /// String combine(String acc, String v) => '$acc $v';
   ///
-  /// result.foldLeft(initial, combine);
+  /// result.foldLeft<String>(initial, combine); // Result: 'dart_either hoc081098'
   /// ```
   C foldLeft<C>(C initial, C Function(C acc, R element) rightOperation) => fold(
         ifLeft: _const(initial),
@@ -532,10 +535,10 @@ abstract class Either<L, R> {
 
   /// If this is a `Left`, then return the left value in `Right` or vice versa.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
-  /// Left('left').swap();   // Result: Right('left')
-  /// Right('right').swap(); // Result: Left('right')
+  /// Left<String, Never>('left').swap();   // Result: Right('left')
+  /// Right<Never, String>('right').swap(); // Result: Left('right')
   /// ```
   Either<R, L> swap() => fold(
         ifLeft: (l) => Either.right(l),
@@ -544,10 +547,10 @@ abstract class Either<L, R> {
 
   /// The given function is applied if this is a `Right`.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
-  /// Right(12).map((_) => 'flower'); // Result: Right('flower')
-  /// Left(12).map((_) => 'flower');  // Result: Left(12)
+  /// Right<int, int>(12).map((_) => 'flower'); // Result: Right('flower')
+  /// Left<int, int>(12).map((_) => 'flower');  // Result: Left(12)
   /// ```
   Either<L, C> map<C>(C Function(R value) f) => fold(
         ifLeft: (l) => Either<L, C>.left(l),
@@ -556,10 +559,10 @@ abstract class Either<L, R> {
 
   /// The given function is applied if this is a `Left`.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
-  /// Right(12).mapLeft((_) => 'flower'); // Result: Right(12)
-  /// Left(12).mapLeft((_) => 'flower');  // Result: Left('flower')
+  /// Right<int, int>(12).mapLeft((_) => 'flower'); // Result: Right(12)
+  /// Left<int, int>(12).mapLeft((_) => 'flower');  // Result: Left('flower')
   /// ```
   Either<C, R> mapLeft<C>(C Function(L value) f) => fold(
         ifLeft: (l) => Either<C, R>.left(f(l)),
@@ -574,13 +577,12 @@ abstract class Either<L, R> {
   /// Slightly different from [map] in that [f] is expected to
   /// return an [Either] (which could be a [Left]).
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
-  /// Right(12).map((v) => Either.right('flower $v')); // Result: Right('flower 12')
-  /// Right(12).map((v) => Either.left('flower $v')); // Result: Left('flower 12')
-  ///
-  /// Left(12).map((_) => Either.right('flower $v'));  // Result: Left(12)
-  /// Left(12).map((_) => Either.left('flower $v'));  // Result: Left(12)
+  /// Right<String, int>(12).flatMap((v) => Right<String, String>('flower $v'));  // Result: Right('flower 12')
+  /// Right<String, int>(12).flatMap((v) => Left<String, String>('flower $v'));   // Result: Left('flower 12')
+  /// Left<String, int>('12').flatMap((v) => Right<String, String>('flower $v')); // Result: Left('12')
+  /// Left<String, int>('12').flatMap((v) => Left<String, String>('flower $v'));  // Result: Left('12')
   /// ```
   Either<L, C> flatMap<C>(Either<L, C> Function(R value) f) => fold(
         ifLeft: (l) => Either<L, C>.left(l),
@@ -588,10 +590,31 @@ abstract class Either<L, R> {
       );
 
   /// Map over Left and Right of this Either
-  Either<C, D> bimap<C, D>(
-    C Function(L value) leftOperation,
-    D Function(R value) rightOperation,
-  ) =>
+  ///
+  /// ### Example
+  /// ```dart
+  /// final Either<String, int> either = Right(1);
+  ///
+  /// // Result: Right('1')
+  /// final Either<List<String>, String> mapped = either.bimap(
+  ///   leftOperation: (String s) => s.split(''),
+  ///   rightOperation: (int i) => i.toString(),
+  /// );
+  /// ```
+  ///
+  /// ```dart
+  /// final Either<String, int> either = Left('hoc081098');
+  ///
+  /// // Result: Left(['h', 'o', 'c', '0', '8', '1', '0', '9', '8'])
+  /// final Either<List<String>, String> mapped = either.bimap(
+  ///   leftOperation: (String s) => s.split(''),
+  ///   rightOperation: (int i) => i.toString(),
+  /// );
+  /// ```
+  Either<C, D> bimap<C, D>({
+    required C Function(L value) leftOperation,
+    required D Function(R value) rightOperation,
+  }) =>
       fold(
         ifLeft: (l) => Either.left(leftOperation(l)),
         ifRight: (r) => Either.right(rightOperation(r)),
@@ -600,13 +623,13 @@ abstract class Either<L, R> {
   /// Returns `false` if [Left] or returns the result of the application of
   /// the given [predicate] to the [Right] value.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
-  /// Right(12).exists((v) => v > 10); // Result: true
-  /// Right(7).exists((v) => v > 10);  // Result: false
+  /// Right<int, int>(12).exists((v) => v > 10); // Result: true
+  /// Right<int, int>(7).exists((v) => v > 10);  // Result: false
   ///
-  /// final Either<int, int> left = Left(12);
-  /// left.exists((v) => v > 10);      // Result: false
+  /// Left<int, int>(12).exists((v) => v > 10);  // Result: false
+  /// Left<int, int>(12).exists((v) => v < 10);  // Result: false
   /// ```
   bool exists(bool Function(R value) predicate) => fold(
         ifLeft: _const(false),
@@ -615,35 +638,35 @@ abstract class Either<L, R> {
 
   /// Returns the value from this [Right] or the given argument if this is a [Left].
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
-  /// Right(12).getOrElse(() => 17); // Result: 12
-  /// Left(12).getOrElse(() => 17);  // Result: 17
+  /// Right<int, int>(12).getOrElse(() => 17); // Result: 12
+  /// Left<int, int>(12).getOrElse(() => 17);  // Result: 17
   /// ```
   R getOrElse(R Function() defaultValue) => fold(
         ifLeft: (_) => defaultValue(),
         ifRight: _identity,
       );
 
-  /// Returns the right value if it exists, otherwise `null`
+  /// Returns the [Right]'s value if it exists, otherwise `null`.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
-  /// final Either<int, int> right = Right(12).orNull(); // Result: 12
-  /// final Either<int, int> left = Left(12).orNull();   // Result: null
+  /// Right<int, int>(12).orNull(); // Result: 12
+  /// Left<int, int>(12).orNull();  // Result: null
   /// ```
   R? orNull() => fold(
         ifLeft: _const(null),
         ifRight: _identity,
       );
 
-  /// Returns the value from this [Either.Right] or allows clients to transform [Either.Left] to [Either.Right] while providing access to
-  /// the value of [Either.Left].
+  /// Returns the value from this [Right]
+  /// or allows clients to transform the value of [Left] to the final result.
   ///
-  /// Example:
+  /// ### Example
   /// ```dart
-  /// Right(12).getOrHandle((v) => 17); // Result: 12
-  /// Left(12).getOrHandle((v) => v + 5); // Result: 17
+  /// Right<int, int>(12).getOrHandle((v) => 17);   // Result: 12
+  /// Left<int, int>(12).getOrHandle((v) => v + 5); // Result: 17
   /// ```
   R getOrHandle(R Function(L value) defaultValue) => fold(
         ifLeft: defaultValue,
@@ -656,18 +679,20 @@ abstract class Either<L, R> {
   /// be called with [Right.value] or [Left.value], while the arguments of [when]
   /// will be called with [Right] or [Left] itself.
   ///
-  /// Example:
+  /// [ifLeft] is the function to apply if this is a [Left].
+  /// [ifRight] is the function to apply if this is a [Right].
+  /// Returns the results of applying the function.
+  ///
+  /// ### Example
   /// ```dart
-  /// final Either<Exception, Value> result = possiblyFailingOperation();
+  /// final Either<String, int> result = Right(1);
+  ///
+  /// // Prints operation succeeded with 1
   /// result.when(
   ///   ifLeft: (left) => print('operation failed with ${left.value}') ,
   ///   ifRight: (right) => print('operation succeeded with ${right.value}'),
   /// );
   /// ```
-  ///
-  /// [ifLeft] is the function to apply if this is a [Left].
-  /// [ifRight] is the function to apply if this is a [Right].
-  /// Returns the results of applying the function.
   @pragma('vm:prefer-inline')
   @pragma('dart2js:tryInline')
   C when<C>({
