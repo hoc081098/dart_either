@@ -91,37 +91,45 @@ void main() {
         expect(Either<Never, int>.right(1), isA<Either<Object, int>>());
       });
 
-      test('Either.catchError', () {
-        // block does not throw
-        expect(
-          Either<Object, int>.catchError(takeOnlyError, () => 1),
-          rightOf1,
-        );
+      group('Either.catchError', () {
+        test('block does not throw', () {
+          // block does not throw
+          expect(
+            Either<Object, int>.catchError(takeOnlyError, () => 1),
+            rightOf1,
+          );
+        });
 
-        // catch exception
-        expect(
-          Either<Object, String>.catchError(
-              takeOnlyError, () => throw exception),
-          exceptionLeft,
-        );
+        test('catch exception', () {
+          // catch exception
+          expect(
+            Either<Object, String>.catchError(
+                takeOnlyError, () => throw exception),
+            exceptionLeft,
+          );
+        });
 
-        // ErrorMapper throws
-        expect(
-          () => Either<Object, String>.catchError(
-            (e, s) => throw e,
-            () => throw exception,
-          ),
-          throwsException,
-        );
+        test('ErrorMapper throws', () {
+          // ErrorMapper throws
+          expect(
+            () => Either<Object, String>.catchError(
+              (e, s) => throw e,
+              () => throw exception,
+            ),
+            throwsException,
+          );
+        });
 
-        // block throws [ControlError].
-        expect(
-          () => Either<Object, String>.catchError(
-            takeOnlyError,
-            () => throw MyControlError<Object>(),
-          ),
-          throwsA(isA<MyControlError>()),
-        );
+        test('block throws [ControlError].', () {
+          // block throws [ControlError].
+          expect(
+            () => Either<Object, String>.catchError(
+              takeOnlyError,
+              () => throw MyControlError<Object>(),
+            ),
+            throwsA(isA<MyControlError>()),
+          );
+        });
       });
 
       group('Either.binding', () {
