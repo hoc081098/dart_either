@@ -683,7 +683,7 @@ void main() {
 
     test('getOrThrow', () {
       expect(rightOf1.getOrThrow(), 1);
-      expect(leftOf1.getOrThrow(), throwsException);
+      expect(() => leftOf1.getOrThrow(), throwsA(1));
     });
 
     test('EitherEffect.ensure', () {
