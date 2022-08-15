@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart_either.dart';
 
 /// Provide [toEitherStream] extension on [Stream].
@@ -39,6 +41,19 @@ extension ToEitherFutureExtension<R> on Future<R> {
   /// ```
   Future<Either<L, R>> toEitherFuture<L>(ErrorMapper<L> errorMapper) =>
       Either.catchFutureError(errorMapper, () => this);
+}
+
+/// Provide [thenFlatMap] extension on [Future] of [Either].
+extension ThenFlatMapFutureExtension<L, R> on Future<Either<L, R>> {
+  /// TODO(thenFlatMap)
+  Future<Either<L, C>> thenFlatMap<C>(
+          FutureOr<Either<L, C>> Function(R value) f) =>
+      then(
+        (either) => either.fold(
+          ifLeft: (v) => v.left<C>(),
+          ifRight: (v) => Future.sync(() => f(v)),
+        ),
+      );
 }
 
 /// Provide [left] and [right] extensions on any types.

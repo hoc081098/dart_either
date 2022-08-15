@@ -29,5 +29,7 @@ jobs:
       - name: Install dependencies
         run: dart pub get
 
-      - name: Run example/lib/dart_either_example.dart
-        run: dart run lib/dart_either_example.dart
+      - name: Run example
+        run: |
+          dart run lib/chain_either.dart
+          dart run lib/dart_either_example.dart

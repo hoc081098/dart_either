@@ -162,7 +162,7 @@ abstract class Either<L, R> {
   /// });
   /// ```
   factory Either.binding(
-      @monadComprehensions R Function(EitherEffect<L, R> effect) block) {
+      @monadComprehensions R Function(EitherEffect<L> effect) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
 
     try {
@@ -280,8 +280,7 @@ abstract class Either<L, R> {
   /// });
   /// ```
   static Future<Either<L, R>> futureBinding<L, R>(
-      @monadComprehensions
-          FutureOr<R> Function(EitherEffect<L, R> effect) block) {
+      @monadComprehensions FutureOr<R> Function(EitherEffect<L> effect) block) {
     final eitherEffect = _EitherEffectImpl<L, R>(_Token());
 
     return Future.sync(() => block(eitherEffect))
@@ -793,19 +792,19 @@ class _MonadComprehensions {
 /// Used for monad comprehensions.
 /// Cannot implement or extend this class.
 @sealed
-abstract class EitherEffect<L, R> {
+abstract class EitherEffect<L> {
   EitherEffect._();
 
   /// Attempt to get right value of [either].
   /// Or throws a [ControlError].
   @monadComprehensions
-  R bind(Either<L, R> either);
+  R bind<R>(Either<L, R> either);
 
   /// Attempt to get right value of [eitherFuture].
   /// Or return a [Future] that completes with a [ControlError].
   /// This is a shorthand for `eitherFuture.then(bind)`.
   @monadComprehensions
-  Future<R> bindFuture(Future<Either<L, R>> eitherFuture);
+  Future<R> bindFuture<R>(Future<Either<L, R>> eitherFuture);
 }
 
 /// Error thrown by [EitherEffect].
@@ -830,15 +829,15 @@ class _Token {
   String toString() => 'Token(${hashCode.toRadixString(16)})';
 }
 
-class _EitherEffectImpl<L, R> extends EitherEffect<L, R> {
+class _EitherEffectImpl<L, R> extends EitherEffect<L> {
   final _Token _token;
 
   _EitherEffectImpl(this._token) : super._();
 
   @override
-  R bind(Either<L, R> either) =>
+  R bind<R>(Either<L, R> either) =>
       either.getOrHandle((v) => throw ControlError._(v, _token));
 
   @override
-  Future<R> bindFuture(Future<Either<L, R>> future) => future.then(bind);
+  Future<R> bindFuture<R>(Future<Either<L, R>> future) => future.then(bind);
 }
