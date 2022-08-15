@@ -200,7 +200,7 @@ abstract class Either<L, R> {
   /// will attempt to will attempt to unwrap the [Either] inside the [Future].
   /// and locally return its [Right.value] wrapped in a [Future].
   /// If the [Either] is a [Left], the binding block will terminate with that bind and return that failed-to-bind [Left].
-  /// If the [Future] completes with an error, if the [Future] completes with an error, it will not be handled.
+  /// If the [Future] completes with an error, it will not be handled.
   ///
   /// You can also use [BindEitherExtension.bind] instead of [EitherEffect.bind],
   /// [BindEitherFutureExtension.bind] instead of [EitherEffect.bindFuture] for more convenience.
