@@ -88,7 +88,12 @@ abstract class Either<L, R> {
 
   /// Evaluates the specified [block] and wrap the result in a [Right].
   ///
-  /// If an error is thrown, invoke [errorMapper] with that error and wrap the result in a [Left].
+  /// If an error is thrown, calling [errorMapper] with that error and wrap the result in a [Left].
+  ///
+  /// ```dart
+  /// Either<Object, int>.catchError((e, s) => e, () => throw Exception()); // Result: Left(Exception())
+  /// Either<Object, String>.catchError((e, s) => e, () => 'hoc081098');    // Result: Right('hoc081098')
+  /// ```
   factory Either.catchError(ErrorMapper<L> errorMapper, R Function() block) {
     try {
       return Either.right(block());
