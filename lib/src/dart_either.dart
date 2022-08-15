@@ -383,13 +383,13 @@ abstract class Either<L, R> {
   /// // Result: Left('3')
   /// Either.traverse<int, String, int>(
   ///   [1, 2, 3, 4, 5, 6],
-  ///   (i) => i < 3 ? i.toString().right() : i.left(),
+  ///   (int i) => i < 3 ? i.toString().right() : i.left(),
   /// );
   ///
   /// // Result: Right(BuiltList.of(['1', '2', '3', '4', '5', '6']))
   /// Either.traverse<int, String, int>(
   ///   [1, 2, 3, 4, 5, 6],
-  ///   (i) => i.toString().right(),
+  ///   (int i) => i.toString().right(),
   /// );
   /// ```
   static Either<L, BuiltList<R>> traverse<L, R, T>(
