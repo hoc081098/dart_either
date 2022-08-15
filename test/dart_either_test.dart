@@ -165,6 +165,16 @@ void main() {
           Right<Never, int>(3),
         );
 
+        // 2 success either.bind with difference types.
+        expect(
+          Either<Object, String>.binding((e) {
+            final a = Either<Object, int>.right(1).bind(e);
+            final b = Either<Object, String>.right('2').bind(e);
+            return a.toString() + b;
+          }),
+          Right<Never, String>('12'),
+        );
+
         // 1 success bind + 1 failure bind
         expect(
           Either<Object, int>.binding((e) {
@@ -323,6 +333,16 @@ void main() {
             return a + b;
           }),
           completion(exceptionLeft),
+        );
+
+        // 2 success either.bind (sync) with difference types.
+        expect(
+          Either.futureBinding<Object, String>((e) {
+            final a = Either<Object, int>.right(1).bind(e);
+            final b = Either<Object, String>.right('2').bind(e);
+            return a.toString() + b;
+          }),
+          completion(Right<Never, String>('12')),
         );
       });
 
