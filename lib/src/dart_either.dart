@@ -350,6 +350,13 @@ abstract class Either<L, R> {
   /// eitherStream.listen(print); // prints Either.Right(1), Either.Right(2),
   ///                             // Either.Right(3), Either.Right(4),
   /// ```
+  ///
+  /// ```dart
+  /// final Stream<int> s = Stream.error(Exception());
+  /// final Stream<Either<Object, int>> eitherStream = Either.catchStreamError((e, s) => e, s);
+  ///
+  /// eitherStream.listen(print); // prints Either.Left(Exception)
+  /// ```
   static Stream<Either<L, R>> catchStreamError<L, R>(
     ErrorMapper<L> errorMapper,
     Stream<R> stream,
