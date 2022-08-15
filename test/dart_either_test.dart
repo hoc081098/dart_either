@@ -468,70 +468,80 @@ void main() {
         });
       });
 
-      test('Either.catchStreamError', () async {
-        // single value
-        await expectLater(
-          Either.catchStreamError(takeOnlyError, Stream.value(1)),
-          emitsInOrder(<Object>[Right<Never, int>(1), emitsDone]),
-        );
-        await expectLater(
-          Either.catchStreamError(takeOnlyError, Single.value(1)),
-          emitsInOrder(<Object>[Right<Never, int>(1), emitsDone]),
-        );
-        await expectLater(
-          Single.value(1).toEitherStream(takeOnlyError),
-          emitsInOrder(<Object>[Right<Never, int>(1), emitsDone]),
-        );
+      group('Either.catchStreamError', () {
+        test('single value', () async {
+          // single value
+          await expectLater(
+            Either.catchStreamError(takeOnlyError, Stream.value(1)),
+            emitsInOrder(<Object>[Right<Never, int>(1), emitsDone]),
+          );
+          await expectLater(
+            Either.catchStreamError(takeOnlyError, Single.value(1)),
+            emitsInOrder(<Object>[Right<Never, int>(1), emitsDone]),
+          );
+          await expectLater(
+            Single.value(1).toEitherStream(takeOnlyError),
+            emitsInOrder(<Object>[Right<Never, int>(1), emitsDone]),
+          );
+        });
 
-        // single error
-        await expectLater(
-          Either.catchStreamError(takeOnlyError, Stream<int>.error(exception)),
-          emitsInOrder(<Object>[exceptionLeft, emitsDone]),
-        );
-        await expectLater(
-          Either.catchStreamError(takeOnlyError, Single<int>.error(exception)),
-          emitsInOrder(<Object>[exceptionLeft, emitsDone]),
-        );
-        await expectLater(
-          Single<int>.error(exception).toEitherStream(takeOnlyError),
-          emitsInOrder(<Object>[exceptionLeft, emitsDone]),
-        );
+        test('single error', () async {
+          // single error
+          await expectLater(
+            Either.catchStreamError(
+                takeOnlyError, Stream<int>.error(exception)),
+            emitsInOrder(<Object>[exceptionLeft, emitsDone]),
+          );
+          await expectLater(
+            Either.catchStreamError(
+                takeOnlyError, Single<int>.error(exception)),
+            emitsInOrder(<Object>[exceptionLeft, emitsDone]),
+          );
+          await expectLater(
+            Single<int>.error(exception).toEitherStream(takeOnlyError),
+            emitsInOrder(<Object>[exceptionLeft, emitsDone]),
+          );
+        });
 
-        // one value + one error
-        await expectLater(
-          Either.catchStreamError(
-            takeOnlyError,
-            Rx.concat<int>([
-              Single.value(1),
-              Single.error(exception),
+        test('one value + one error', () async {
+          // one value + one error
+          await expectLater(
+            Either.catchStreamError(
+              takeOnlyError,
+              Rx.concat<int>([
+                Single.value(1),
+                Single.error(exception),
+              ]),
+            ),
+            emitsInOrder(<Object>[
+              Right<Never, int>(1),
+              exceptionLeft,
+              emitsDone,
             ]),
-          ),
-          emitsInOrder(<Object>[
-            Right<Never, int>(1),
-            exceptionLeft,
-            emitsDone,
-          ]),
-        );
+          );
+        });
 
-        // value + error + value + error
-        await expectLater(
-          Either.catchStreamError(
-            takeOnlyError,
-            Rx.concat<int>([
-              Single.value(1),
-              Single.error(exception),
-              Stream.value(2),
-              Single.error('Error'),
+        test('value + error + value + error', () async {
+          // value + error + value + error
+          await expectLater(
+            Either.catchStreamError(
+              takeOnlyError,
+              Rx.concat<int>([
+                Single.value(1),
+                Single.error(exception),
+                Stream.value(2),
+                Single.error('Error'),
+              ]),
+            ),
+            emitsInOrder(<Object>[
+              Right<Never, int>(1),
+              exceptionLeft,
+              Right<Object, int>(2),
+              Left<String, Never>('Error'),
+              emitsDone,
             ]),
-          ),
-          emitsInOrder(<Object>[
-            Right<Never, int>(1),
-            exceptionLeft,
-            Right<Object, int>(2),
-            Left<String, Never>('Error'),
-            emitsDone,
-          ]),
-        );
+          );
+        });
       });
 
       group('Either.sequence', () {
