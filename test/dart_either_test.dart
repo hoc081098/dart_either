@@ -410,54 +410,62 @@ void main() {
         });
       });
 
-      test('Either.catchFutureError', () async {
-        // single return
-        await expectLater(
-          Either.catchFutureError<Object, int>(takeOnlyError, () => 1),
-          completion(rightOf1),
-        );
+      group('Either.catchFutureError', () {
+        test('single return', () async {
+          // single return
+          await expectLater(
+            Either.catchFutureError<Object, int>(takeOnlyError, () => 1),
+            completion(rightOf1),
+          );
 
-        await expectLater(
-          Either.catchFutureError<Object, int>(takeOnlyError, () async => 1),
-          completion(rightOf1),
-        );
+          await expectLater(
+            Either.catchFutureError<Object, int>(takeOnlyError, () async => 1),
+            completion(rightOf1),
+          );
 
-        await expectLater(
-          Either.catchFutureError<Object, int>(takeOnlyError, () async {
-            await Future<void>.delayed(const Duration(milliseconds: 10));
-            return 1;
-          }),
-          completion(rightOf1),
-        );
+          await expectLater(
+            Either.catchFutureError<Object, int>(
+                takeOnlyError, () => Future.value(1)),
+            completion(rightOf1),
+          );
+        });
 
-        await expectLater(
-          Either.catchFutureError<Object, int>(
-              takeOnlyError, () => Future.value(1)),
-          completion(rightOf1),
-        );
+        test('single return with delay', () async {
+          await expectLater(
+            Either.catchFutureError<Object, int>(takeOnlyError, () async {
+              await Future<void>.delayed(const Duration(milliseconds: 10));
+              return 1;
+            }),
+            completion(rightOf1),
+          );
+        });
 
-        // catch exception
-        await expectLater(
-          Either.catchFutureError<Object, int>(
-              takeOnlyError, () => throw exception),
-          completion(exceptionLeft),
-        );
+        test('catch exception', () async {
+          // catch exception
+          await expectLater(
+            Either.catchFutureError<Object, int>(
+                takeOnlyError, () => throw exception),
+            completion(exceptionLeft),
+          );
 
-        await expectLater(
-          Either.catchFutureError<Object, int>(
-              takeOnlyError, () async => throw exception),
-          completion(exceptionLeft),
-        );
+          await expectLater(
+            Either.catchFutureError<Object, int>(
+                takeOnlyError, () async => throw exception),
+            completion(exceptionLeft),
+          );
+        });
 
-        final errorFuture = Future<int>.error(exception);
-        await expectLater(
-          Either.catchFutureError(takeOnlyError, () => errorFuture),
-          completion(exceptionLeft),
-        );
-        await expectLater(
-          errorFuture.toEitherFuture(takeOnlyError),
-          completion(exceptionLeft),
-        );
+        test('catch error from future', () async {
+          final errorFuture = Future<int>.error(exception);
+          await expectLater(
+            Either.catchFutureError(takeOnlyError, () => errorFuture),
+            completion(exceptionLeft),
+          );
+          await expectLater(
+            errorFuture.toEitherFuture(takeOnlyError),
+            completion(exceptionLeft),
+          );
+        });
       });
 
       test('Either.catchStreamError', () async {
