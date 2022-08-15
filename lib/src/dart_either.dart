@@ -377,7 +377,22 @@ abstract class Either<L, R> {
   /// Otherwise, collects all values and wrap them in a [Right].
   ///
   /// This is a shorthand for `Either.sequence<L, R>(values.map(mapper))`.
-  static Either<L, BuiltList<R>> traverse<T, L, R>(
+  ///
+  /// Example:
+  /// ```dart
+  /// // Result: Left('3')
+  /// Either.traverse<int, String, int>(
+  ///   [1, 2, 3, 4, 5, 6],
+  ///   (i) => i < 3 ? i.toString().right() : i.left(),
+  /// );
+  ///
+  /// // Result: Right(BuiltList.of(['1', '2', '3', '4', '5', '6']))
+  /// Either.traverse<int, String, int>(
+  ///   [1, 2, 3, 4, 5, 6],
+  ///   (i) => i.toString().right(),
+  /// );
+  /// ```
+  static Either<L, BuiltList<R>> traverse<L, R, T>(
     Iterable<T> values,
     Either<L, R> Function(T value) mapper,
   ) =>
