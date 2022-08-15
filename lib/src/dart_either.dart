@@ -295,7 +295,34 @@ abstract class Either<L, R> {
   /// Evaluates the specified [block] and wrap the result in a [Right].
   ///
   /// If an error is thrown or [block] returns a future that completes with an error,
-  /// invoke [errorMapper] with that error and wrap the result in a [Left].
+  /// calling [errorMapper] with that error and wrap the result in a [Left].
+  ///
+  /// Example:
+  /// ```dart
+  /// // Result: Left(Exception())
+  /// await Either.catchFutureError<Object, String>(
+  ///   (e, s) => e,
+  ///   () => throw Exception())
+  /// );
+  ///
+  /// // Result: Left(Exception())
+  /// await Either.catchFutureError<Object, String>(
+  ///   (e, s) => e,
+  ///   () async => throw Exception())
+  /// );
+  ///
+  /// // Result: Right('hoc081098')
+  /// await Either.catchFutureError<Object, String>(
+  ///   (e, s) => e,
+  ///   () => Future.value('hoc081098'))
+  /// );
+  ///
+  /// // Result: Right('hoc081098')
+  /// await Either.catchFutureError<Object, String>(
+  ///   (e, s) => e,
+  ///   () async => await Future.value('hoc081098'))
+  /// );
+  /// ```
   static Future<Either<L, R>> catchFutureError<L, R>(
     ErrorMapper<L> errorMapper,
     FutureOr<R> Function() block,
