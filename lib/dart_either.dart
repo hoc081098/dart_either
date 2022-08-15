@@ -1,13 +1,15 @@
 ///
 /// ### Author: [Petrus Nguyễn Thái Học](https://github.com/hoc081098).
 ///
-/// [Either] is a type that represents either [Right] (usually represent a "desired" value) or [Left] (usually represent a "undesired" value or error value).
+/// [Either] is a type that represents either [Right] (usually represent a "desired" value)
+/// or [Left] (usually represent a "undesired" value or error value).
+///
 /// [Elm Result](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Result).
 /// [Haskell Data.Either](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Either.html).
 /// [Rust Result](https://doc.rust-lang.org/std/result/enum.Result.html).
 ///
 /// In day-to-day programming, it is fairly common to find ourselves writing functions that can fail.
-/// For instance, querying a service may result in a connection issue, or some unexpected JSON response.
+/// For instance, querying a service may result in a connection issue, or some unexpected `JSON` response.
 ///
 /// To communicate these errors, it has become common practice to throw exceptions; however,
 /// exceptions are not tracked in any way, shape, or form by the compiler. To see what
@@ -15,7 +17,7 @@
 /// Then, to handle these exceptions, we have to make sure we catch them at the call site. This
 /// all becomes even more unwieldy when we try to compose exception-throwing procedures.
 ///
-/// ```
+/// ```dart
 /// double throwsSomeStuff(int i) => throw UnimplementedError();
 ///
 /// String throwsOtherThings(double d) => throw UnimplementedError();
