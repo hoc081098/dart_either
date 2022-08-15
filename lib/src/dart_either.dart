@@ -74,6 +74,12 @@ T Function(Object?) _const<T>(T t) => (_) => t;
 abstract class Either<L, R> {
   const Either._();
 
+  // -----------------------------------------------------------------------------
+  //
+  // BEGIN: constructors
+  //
+  // -----------------------------------------------------------------------------
+
   /// Create a [Left].
   const factory Either.left(L left) = Left;
 
@@ -160,6 +166,18 @@ abstract class Either<L, R> {
       }
     }
   }
+
+  // -----------------------------------------------------------------------------
+  //
+  // END: constructors
+  //
+  // -----------------------------------------------------------------------------
+
+  // -----------------------------------------------------------------------------
+  //
+  // BEGIN: static methods.
+  //
+  // -----------------------------------------------------------------------------
 
   /// Returns a [Right] if [value] is not `null`.
   /// Returns a [Left] containing `null` otherwise.
@@ -298,6 +316,12 @@ abstract class Either<L, R> {
           test: (e) => identical(e._token, token),
         );
   }
+
+  // -----------------------------------------------------------------------------
+  //
+  // END: static methods.
+  //
+  // -----------------------------------------------------------------------------
 
   /// Returns `true` if this is a [Left], `false` otherwise.
   /// Used only for performance instead of fold.
