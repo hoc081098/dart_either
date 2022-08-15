@@ -184,8 +184,86 @@ abstract class Either<L, R> {
   static Either<void, R> fromNullable<R extends Object>(R? value) =>
       value == null ? const Either.left(null) : Either.right(value);
 
-  /// TODO(futureBinding)
-  /// Should not catch [ControlError] in [effect].
+  /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).
+  /// [Syntactic sugar do-notation](https://en.wikipedia.org/wiki/Monad_(functional_programming)#Syntactic_sugar_do-notation).
+  /// Although using [flatMap] openly often makes sense, many programmers prefer a syntax
+  /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`, `computation expressions` in `F#`, and `for comprehension` in `Scala`).
+  /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
+  ///
+  /// Calls the specified function [block] with [EitherEffect] as its parameter and returns its [Either] wrapped in a [Future].
+  ///
+  /// When inside a [Either.futureBinding] block, calling the [EitherEffect.bind] function will attempt to unwrap the [Either]
+  /// and locally return its [Right.value]. If the [Either] is a [Left],
+  /// the binding block will terminate with that bind and return that failed-to-bind [Left].
+  ///
+  /// When inside a [Either.futureBinding] block, calling the [EitherEffect.bindFuture] function
+  /// will attempt to will attempt to unwrap the [Either] inside the [Future].
+  /// and locally return its [Right.value] wrapped in a [Future].
+  /// If the [Either] is a [Left], the binding block will terminate with that bind and return that failed-to-bind [Left].
+  /// If the [Future] completes with an error, if the [Future] completes with an error, it will not be handled.
+  ///
+  /// You can also use [BindEitherExtension.bind] instead of [EitherEffect.bind],
+  /// [BindEitherFutureExtension.bind] instead of [EitherEffect.bindFuture] for more convenience.
+  ///
+  /// Example:
+  /// ```dart
+  /// class ExampleError {}
+  ///
+  /// Either<ExampleError, int> provideX() { ... }
+  /// Future<Either<ExampleError, int>> provideY() { ... }
+  /// Future<Either<ExampleError, int>> provideZ(int x, int y) { ... }
+  ///
+  /// Future<Either<ExampleError, int>> result = Either.futureBinding<ExampleError, int>((e) async {
+  ///   int x = provideX().bind(e);                   // or use `e.bind(provideX())`.
+  ///   int y = await e.bindFuture(provideY());       // or use `await provideY().bind(e)`.
+  ///   int z = await provideZ(x, y).bind(e);         // or use `await e.bindFuture(provideZ(x, y))`.
+  ///   return z;
+  /// });
+  /// ```
+  ///
+  /// ### NOTE
+  /// - Do NOT catch [ControlError] in [block].
+  /// - Do NOT throw any errors inside [block].
+  /// - When using [EitherEffect.bindFuture], if the [Future] completes with an error, it will not be handled.
+  /// - Use [Either.catchError], [Either.catchFutureError] or [Either.catchStreamError] to catch error,
+  ///   then use [EitherEffect.bind] and [EitherEffect.bindFuture] to unwrap the [Either].
+  ///
+  /// ```dart
+  /// /// This function can throw an error.
+  /// int canThrowAnError() { ... }
+  /// Future<int> canReturnAnErrorFuture() { ... }
+  /// Future<int> errorFuture = Future.error(Exception());
+  ///
+  /// // DON'T
+  /// Future<Either<ExampleError, int>> result = Either.futureBinding<ExampleError, int>((e) async {
+  ///   int value1 = canThrowAnError();                // DON'T
+  ///   int value2 = await canReturnAnErrorFuture();   // DON'T
+  ///   int value3 = await errorFuture;                // DON'T
+  ///   return value1 + value2 + value3;
+  /// });
+  ///
+  /// // DO
+  /// ExampleError toExampleError(Object e, StackTrace st) { ... }
+  ///
+  /// Future<Either<ExampleError, int>> result = Either.futureBinding<ExampleError, int>((e) async {
+  ///   int value1 = Either<ExampleError, int>.catchError(
+  ///     toExampleError,
+  ///     canThrowAnError
+  ///   ).bind(e);
+  ///
+  ///   int value2 = await Either.catchFutureError<ExampleError, int>(
+  ///     toExampleError,
+  //      canReturnAnErrorFuture
+  ///   ).bind(e);
+  ///
+  ///   int value3 = await Either.catchFutureError<ExampleError, int>(
+  ///     toExampleError,
+  ///     () => errorFuture
+  ///   ).bind(e);
+  ///
+  ///   return value1 + value2 + value3;
+  /// });
+  /// ```
   static Future<Either<L, R>> futureBinding<L, R>(
       @monadComprehensions
           FutureOr<R> Function(EitherEffect<L, R> effect) block) {
@@ -625,6 +703,7 @@ abstract class EitherEffect<L, R> {
 
   /// Attempt to get right value of [eitherFuture].
   /// Or return a [Future] that completes with a [ControlError].
+  /// This is a shorthand for `eitherFuture.then(bind)`.
   @monadComprehensions
   Future<R> bindFuture(Future<Either<L, R>> eitherFuture);
 }

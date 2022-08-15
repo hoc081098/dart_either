@@ -1,16 +1,5 @@
 import 'dart_either.dart';
 
-/// Provide [toFuture] extension on [Either].
-extension AsFutureEitherExtension<L extends Object, R> on Either<L, R> {
-  /// Convert this [Either] to a [Future].
-  /// If [this] is [Right], the Future will complete with [Right.value].
-  /// If [this] is [Left], the Future will complete with [Left.value] as an error.
-  Future<R> toFuture() => fold(
-        ifLeft: (e) => Future.error(e),
-        ifRight: (v) => Future.value(v),
-      );
-}
-
 /// Provide [toEitherStream] extension on [Stream].
 extension ToEitherStreamExtension<R> on Stream<R> {
   /// Transform data events to [Right]s and error events to [Left]s.
@@ -33,6 +22,22 @@ extension ToEitherStreamExtension<R> on Stream<R> {
   /// ```
   Stream<Either<L, R>> toEitherStream<L>(ErrorMapper<L> errorMapper) =>
       Either.catchStreamError<L, R>(errorMapper, this);
+}
+
+/// Provide [toEitherFuture] extension on [Future].
+extension ToEitherFutureExtension<R> on Future<R> {
+  /// Transform data value to [Right] or error value to [Left].
+  /// If this Future completes with a value, returns a [Right] containing that value.
+  /// Otherwise, calling [errorMapper] with the error value and wrap the result in a [Left].
+  /// Example:
+  /// ```dart
+  /// final Future<int> f = Future.value(1);
+  /// final Future<Either<Object, int>> eitherFuture = f.toEitherFuture((e, s) => e);
+  ///
+  /// eitherFuture.then(print); // prints Either.Right(1)
+  /// ```
+  Future<Either<L, R>> toEitherFuture<L>(ErrorMapper<L> errorMapper) =>
+      Either.catchFutureError(errorMapper, () => this);
 }
 
 /// Provide [left] and [right] extensions on any types.

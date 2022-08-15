@@ -364,6 +364,16 @@ void main() {
               takeOnlyError, () async => throw exception),
           completion(exceptionLeft),
         );
+
+        final errorFuture = Future<int>.error(exception);
+        await expectLater(
+          Either.catchFutureError(takeOnlyError, () => errorFuture),
+          completion(exceptionLeft),
+        );
+        await expectLater(
+          errorFuture.toEitherFuture(takeOnlyError),
+          completion(exceptionLeft),
+        );
       });
 
       test('Either.catchStreamError', () async {
@@ -669,6 +679,11 @@ void main() {
     test('toFuture', () async {
       await expectLater(rightOf1.toFuture(), completion(1));
       await expectLater(leftOf1.toFuture(), throwsA(1));
+    });
+
+    test('getOrThrow', () {
+      expect(rightOf1.getOrThrow(), 1);
+      expect(leftOf1.getOrThrow(), throwsException);
     });
 
     test('EitherEffect.ensure', () {

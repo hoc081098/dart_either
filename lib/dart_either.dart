@@ -42,6 +42,7 @@
 /// we fix the left type parameter and leave the right one free. So, the map and flatMap methods are right-biased.
 library dart_either;
 
-export 'src/dart_either.dart';
 export 'src/binding.dart';
+export 'src/dart_either.dart';
+export 'src/either_extensions.dart';
 export 'src/extensions.dart';
