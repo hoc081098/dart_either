@@ -90,6 +90,7 @@ abstract class Either<L, R> {
   ///
   /// If an error is thrown, calling [errorMapper] with that error and wrap the result in a [Left].
   ///
+  /// Example:
   /// ```dart
   /// Either<Object, int>.catchError((e, s) => e, () => throw Exception()); // Result: Left(Exception())
   /// Either<Object, String>.catchError((e, s) => e, () => 'hoc081098');    // Result: Right('hoc081098')
