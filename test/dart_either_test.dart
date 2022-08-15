@@ -124,66 +124,80 @@ void main() {
         );
       });
 
-      test('Either.binding', () {
-        // single return
-        expect(
-          Either<Object, int>.binding((e) => 1),
-          rightOf1,
-        );
+      group('Either.binding', () {
+        test('single return', () {
+          // single return
+          expect(
+            Either<Object, int>.binding((e) => 1),
+            rightOf1,
+          );
+        });
 
-        // rethrow exception
-        expect(
-          () => Either<Object, int>.binding((e) => throw exception),
-          throwsException,
-        );
+        test('rethrow exception', () {
+          // rethrow exception
+          expect(
+            () => Either<Object, int>.binding((e) => throw exception),
+            throwsException,
+          );
+        });
 
-        // block throws [ControlError].
-        expect(
-          () => Either<Object, String>.binding(
-            (e) => throw MyControlError<Object>(),
-          ),
-          throwsA(isA<NoSuchMethodError>()),
-        );
+        test('block throws [ControlError].', () {
+          // block throws [ControlError].
+          expect(
+            () => Either<Object, String>.binding(
+              (e) => throw MyControlError<Object>(),
+            ),
+            throwsA(isA<NoSuchMethodError>()),
+          );
+        });
 
-        // 2 success bind
-        expect(
-          Either<Object, int>.binding((e) {
-            final a = e.bind(Right(1));
-            final b = e.bind(Right(2));
-            return a + b;
-          }),
-          Right<Never, int>(3),
-        );
+        test('2 success bind', () {
+          // 2 success bind
+          expect(
+            Either<Object, int>.binding((e) {
+              final a = e.bind(Right(1));
+              final b = e.bind(Right(2));
+              return a + b;
+            }),
+            Right<Never, int>(3),
+          );
+        });
 
-        // 2 success either.bind
-        expect(
-          Either<Object, int>.binding((e) {
-            final a = Either<Object, int>.right(1).bind(e);
-            final b = Either<Object, int>.right(2).bind(e);
-            return a + b;
-          }),
-          Right<Never, int>(3),
-        );
+        test('2 success either.bind', () {
+          // 2 success either.bind
+          expect(
+            Either<Object, int>.binding((e) {
+              final a = Either<Object, int>.right(1).bind(e);
+              final b = Either<Object, int>.right(2).bind(e);
+              return a + b;
+            }),
+            Right<Never, int>(3),
+          );
+        });
 
-        // 2 success either.bind with difference types.
-        expect(
-          Either<Object, String>.binding((e) {
-            final a = Either<Object, int>.right(1).bind(e);
-            final b = Either<Object, String>.right('2').bind(e);
-            return a.toString() + b;
-          }),
-          Right<Never, String>('12'),
-        );
+        test('2 success either.bind with difference types.', () {
+          // 2 success either.bind with difference types.
+          expect(
+            Either<Object, String>.binding((e) {
+              final a = Either<Object, int>.right(1).bind(e);
+              final b = Either<Object, String>.right('2').bind(e);
+              return a.toString() + b;
+            }),
+            Right<Never, String>('12'),
+          );
+        });
 
-        // 1 success bind + 1 failure bind
-        expect(
-          Either<Object, int>.binding((e) {
-            final a = Either<Object, int>.right(1).bind(e);
-            final b = Either<Object, int>.left(exception).bind(e);
-            return a + b;
-          }),
-          exceptionLeft,
-        );
+        test('1 success bind + 1 failure bind', () {
+          // 1 success bind + 1 failure bind
+          expect(
+            Either<Object, int>.binding((e) {
+              final a = Either<Object, int>.right(1).bind(e);
+              final b = Either<Object, int>.left(exception).bind(e);
+              return a + b;
+            }),
+            exceptionLeft,
+          );
+        });
       });
     });
 
