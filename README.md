@@ -124,7 +124,7 @@ Example:
 
 ### Creation
 
-#### Factory constructors.
+#### Factory constructors
 
 - [Either.left](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.left.html)
 - [Either.right](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.right.html)
@@ -132,6 +132,17 @@ Example:
 - [Either.catchError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.catchError.html)
 - [Left](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Left/Left.html)
 - [Right](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Right-class.html)
+
+#### Static methods
+
+- [catchFutureError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/catchFutureError.html)
+- [catchStreamError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/catchStreamError.html)
+- [fromNullable](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/fromNullable.html)
+- [futureBinding](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/futureBinding.html)
+- [parSequenceN](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/parSequenceN.html)
+- [parTraverseN](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/parTraverseN.html)
+- [sequence](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/sequence.html)
+- [traverse](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/traverse.html)
 
 ## Reference
 
