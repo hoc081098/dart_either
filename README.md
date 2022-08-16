@@ -135,14 +135,14 @@ Example:
 
 #### Static methods
 
-- [catchFutureError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/catchFutureError.html)
-- [catchStreamError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/catchStreamError.html)
-- [fromNullable](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/fromNullable.html)
-- [futureBinding](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/futureBinding.html)
-- [parSequenceN](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/parSequenceN.html)
-- [parTraverseN](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/parTraverseN.html)
-- [sequence](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/sequence.html)
-- [traverse](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/traverse.html)
+- [Either.catchFutureError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/catchFutureError.html)
+- [Either.catchStreamError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/catchStreamError.html)
+- [Either.fromNullable](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/fromNullable.html)
+- [Either.futureBinding](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/futureBinding.html)
+- [Either.parSequenceN](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/parSequenceN.html)
+- [Either.parTraverseN](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/parTraverseN.html)
+- [Either.sequence](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/sequence.html)
+- [Either.traverse](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/traverse.html)
 
 ## Reference
 
