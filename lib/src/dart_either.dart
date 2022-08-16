@@ -211,14 +211,14 @@ abstract class Either<L, R> {
   /// and locally return its [Right.value]. If the [Either] is a [Left],
   /// the binding block will terminate with that bind and return that failed-to-bind [Left].
   ///
-  /// When inside a [Either.futureBinding] block, calling the [EitherEffect.bindFuture] function
+  /// When inside a [Either.futureBinding] block, calling the [BindFutureEitherEffectExtension.bindFuture] function
   /// will attempt to will attempt to unwrap the [Either] inside the [Future].
   /// and locally return its [Right.value] wrapped in a [Future].
   /// If the [Either] is a [Left], the binding block will terminate with that bind and return that failed-to-bind [Left].
   /// If the [Future] completes with an error, it will not be handled.
   ///
   /// You can also use [BindEitherExtension.bind] instead of [EitherEffect.bind],
-  /// [BindEitherFutureExtension.bind] instead of [EitherEffect.bindFuture] for more convenience.
+  /// [BindEitherFutureExtension.bind] instead of [BindFutureEitherEffectExtension.bindFuture] for more convenience.
   ///
   /// ### Example
   /// ```dart
@@ -239,9 +239,9 @@ abstract class Either<L, R> {
   /// ### NOTE
   /// - Do NOT catch [ControlError] in [block].
   /// - Do NOT throw any errors inside [block].
-  /// - When using [EitherEffect.bindFuture], if the [Future] completes with an error, it will not be handled.
+  /// - When using [BindFutureEitherEffectExtension.bindFuture], if the [Future] completes with an error, it will not be handled.
   /// - Use [Either.catchError], [Either.catchFutureError] or [Either.catchStreamError] to catch error,
-  ///   then use [EitherEffect.bind] and [EitherEffect.bindFuture] to unwrap the [Either].
+  ///   then use [EitherEffect.bind] and [BindFutureEitherEffectExtension.bindFuture] to unwrap the [Either].
   ///
   /// ```dart
   /// /// This function can throw an error.
@@ -799,12 +799,6 @@ abstract class EitherEffect<L> {
   /// Or throws a [ControlError].
   @monadComprehensions
   R bind<R>(Either<L, R> either);
-
-  /// Attempt to get right value of [eitherFuture].
-  /// Or return a [Future] that completes with a [ControlError].
-  /// This is a shorthand for `eitherFuture.then(bind)`.
-  @monadComprehensions
-  Future<R> bindFuture<R>(Future<Either<L, R>> eitherFuture);
 }
 
 /// Error thrown by [EitherEffect].
@@ -837,7 +831,4 @@ class _EitherEffectImpl<L> extends EitherEffect<L> {
   @override
   R bind<R>(Either<L, R> either) =>
       either.getOrHandle((v) => throw ControlError._(v, _token));
-
-  @override
-  Future<R> bindFuture<R>(Future<Either<L, R>> future) => future.then(bind);
 }
