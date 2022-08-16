@@ -40,8 +40,8 @@ void main() {
 
   /// Pattern matching
   right.fold(
-    ifLeft: (l) => print('Left($l)'),
-    ifRight: (r) => print('Right($r)'),
+    ifLeft: (l) => print('Left: $l'),
+    ifRight: (r) => print('Right: $r'),
   ); // Prints Right(10)
 
   /// Convert to nullable value
