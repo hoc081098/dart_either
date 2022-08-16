@@ -144,6 +144,12 @@ Example:
 - [Either.sequence](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/sequence.html)
 - [Either.traverse](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/traverse.html)
 
+#### Extension methods
+- [Stream.toEitherStream](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherStreamExtension/toEitherStream.html)
+- [Future.toEitherFuture](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherFutureExtension/toEitherFuture.html)
+- [T.left](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherObjectExtension/left.html)
+- [T.right](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherObjectExtension/right.html)
+
 ## Reference
 
 - [Functional Error Handling](https://arrow-kt.io/docs/patterns/error_handling/)
