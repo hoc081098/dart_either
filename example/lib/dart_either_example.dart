@@ -23,8 +23,8 @@ void main() {
     (e, s) => 'Error: $e',
     () => int.parse('invalid'),
   );
-  print(
-      catchError); // Prints Either.Left(Error: FormatException: Invalid radix-10 number (at character 1)
+  print(catchError);
+  // Prints Either.Left(Error: FormatException: Invalid radix-10 number (at character 1)
   // invalid
   // ^
   // )
