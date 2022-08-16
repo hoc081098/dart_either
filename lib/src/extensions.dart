@@ -43,10 +43,17 @@ extension ToEitherFutureExtension<R> on Future<R> {
       Either.catchFutureError(errorMapper, () => this);
 }
 
-/// Provide [thenFlatMap] extension on [Future] of [Either].
+/// Provide [asyncFlatMap] extension on [Future] of [Either].
 extension ThenFlatMapFutureExtension<L, R> on Future<Either<L, R>> {
-  /// TODO(thenFlatMap)
-  Future<Either<L, C>> thenFlatMap<C>(
+  /// When this [Future] completes with a [Right] value,
+  /// calling [f] callback with [Right.value].
+  /// And returns a new [Future] which is completed with the result of the call to [f].
+  ///
+  /// If this [Future] completes with a [Left] value,
+  /// returns a [Future] that completes with a [Left] which containing original [Left.value].
+  ///
+  /// This function does not handle any errors. See [Future.then].
+  Future<Either<L, C>> asyncFlatMap<C>(
           FutureOr<Either<L, C>> Function(R value) f) =>
       then(
         (either) => either.fold(
