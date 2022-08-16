@@ -18,6 +18,16 @@ Liked some of my work? Buy me a coffee (or more likely a beer)
 
 [!["Buy Me A Coffee"](https://cdn.buymeacoffee.com/buttons/default-orange.png)](https://www.buymeacoffee.com/hoc081098)
 
+## Difference from other implementations ([dartz](https://pub.dev/packages/dartz) and [fpdart](https://pub.dev/packages/fpdart))
+
+I see a lot of people importing whole libraries such as [dartz](https://pub.dev/packages/dartz) and [fpdart](https://pub.dev/packages/fpdart), ...
+but they only use `Either` class :). So I decided to write, port and adapt `Either` class from [Λrrow-kt](https://github.com/arrow-kt/arrow).
+
+- Inspired by [Λrrow-kt](https://github.com/arrow-kt/arrow), [Scala Cats](https://typelevel.org/cats/typeclasses.html#type-classes-in-cats).
+- Fully documented, tested and many examples. Every method/function in this library is documented with examples.
+- This library is most complete `Either` implementation, which supports `Monad comprehension` (both `sync` and `async` versions).
+- Very lightweight and simple library (compare to [dartz](https://pub.dev/packages/dartz)).
+
 ## Either monad
 
 `Either` is a type that represents either `Right` (usually represent a "desired" value)
@@ -112,6 +122,12 @@ we fix the left type parameter and leave the right one free. So, the `map` and `
 ## Use
 
 ### Creation
+
+#### Constructor
+
+- [Either.left]()
+- [Either.right]()
+- [Either.right]()
 
 ## Reference
 
