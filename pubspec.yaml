@@ -1,6 +1,6 @@
 name: dart_either
 description: Small lib for catching errors and turn it into a value.
-version: 1.0.0-beta01
+version: 1.0.0-beta02
 homepage: https://github.com/hoc081098/dart_either.git
 repository: https://github.com/hoc081098/dart_either.git
 issue_tracker: https://github.com/hoc081098/dart_either/issues
