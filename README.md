@@ -24,9 +24,9 @@ I see a lot of people importing whole libraries such as [dartz](https://pub.dev/
 but they only use `Either` class :). So I decided to write, port and adapt `Either` class from [Λrrow-kt](https://github.com/arrow-kt/arrow).
 
 - Inspired by [Λrrow-kt](https://github.com/arrow-kt/arrow), [Scala Cats](https://typelevel.org/cats/typeclasses.html#type-classes-in-cats).
-- Fully documented, tested and many examples. Every method/function in this library is documented with examples.
-- This library is most complete `Either` implementation, which supports `Monad comprehension` (both `sync` and `async` versions).
-- Very lightweight and simple library (compare to [dartz](https://pub.dev/packages/dartz)).
+- **Fully documented**, **tested** and **many examples**. Every method/function in this library is documented with examples.
+- This library is **most complete** `Either` implementation, which supports **`Monad comprehension` (both `sync` and `async` versions)**.
+- Very **lightweight** and **simple** library (compare to [dartz](https://pub.dev/packages/dartz)).
 
 ## Either monad
 
