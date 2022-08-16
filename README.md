@@ -10,7 +10,7 @@
 [![Style](https://img.shields.io/badge/style-lints-40c4ff.svg)](https://pub.dev/packages/lints)
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fhoc081098%2Fdart_either&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
 
-Either monad for Dart language and Flutter framework.
+Either monad for Dart language and Flutter framework. Supports `Monad comprehension` (both `sync` and `async` versions).
 
 ## Credits: port and adapt from [Λrrow-kt](https://github.com/arrow-kt/arrow).
 
@@ -70,6 +70,7 @@ Because `Either` is right-biased, it is possible to define a `Monad` instance fo
 Since we only ever want the computation to continue in the case of `Right` (as captured by the right-bias nature),
 we fix the left type parameter and leave the right one free. So, the `map` and `flatMap` methods are right-biased.
 
+Example:
 ```dart
   /// Create an instance of [Right]
   final right = Either<String, int>.right(10);
@@ -119,15 +120,18 @@ we fix the left type parameter and leave the right one free. So, the `map` and `
   print(nullableValue); // Prints 10
 ```
 
-## Use
+## Use - [Documentation](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/dart_either-library.html)
 
 ### Creation
 
-#### Constructor
+#### Factory constructors.
 
-- [Either.left]()
-- [Either.right]()
-- [Either.right]()
+- [Either.left](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.left.html)
+- [Either.right](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.right.html)
+- [Either.binding](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.binding.html)
+- [Either.catchError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.catchError.html)
+- [Left](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Left/Left.html)
+- [Right](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Right-class.html)
 
 ## Reference
 
