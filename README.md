@@ -123,9 +123,9 @@ dependencies:
 
 ## Use - [Documentation](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/dart_either-library.html)
 
-### Creation
+### 1. Creation
 
-#### Factory constructors
+#### 1.1. Factory constructors
 
 - [Either.left](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.left.html)
 - [Either.right](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.right.html)
@@ -134,7 +134,28 @@ dependencies:
 - [Left](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Left/Left.html)
 - [Right](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Right-class.html)
 
-#### Static methods
+```dart
+// Left('Left value')
+final left = Either<Object, String>.left('Left value'); // or Left<Object, String>('Left value');
+
+// Right(1)
+final right = Either<Object, int>.right(1); // or Right<Object, int>(1);
+
+// Left('Left value')
+Either<Object, String>.binding((e) {
+  final String s = left.bind(e);
+  final int i = right.bind(e);
+  return '$s $i';
+});
+
+// Left(FormatException(...))
+Either.catchError(
+  (e, s) => 'Error: $e',
+  () => int.parse('invalid'),
+);
+```
+
+#### 1.2. Static methods
 
 - [Either.catchFutureError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/catchFutureError.html)
 - [Either.catchStreamError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/catchStreamError.html)
@@ -145,11 +166,13 @@ dependencies:
 - [Either.sequence](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/sequence.html)
 - [Either.traverse](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/traverse.html)
 
-#### Extension methods
+#### 1.3. Extension methods
 - [Stream.toEitherStream](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherStreamExtension/toEitherStream.html)
 - [Future.toEitherFuture](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherFutureExtension/toEitherFuture.html)
 - [T.left](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherObjectExtension/left.html)
 - [T.right](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherObjectExtension/right.html)
+
+### 2. Operations
 
 ## Reference
 
