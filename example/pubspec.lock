@@ -28,7 +28,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.0.0-beta02"
+    version: "1.0.0-beta03"
   http:
     dependency: "direct main"
     description:
