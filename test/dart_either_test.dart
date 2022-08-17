@@ -927,5 +927,103 @@ void main() {
         },
       );
     });
+
+    group('Future<Either<L, R>>.asyncMap', () {
+      //
+      // Right
+      //
+
+      test('Future completes with a Right value, map to a value', () {
+        expect(
+          Future.value(rightOf1).asyncMap((v) => v + 1),
+          completion(Right<int, int>(2)),
+        );
+      });
+
+      test(
+        'Future completes with a Right value, map to a Future completes with a value',
+        () {
+          expect(
+            Future.value(rightOf1).asyncMap((v) async => v + 1),
+            completion(Right<int, int>(2)),
+          );
+        },
+      );
+
+      test(
+        'Future completes with a Right value, throw exception',
+        () {
+          expect(
+            Future.value(rightOf1).asyncMap<String>((v) => throw exception),
+            throwsException,
+          );
+        },
+      );
+
+      test(
+        'Future completes with a Right value, return a error Future',
+        () {
+          expect(
+            Future.value(rightOf1)
+                .asyncMap<String>((v) async => throw exception),
+            throwsException,
+          );
+
+          expect(
+            Future.value(rightOf1)
+                .asyncMap<String>((v) => Future.error(exception)),
+            throwsException,
+          );
+        },
+      );
+
+      //
+      // Left
+      //
+
+      test('Future completes with a Left value, map to a value', () {
+        expect(
+          Future.value(leftOf1).asyncMap((v) => v + 1),
+          completion(leftOf1),
+        );
+      });
+
+      test(
+        'Future completes with a Left value, map to a Future of Right value',
+        () {
+          expect(
+            Future.value(leftOf1).asyncMap((v) async => v + 1),
+            completion(leftOf1),
+          );
+        },
+      );
+
+      test(
+        'Future completes with a Left value, throw exception',
+        () {
+          expect(
+            Future.value(leftOf1).asyncMap<String>((v) => throw exception),
+            completion(leftOf1),
+          );
+        },
+      );
+
+      test(
+        'Future completes with a Left value, return a error Future',
+        () {
+          expect(
+            Future.value(leftOf1)
+                .asyncMap<String>((v) async => throw exception),
+            completion(leftOf1),
+          );
+
+          expect(
+            Future.value(leftOf1)
+                .asyncMap<String>((v) => Future.error(exception)),
+            completion(leftOf1),
+          );
+        },
+      );
+    });
   });
 }
