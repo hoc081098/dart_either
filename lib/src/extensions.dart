@@ -65,7 +65,15 @@ extension AsyncFlatMapFutureExtension<L, R> on Future<Either<L, R>> {
 
 /// Provide [asyncMap] extension on [Future] of [Either].
 extension AsyncMapFutureExtension<L, R> on Future<Either<L, R>> {
-  /// TODO(asyncMap)
+  /// When this [Future] completes with a [Right] value,
+  /// calling [f] callback with [Right.value].
+  /// And returns a new [Future] which is completed with a [Right] value
+  /// which containing the result of the call to [f].
+  ///
+  /// If this [Future] completes with a [Left] value,
+  /// returns a [Future] that completes with a [Left] which containing original [Left.value].
+  ///
+  /// This function does not handle any errors. See [Future.then].
   Future<Either<L, C>> asyncMap<C>(FutureOr<C> Function(R value) f) => then(
         (either) => either.fold(
           ifLeft: (v) => v.left<C>(),
