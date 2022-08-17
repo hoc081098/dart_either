@@ -8,8 +8,6 @@ import 'package:http/http.dart' as http;
 import 'package:rxdart_ext/rxdart_ext.dart';
 import 'package:tuple/tuple.dart';
 
-import 'http_either_chain.dart';
-
 typedef UserAndPosts = Tuple2<User, BuiltList<Post>>;
 
 AsyncError toAsyncError(Object e, StackTrace s) => AsyncError(e, s);
