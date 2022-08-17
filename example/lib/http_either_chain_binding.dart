@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 import 'package:rxdart_ext/rxdart_ext.dart';
 import 'package:tuple/tuple.dart';
 
+import 'http_either_chain.dart';
+
 typedef UserAndPosts = Tuple2<User, BuiltList<Post>>;
 
 AsyncError toAsyncError(Object e, StackTrace s) => AsyncError(e, s);
@@ -78,32 +80,33 @@ Either<AsyncError, BuiltList<Post>> toPosts(dynamic list) =>
 
 //-------------------------------------HTTP-------------------------------------
 
-Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
-  Either<AsyncError, dynamic> toJson(http.Response response) =>
-      response.statusCode >= 200 && response.statusCode < 300
-          ? Either<AsyncError, dynamic>.catchError(
-              toAsyncError,
-              () => jsonDecode(response.body),
-            )
-          : AsyncError(
-              HttpException(
-                'statusCode=${response.statusCode}, body=${response.body}',
-                uri: response.request?.url,
-              ),
-              StackTrace.current,
-            ).left<dynamic>();
+Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
+    Either.futureBinding<AsyncError, dynamic>((e) async {
+      final uri =
+          Either.catchError(toAsyncError, () => Uri.parse(uriString)).bind(e);
 
-  Future<Either<AsyncError, http.Response>> httpGet(Uri uri) =>
-      Either.catchFutureError(toAsyncError, () async {
-        await delay(500);
-        return http.get(uri);
-      });
+      final response = await Either.catchFutureError(
+        toAsyncError,
+        () async {
+          await delay(500);
+          return http.get(uri);
+        },
+      ).bind(e);
 
-  final uri =
-      Future.value(Either.catchError(toAsyncError, () => Uri.parse(uriString)));
+      e.ensure(
+        response.statusCode >= 200 && response.statusCode < 300,
+        () => AsyncError(
+          HttpException(
+            'statusCode=${response.statusCode}, body=${response.body}',
+            uri: response.request?.url,
+          ),
+          StackTrace.current,
+        ),
+      );
 
-  return uri.asyncFlatMap(httpGet).asyncFlatMap<dynamic>(toJson);
-}
+      return Either<AsyncError, dynamic>.catchError(
+          toAsyncError, () => jsonDecode(response.body)).bind(e);
+    });
 
 //------------------------------------EXAMPLE-----------------------------------
 
@@ -116,21 +119,31 @@ void main() async {
         (User user) => () {
           print('Get posts for $user...');
 
-          return httpGetAsEither(
-                  'https://jsonplaceholder.typicode.com/posts?userId=${user.id}')
-              .asyncFlatMap(toPosts)
-              .asyncMap((posts) => Tuple2(user, posts));
+          return Either.futureBinding((e) async {
+            final dynamic list = await httpGetAsEither(
+                    'https://jsonplaceholder.typicode.com/posts?userId=${user.id}')
+                .bind(e);
+
+            final posts = toPosts(list).bind(e);
+
+            return Tuple2(user, posts);
+          });
         },
         3,
       );
 
-  await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
-      .asyncFlatMap(toUsers)
-      .asyncFlatMap(getPosts)
-      .then(
-        (result) => result.fold(
-          ifLeft: (e) => print('Error: $e'),
-          ifRight: (items) => print('Success: ${items.length}'),
-        ),
-      );
+  await Either.futureBinding<AsyncError, BuiltList<UserAndPosts>>((e) async {
+    final dynamic list =
+        await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
+            .bind(e);
+
+    final users = toUsers(list).bind(e);
+
+    return await getPosts(users).bind(e);
+  }).then(
+    (result) => result.fold(
+      ifLeft: (e) => print('Error: $e'),
+      ifRight: (items) => print('Success: ${items.length}'),
+    ),
+  );
 }

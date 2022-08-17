@@ -432,7 +432,7 @@ abstract class Either<L, R> {
 
   /// TODO(parTraverseN)
   @experimental
-  static Future<Either<L, List<R>>> parTraverseN<L, R, T>(
+  static Future<Either<L, BuiltList<R>>> parTraverseN<L, R, T>(
     Iterable<T> values,
     Future<Either<L, R>> Function() Function(T value) mapper,
     int? n,
@@ -441,7 +441,7 @@ abstract class Either<L, R> {
 
   /// TODO(parSequenceN)
   @experimental
-  static Future<Either<L, List<R>>> parSequenceN<L, R>(
+  static Future<Either<L, BuiltList<R>>> parSequenceN<L, R>(
     Iterable<Future<Either<L, R>> Function()> functions,
     int? n,
   ) async {
@@ -462,7 +462,7 @@ abstract class Either<L, R> {
       futureFunctions.map(runWithPermit),
       eagerError: true,
     )
-        .then((values) => Either<L, List<R>>.right(values))
+        .then((values) => Either<L, BuiltList<R>>.right(values.build()))
         .onError<ControlError<L>>(
           (e, s) => Left(e._value),
           test: (e) => identical(e._token, token),
