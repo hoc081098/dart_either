@@ -20,7 +20,7 @@ Liked some of my work? Buy me a coffee (or more likely a beer)
 
 ## Difference from other implementations ([dartz](https://pub.dev/packages/dartz) and [fpdart](https://pub.dev/packages/fpdart))
 
-I see a lot of people importing whole libraries such as [dartz](https://pub.dev/packages/dartz) and [fpdart](https://pub.dev/packages/fpdart), ...
+I have seen a lot of people importing whole libraries such as [dartz](https://pub.dev/packages/dartz) and [fpdart](https://pub.dev/packages/fpdart), ...
 but they only use `Either` class :). So I decided to write, port and adapt `Either` class from [Λrrow-kt](https://github.com/arrow-kt/arrow).
 
 - Inspired by [Λrrow-kt](https://github.com/arrow-kt/arrow), [Scala Cats](https://typelevel.org/cats/typeclasses.html#type-classes-in-cats).
@@ -110,6 +110,16 @@ right.fold(
 
 /// Convert to nullable value
 final nullableValue = right.orNull(); // 10
+```
+
+## Getting started
+
+In your Dart/Flutter project, add the dependency to your `pubspec.yaml`
+
+```yaml
+dependencies:
+  ...
+    dart_either: ^1.0.0
 ```
 
 ## Use - [Documentation](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/dart_either-library.html)
