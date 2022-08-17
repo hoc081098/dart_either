@@ -45,6 +45,8 @@ extension ToEitherFutureExtension<R> on Future<R> {
 
 /// Provide [asyncFlatMap] extension on [Future] of [Either].
 extension AsyncFlatMapFutureExtension<L, R> on Future<Either<L, R>> {
+  /// `flatMap` the [Either] in the [Future] context.
+  ///
   /// When this [Future] completes with a [Right] value,
   /// calling [f] callback with [Right.value].
   /// And returns a new [Future] which is completed with the result of the call to [f].
@@ -65,6 +67,8 @@ extension AsyncFlatMapFutureExtension<L, R> on Future<Either<L, R>> {
 
 /// Provide [asyncMap] extension on [Future] of [Either].
 extension AsyncMapFutureExtension<L, R> on Future<Either<L, R>> {
+  /// `map` the [Either] in the [Future] context.
+  ///
   /// When this [Future] completes with a [Right] value,
   /// calling [f] callback with [Right.value].
   /// And returns a new [Future] which is completed with a [Right] value
