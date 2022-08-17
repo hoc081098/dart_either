@@ -432,7 +432,7 @@ abstract class Either<L, R> {
 
   /// TODO(parTraverseN)
   @experimental
-  static Future<Either<L, List<R>>> parTraverseN<T, L, R>(
+  static Future<Either<L, List<R>>> parTraverseN<L, R, T>(
     Iterable<T> values,
     Future<Either<L, R>> Function() Function(T value) mapper,
     int? n,

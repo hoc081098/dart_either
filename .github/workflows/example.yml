@@ -33,3 +33,4 @@ jobs:
         run: |
           dart run lib/chain_either.dart
           dart run lib/dart_either_example.dart
+          dart run lib/http_either_chain.dart

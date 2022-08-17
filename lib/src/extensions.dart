@@ -44,7 +44,7 @@ extension ToEitherFutureExtension<R> on Future<R> {
 }
 
 /// Provide [asyncFlatMap] extension on [Future] of [Either].
-extension ThenFlatMapFutureExtension<L, R> on Future<Either<L, R>> {
+extension AsyncFlatMapFutureExtension<L, R> on Future<Either<L, R>> {
   /// When this [Future] completes with a [Right] value,
   /// calling [f] callback with [Right.value].
   /// And returns a new [Future] which is completed with the result of the call to [f].
@@ -59,6 +59,17 @@ extension ThenFlatMapFutureExtension<L, R> on Future<Either<L, R>> {
         (either) => either.fold(
           ifLeft: (v) => v.left<C>(),
           ifRight: (v) => Future.sync(() => f(v)),
+        ),
+      );
+}
+
+/// Provide [asyncMap] extension on [Future] of [Either].
+extension AsyncMapFutureExtension<L, R> on Future<Either<L, R>> {
+  /// TODO(asyncMap)
+  Future<Either<L, C>> asyncMap<C>(FutureOr<C> Function(R value) f) => then(
+        (either) => either.fold(
+          ifLeft: (v) => v.left<C>(),
+          ifRight: (v) => Future.sync(() => f(v)).then((v) => v.right<L>()),
         ),
       );
 }
