@@ -118,8 +118,7 @@ In your Dart/Flutter project, add the dependency to your `pubspec.yaml`
 
 ```yaml
 dependencies:
-  ...
-    dart_either: ^1.0.0
+  dart_either: ^1.0.0
 ```
 
 ## Use - [Documentation](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/dart_either-library.html)
