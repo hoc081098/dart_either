@@ -132,7 +132,9 @@ void main() async {
         3,
       );
 
-  await Either.futureBinding<AsyncError, BuiltList<UserAndPosts>>((e) async {
+  final result =
+      await Either.futureBinding<AsyncError, BuiltList<UserAndPosts>>(
+          (e) async {
     final dynamic list =
         await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
             .bind(e);
@@ -140,10 +142,10 @@ void main() async {
     final users = toUsers(list).bind(e);
 
     return await getPosts(users).bind(e);
-  }).then(
-    (result) => result.fold(
-      ifLeft: (e) => print('Error: $e'),
-      ifRight: (items) => print('Success: ${items.length}'),
-    ),
+  });
+
+  result.fold(
+    ifLeft: (e) => print('Error: $e'),
+    ifRight: (items) => print('Success: ${items.length}'),
   );
 }
