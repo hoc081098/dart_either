@@ -500,8 +500,6 @@ abstract class Either<L, R> {
   ///   ifRight: (value) => print('operation succeeded with $value'),
   /// );
   /// ```
-  @pragma('vm:prefer-inline')
-  @pragma('dart2js:tryInline')
   C fold<C>({
     required C Function(L value) ifLeft,
     required C Function(R value) ifRight,
@@ -692,8 +690,6 @@ abstract class Either<L, R> {
   ///   ifRight: (right) => print('operation succeeded with ${right.value}'),
   /// );
   /// ```
-  @pragma('vm:prefer-inline')
-  @pragma('dart2js:tryInline')
   C when<C>({
     required C Function(Left<L, R> left) ifLeft,
     required C Function(Right<L, R> right) ifRight,
