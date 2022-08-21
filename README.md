@@ -14,6 +14,8 @@ Either monad for Dart language and Flutter framework.
 The library for error handling and railway oriented programming.
 Supports `Monad comprehension` (both `sync` and `async` versions).
 Supports `async map` and `async flatMap` hiding the boilerplate of working with asynchronous computations `Future<Either<L, R>>`.
+Error handler library for type-safe and easy work with errors on Dart and Flutter.
+Either is an alternative to Nullable value and Exceptions.
 
 ## Credits: port and adapt from [Λrrow-kt](https://github.com/arrow-kt/arrow).
 

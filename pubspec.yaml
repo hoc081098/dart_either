@@ -1,5 +1,8 @@
 name: dart_either
-description: Small lib for catching errors and turn it into a value.
+description: >
+  Either monad for Dart language and Flutter framework.
+  Type-safe error handling, railway oriented programming.
+  Supports Monad comprehension, async map, async flatMap.
 version: 1.0.0-beta03
 homepage: https://github.com/hoc081098/dart_either.git
 repository: https://github.com/hoc081098/dart_either.git
