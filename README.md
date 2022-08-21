@@ -10,7 +10,10 @@
 [![Style](https://img.shields.io/badge/style-lints-40c4ff.svg)](https://pub.dev/packages/lints)
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fhoc081098%2Fdart_either&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
 
-Either monad for Dart language and Flutter framework. Supports `Monad comprehension` (both `sync` and `async` versions).
+Either monad for Dart language and Flutter framework.
+The library for error handling and railway oriented programming.
+Supports `Monad comprehension` (both `sync` and `async` versions).
+Supports `async map` and `async flatMap` hiding the boilerplate of working with asynchronous computations `Future<Either<L, R>>`.
 
 ## Credits: port and adapt from [Λrrow-kt](https://github.com/arrow-kt/arrow).
 
@@ -25,7 +28,8 @@ but they only use `Either` class :). So I decided to write, port and adapt `Eith
 
 - Inspired by [Λrrow-kt](https://github.com/arrow-kt/arrow), [Scala Cats](https://typelevel.org/cats/typeclasses.html#type-classes-in-cats).
 - **Fully documented**, **tested** and **many examples**. Every method/function in this library is documented with examples.
-- This library is **most complete** `Either` implementation, which supports **`Monad comprehension` (both `sync` and `async` versions)**.
+- This library is **most complete** `Either` implementation, which supports **`Monad comprehension` (both `sync` and `async` versions)**,
+  and supports `async map` and `async flatMap` hiding the boilerplate of working with asynchronous computations `Future<Either<L, R>>`.
 - Very **lightweight** and **simple** library (compare to [dartz](https://pub.dev/packages/dartz)).
 
 ## Either monad
