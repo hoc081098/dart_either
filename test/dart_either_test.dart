@@ -830,14 +830,14 @@ void main() {
       );
     });
 
-    group('Future<Either<L, R>>.asyncFlatMap', () {
+    group('Future<Either<L, R>>.thenFlatMapEither', () {
       //
       // Right
       //
 
       test('Future completes with a Right value, map to a Right value', () {
         expect(
-          Future.value(rightOf1).asyncFlatMap((v) => (v + 1).right()),
+          Future.value(rightOf1).thenFlatMapEither((v) => (v + 1).right()),
           completion(Right<int, int>(2)),
         );
       });
@@ -846,7 +846,8 @@ void main() {
         'Future completes with a Right value, map to a Future of Right value',
         () {
           expect(
-            Future.value(rightOf1).asyncFlatMap((v) async => (v + 1).right()),
+            Future.value(rightOf1)
+                .thenFlatMapEither((v) async => (v + 1).right()),
             completion(Right<int, int>(2)),
           );
         },
@@ -856,7 +857,8 @@ void main() {
         'Future completes with a Right value, throw exception',
         () {
           expect(
-            Future.value(rightOf1).asyncFlatMap<String>((v) => throw exception),
+            Future.value(rightOf1)
+                .thenFlatMapEither<String>((v) => throw exception),
             throwsException,
           );
         },
@@ -867,13 +869,13 @@ void main() {
         () {
           expect(
             Future.value(rightOf1)
-                .asyncFlatMap<String>((v) async => throw exception),
+                .thenFlatMapEither<String>((v) async => throw exception),
             throwsException,
           );
 
           expect(
             Future.value(rightOf1)
-                .asyncFlatMap<String>((v) => Future.error(exception)),
+                .thenFlatMapEither<String>((v) => Future.error(exception)),
             throwsException,
           );
         },
@@ -885,7 +887,7 @@ void main() {
 
       test('Future completes with a Left value, map to a Right value', () {
         expect(
-          Future.value(leftOf1).asyncFlatMap((v) => (v + 1).right()),
+          Future.value(leftOf1).thenFlatMapEither((v) => (v + 1).right()),
           completion(leftOf1),
         );
       });
@@ -894,7 +896,8 @@ void main() {
         'Future completes with a Left value, map to a Future of Right value',
         () {
           expect(
-            Future.value(leftOf1).asyncFlatMap((v) async => (v + 1).right()),
+            Future.value(leftOf1)
+                .thenFlatMapEither((v) async => (v + 1).right()),
             completion(leftOf1),
           );
         },
@@ -904,7 +907,8 @@ void main() {
         'Future completes with a Left value, throw exception',
         () {
           expect(
-            Future.value(leftOf1).asyncFlatMap<String>((v) => throw exception),
+            Future.value(leftOf1)
+                .thenFlatMapEither<String>((v) => throw exception),
             completion(leftOf1),
           );
         },
@@ -915,27 +919,27 @@ void main() {
         () {
           expect(
             Future.value(leftOf1)
-                .asyncFlatMap<String>((v) async => throw exception),
+                .thenFlatMapEither<String>((v) async => throw exception),
             completion(leftOf1),
           );
 
           expect(
             Future.value(leftOf1)
-                .asyncFlatMap<String>((v) => Future.error(exception)),
+                .thenFlatMapEither<String>((v) => Future.error(exception)),
             completion(leftOf1),
           );
         },
       );
     });
 
-    group('Future<Either<L, R>>.asyncMap', () {
+    group('Future<Either<L, R>>.thenMapEither', () {
       //
       // Right
       //
 
       test('Future completes with a Right value, map to a value', () {
         expect(
-          Future.value(rightOf1).asyncMap((v) => v + 1),
+          Future.value(rightOf1).thenMapEither((v) => v + 1),
           completion(Right<int, int>(2)),
         );
       });
@@ -944,7 +948,7 @@ void main() {
         'Future completes with a Right value, map to a Future completes with a value',
         () {
           expect(
-            Future.value(rightOf1).asyncMap((v) async => v + 1),
+            Future.value(rightOf1).thenMapEither((v) async => v + 1),
             completion(Right<int, int>(2)),
           );
         },
@@ -954,7 +958,8 @@ void main() {
         'Future completes with a Right value, throw exception',
         () {
           expect(
-            Future.value(rightOf1).asyncMap<String>((v) => throw exception),
+            Future.value(rightOf1)
+                .thenMapEither<String>((v) => throw exception),
             throwsException,
           );
         },
@@ -965,13 +970,13 @@ void main() {
         () {
           expect(
             Future.value(rightOf1)
-                .asyncMap<String>((v) async => throw exception),
+                .thenMapEither<String>((v) async => throw exception),
             throwsException,
           );
 
           expect(
             Future.value(rightOf1)
-                .asyncMap<String>((v) => Future.error(exception)),
+                .thenMapEither<String>((v) => Future.error(exception)),
             throwsException,
           );
         },
@@ -983,7 +988,7 @@ void main() {
 
       test('Future completes with a Left value, map to a value', () {
         expect(
-          Future.value(leftOf1).asyncMap((v) => v + 1),
+          Future.value(leftOf1).thenMapEither((v) => v + 1),
           completion(leftOf1),
         );
       });
@@ -992,7 +997,7 @@ void main() {
         'Future completes with a Left value, map to a Future of Right value',
         () {
           expect(
-            Future.value(leftOf1).asyncMap((v) async => v + 1),
+            Future.value(leftOf1).thenMapEither((v) async => v + 1),
             completion(leftOf1),
           );
         },
@@ -1002,7 +1007,7 @@ void main() {
         'Future completes with a Left value, throw exception',
         () {
           expect(
-            Future.value(leftOf1).asyncMap<String>((v) => throw exception),
+            Future.value(leftOf1).thenMapEither<String>((v) => throw exception),
             completion(leftOf1),
           );
         },
@@ -1013,13 +1018,13 @@ void main() {
         () {
           expect(
             Future.value(leftOf1)
-                .asyncMap<String>((v) async => throw exception),
+                .thenMapEither<String>((v) async => throw exception),
             completion(leftOf1),
           );
 
           expect(
             Future.value(leftOf1)
-                .asyncMap<String>((v) => Future.error(exception)),
+                .thenMapEither<String>((v) => Future.error(exception)),
             completion(leftOf1),
           );
         },

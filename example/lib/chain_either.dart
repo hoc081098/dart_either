@@ -83,12 +83,12 @@ Future<Either<String, void>> doSomethingWithPostsEither(
 //--------------------------------EITHER FLATMAP--------------------------------
 
 Future<Either<String, void>> eitherFlatMapCode() =>
-    findUserByIdEither('user_id').asyncFlatMap((user) {
+    findUserByIdEither('user_id').thenFlatMapEither((user) {
       if (user == null) {
         return 'User is null'.left<List<Post>>();
       }
-      return getPostsByUserEither(user)
-          .asyncFlatMap((posts) => doSomethingWithPostsEither(user, posts));
+      return getPostsByUserEither(user).thenFlatMapEither(
+          (posts) => doSomethingWithPostsEither(user, posts));
     });
 
 //--------------------------------EITHER BINDING--------------------------------

@@ -102,7 +102,7 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
   final uri =
       Future.value(Either.catchError(toAsyncError, () => Uri.parse(uriString)));
 
-  return uri.asyncFlatMap(httpGet).asyncFlatMap<dynamic>(toJson);
+  return uri.thenFlatMapEither(httpGet).thenFlatMapEither<dynamic>(toJson);
 }
 
 //------------------------------------EXAMPLE-----------------------------------
@@ -118,15 +118,15 @@ void main() async {
 
           return httpGetAsEither(
                   'https://jsonplaceholder.typicode.com/posts?userId=${user.id}')
-              .asyncFlatMap(toPosts)
-              .asyncMap((posts) => Tuple2(user, posts));
+              .thenFlatMapEither(toPosts)
+              .thenMapEither((posts) => Tuple2(user, posts));
         },
         3,
       );
 
   await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
-      .asyncFlatMap(toUsers)
-      .asyncFlatMap(getPosts)
+      .thenFlatMapEither(toUsers)
+      .thenFlatMapEither(getPosts)
       .then(
         (result) => result.fold(
           ifLeft: (e) => print('Error: $e'),
