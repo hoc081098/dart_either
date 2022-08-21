@@ -16,9 +16,6 @@ extension on Object {
     if (this is ControlError) {
       throw this;
     }
-    if (this is _InvalidEitherError) {
-      throw this;
-    }
     return this;
   }
 }
@@ -87,25 +84,10 @@ abstract class Either<L, R> {
   }) {
     if (isLeft) {
       return ifLeft(_unionValue as L);
-    }
-    if (isRight) {
+    } else {
+      assert(isRight);
       return ifRight(_unionValue as R);
     }
-    _throwInvalidEitherError<L, R>(this);
-  }
-
-  @pragma('vm:always-consider-inlining')
-  @pragma('vm:prefer-inline')
-  @pragma('dart2js:tryInline')
-  static Never _throwInvalidEitherError<L, R>(Either<L, R> either) {
-    assert(() {
-      if (either is Left<L, R> || either is Right<L, R>) {
-        throw StateError('Internal bug!');
-      }
-      return true;
-    }());
-
-    throw _InvalidEitherError<L, R>(either);
   }
 
   // -----------------------------------------------------------------------------
@@ -451,11 +433,9 @@ abstract class Either<L, R> {
     for (final either in values) {
       if (either.isLeft) {
         return Either<L, BuiltList<R>>.left(either._unionValue as L);
-      }
-      if (either.isRight) {
-        result.add(either._unionValue as R);
       } else {
-        _throwInvalidEitherError<L, R>(either);
+        assert(either.isRight);
+        result.add(either._unionValue as R);
       }
     }
 
@@ -721,11 +701,10 @@ abstract class Either<L, R> {
   }) {
     if (isLeft) {
       return ifLeft(this as Left<L, R>);
-    }
-    if (isRight) {
+    } else {
+      assert(isRight);
       return ifRight(this as Right<L, R>);
     }
-    _throwInvalidEitherError<L, R>(this);
   }
 }
 
@@ -785,17 +764,6 @@ class Right<L, R> extends Either<L, R> {
 
   @override
   R get _unionValue => value;
-}
-
-class _InvalidEitherError<L, R> extends Error {
-  final Either<L, R> invalid;
-
-  _InvalidEitherError(this.invalid);
-
-  @override
-  String toString() =>
-      'Unknown $invalid. $invalid must be either a `Right<$L, $R>` or `Left<$L, $R>`.'
-      ' Cannot implement or extend `Either` class';
 }
 
 // -----------------------------------------------------------------------------
