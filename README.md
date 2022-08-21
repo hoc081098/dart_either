@@ -173,7 +173,60 @@ Either.catchError(
 - [Either.traverse](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/traverse.html)
 
 ```dart
+import 'package:http/http.dart' as http;
 
+Future<Either<String, http.Response>> eitherFuture = Either.catchFutureError(
+  (e, s) => 'Error: $e',
+  () async {
+    final uri = Uri.parse('https://pub.dev/packages/dart_either');
+    return http.get(uri);
+  },
+);
+(await eitherFuture).fold(ifLeft: print, ifRight: print);
+
+
+Stream<int> genStream() async* {
+  for (var i = 0; i < 5; i++) {
+    yield i;
+  }
+  throw Exception('Fatal');
+}
+Stream<Either<String, int>> eitherStream = Either.catchStreamError(
+  (e, s) => 'Error: $e',
+  genStream(),
+);
+eitherStream.listen(print);
+
+
+// Left(null)
+Either.fromNullable<int>(null);
+// Right(1)
+Either.fromNullable<int>(1);
+
+String url1 = 'url1';
+String url2 = 'url2';
+Either.futureBinding<String, http.Response>((e) async {
+  final response = await Either.catchFutureError(
+    (e, s) => 'Get $url1: $e',
+    () async {
+      final uri = Uri.parse(url1);
+      return http.get(uri);
+    },
+  ).bind(e);
+
+  final id = Either.catchError(
+    (e, s) => 'Parse $url1 body: $e',
+    () => jsonDecode(response.body)['id'] as String,
+  ).bind(e);
+
+  return await Either.catchFutureError(
+    (e, s) => 'Get $url2: $e',
+    () async {
+      final uri = Uri.parse('$url2?id=$id');
+      return http.get(uri);
+    },
+  ).bind(e);
+});
 ```
 
 #### 1.3. Extension methods
