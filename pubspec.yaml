@@ -3,7 +3,7 @@ description: >
   Either monad for Dart language and Flutter framework.
   Type-safe error handling, railway oriented programming.
   Supports Monad comprehension, async map, async flatMap.
-version: 1.0.0-beta03
+version: 1.0.0-beta04
 homepage: https://github.com/hoc081098/dart_either.git
 repository: https://github.com/hoc081098/dart_either.git
 issue_tracker: https://github.com/hoc081098/dart_either/issues
