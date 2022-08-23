@@ -375,10 +375,7 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
 
       final response = await Either.catchFutureError(
         toAsyncError,
-        () async {
-          await delay(500);
-          return http.get(uri);
-        },
+        () => http.get(uri),
       ).bind(e);
 
       e.ensure(
