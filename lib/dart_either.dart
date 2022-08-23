@@ -4,7 +4,7 @@
 /// [Either] is a type that represents either [Right] (usually represent a "desired" value)
 /// or [Left] (usually represent a "undesired" value or error value).
 ///
-/// [Elm Result](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Result).
+/// [Elm Result](https://package.elm-lang.org/packages/elm-lang/core/5.1.1/Result).
 /// [Haskell Data.Either](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Either.html).
 /// [Rust Result](https://doc.rust-lang.org/std/result/enum.Result.html).
 ///
