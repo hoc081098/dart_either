@@ -334,3 +334,10 @@ Either<String, int> right = 2.right<String>();
 Please file feature requests and bugs at the [issue tracker][tracker].
 
 [tracker]: https://github.com/hoc081098/dart_either/issues
+
+## License
+```
+MIT License
+
+Copyright (c) 2021-2022 Petrus Nguyễn Thái Học
+```
