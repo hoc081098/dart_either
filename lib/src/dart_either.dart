@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
 
-import '../dart_either.dart';
 import 'binding.dart';
 import 'extensions.dart';
 import 'utils/semaphore.dart';
