@@ -265,6 +265,30 @@ Either<String, BuiltList<Uri>> urisEither = Either.traverse(
 - [T.left](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherObjectExtension/left.html)
 - [T.right](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherObjectExtension/right.html)
 
+```dart
+/// Stream.toEitherStream
+Stream<int> genStream() async* {
+  for (var i = 0; i < 5; i++) {
+    yield i;
+  }
+  throw Exception('Fatal');
+}
+Stream<Either<String, int>> eitherStream = genStream().toEitherStream((e, s) => 'Error: $e');
+eitherStream.listen(print);
+
+
+/// Future.toEitherFuture
+Future<Either<Object, int>> f1 = Future<int>.error('An error').toEitherFuture((e, s) => e);
+Future<Either<Object, int>> f2 = Future<int>.value(1).toEitherFuture((e, s) => e);
+await f1; // Left('An error')
+await f2; // Right(1)
+
+
+/// T.left, T.right
+Either<int, String> left = 1.left<String>();
+Either<String, int> right = 2.right<String>();
+```
+
 ### 2. Operations
 
 ## Reference
