@@ -43,9 +43,10 @@ dependencies:
   dart_either: ^1.0.0
 ```
 
-## Documentation
+## Documentation & example
 
-https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/dart_either-library.html
+ - Documentation: https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/dart_either-library.html
+ - Example: https://github.com/hoc081098/dart_either/tree/master/example/lib
 
 ## Either monad
 
