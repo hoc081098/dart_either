@@ -395,9 +395,9 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
 
 Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
 
-Either<AsyncError, BuiltList<User>> result = await Either.futureBinding<AsyncError, BuiltList<User>>((e) async {
+Either<AsyncError, BuiltList<User>> result = await Either.futureBinding((e) async {
   final dynamic json = await httpGetAsEither('https://jsonplaceholder.typicode.com/users').bind(e);
-  final BuiltList<User> users = await toUsers(json as List).bind(e);
+  final BuiltList<User> users = toUsers(json as List).bind(e);
   return users;
 });
 ```
