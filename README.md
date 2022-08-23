@@ -127,18 +127,18 @@ dependencies:
   dart_either: ^1.0.0
 ```
 
-## Use - [Documentation](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/dart_either-library.html)
+## Use - [Documentation](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/dart_either-library.html)
 
 ### 1. Creation
 
 #### 1.1. Factory constructors
 
-- [Either.left](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.left.html)
-- [Either.right](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.right.html)
-- [Either.binding](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.binding.html)
-- [Either.catchError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/Either.catchError.html)
-- [Left](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Left/Left.html)
-- [Right](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Right-class.html)
+- [Either.left](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Either/Either.left.html)
+- [Either.right](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Either/Either.right.html)
+- [Either.binding](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Either/Either.binding.html)
+- [Either.catchError](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Either/Either.catchError.html)
+- [Left](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Left/Left.html)
+- [Right](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Right-class.html)
 
 ```dart
 // Left('Left value')
@@ -163,14 +163,14 @@ Either.catchError(
 
 #### 1.2. Static methods
 
-- [Either.catchFutureError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/catchFutureError.html)
-- [Either.catchStreamError](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/catchStreamError.html)
-- [Either.fromNullable](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/fromNullable.html)
-- [Either.futureBinding](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/futureBinding.html)
-- [Either.parSequenceN](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/parSequenceN.html)
-- [Either.parTraverseN](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/parTraverseN.html)
-- [Either.sequence](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/sequence.html)
-- [Either.traverse](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/Either/traverse.html)
+- [Either.catchFutureError](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Either/catchFutureError.html)
+- [Either.catchStreamError](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Either/catchStreamError.html)
+- [Either.fromNullable](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Either/fromNullable.html)
+- [Either.futureBinding](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Either/futureBinding.html)
+- [Either.parSequenceN](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Either/parSequenceN.html)
+- [Either.parTraverseN](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Either/parTraverseN.html)
+- [Either.sequence](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Either/sequence.html)
+- [Either.traverse](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/Either/traverse.html)
 
 ```dart
 import 'package:http/http.dart' as http;
@@ -260,10 +260,10 @@ Either<String, BuiltList<Uri>> urisEither = Either.traverse(
 ```
 
 #### 1.3. Extension methods
-- [Stream.toEitherStream](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherStreamExtension/toEitherStream.html)
-- [Future.toEitherFuture](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherFutureExtension/toEitherFuture.html)
-- [T.left](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherObjectExtension/left.html)
-- [T.right](https://pub.dev/documentation/dart_either/1.0.0-beta02/dart_either/ToEitherObjectExtension/right.html)
+- [Stream.toEitherStream](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/ToEitherStreamExtension/toEitherStream.html)
+- [Future.toEitherFuture](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/ToEitherFutureExtension/toEitherFuture.html)
+- [T.left](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/ToEitherObjectExtension/left.html)
+- [T.right](https://pub.dev/documentation/dart_either/1.0.0-beta04/dart_either/ToEitherObjectExtension/right.html)
 
 ```dart
 /// Stream.toEitherStream
