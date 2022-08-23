@@ -300,6 +300,29 @@ Either<String, int> right = 2.right<String>();
 
 ### 2. Operations
 
+- [isLeft](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/isLeft.html)
+- [isRight](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/isRight.html)
+- [fold](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/fold.html)
+- [foldLeft](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/foldLeft.html)
+- [swap](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/swap.html)
+- [tapLeft](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/tapLeft.html)
+- [tap](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/tap.html)
+- [map](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/map.html)
+- [mapLeft](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/mapLeft.html)
+- [flatMap](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/flatMap.html)
+- [bimap](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/bimap.html)
+- [exists](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/exists.html)
+- [all](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/all.html)
+- [getOrElse](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/getOrElse.html)
+- [orNull](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/orNull.html)
+- [getOrHandle](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/getOrHandle.html)
+- [findOrNull](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/findOrNull.html)
+- [when](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/when.html)
+- [handleErrorWith](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/handleErrorWith.html)
+- [handleError](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/handleError.html)
+- [redeem](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/redeem.html)
+- [redeemWith](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/redeemWith.html)
+
 ## Reference
 
 - [Functional Error Handling](https://arrow-kt.io/docs/patterns/error_handling/)
