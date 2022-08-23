@@ -322,6 +322,13 @@ Either<String, int> right = 2.right<String>();
 - [handleError](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/handleError.html)
 - [redeem](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/redeem.html)
 - [redeemWith](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/Either/redeemWith.html)
+- [toFuture](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/AsFutureEitherExtension/toFuture.html)
+- [getOrThrow](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/GetOrThrowEitherExtension/getOrThrow.html)
+
+### 3. Extensions on `Future<Either<L, R>>`.
+
+- [thenFlatMapEither](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/AsyncFlatMapFutureExtension/thenFlatMapEither.html)
+- [thenMapEither](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/AsyncMapFutureExtension/thenMapEither.html)
 
 ## Reference
 
