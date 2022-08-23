@@ -781,6 +781,20 @@ void main() {
       );
     });
 
+    test('all', () {
+      expect(rightOf1.all((value) => value > 0), isTrue);
+      expect(rightOf1.all((value) => value > 1), isFalse);
+
+      expect(
+        leftOf1.all((value) => value > 0),
+        isTrue,
+      );
+      expect(
+        leftOf1.all((value) => value > 1),
+        isTrue,
+      );
+    });
+
     test('getOrElse', () {
       expect(rightOf1.getOrElse(() => 2), 1);
       expect(leftOf1.getOrElse(() => 2), 2);
@@ -794,6 +808,14 @@ void main() {
     test('getOrHandle', () {
       expect(rightOf1.getOrHandle((l) => l + 1), 1);
       expect(leftOf1.getOrHandle((l) => l + 1), 2);
+    });
+
+    test('findOrNull', () {
+      expect(leftOf1.findOrNull((value) => value > 0), isNull);
+      expect(leftOf1.findOrNull((value) => value > 2), isNull);
+
+      expect(rightOf1.findOrNull((value) => value > 0), 1);
+      expect(rightOf1.findOrNull((value) => value > 2), isNull);
     });
 
     test('when', () {
@@ -813,6 +835,26 @@ void main() {
       expect(
         rightOf1.when(ifLeft: (value) => value, ifRight: (value) => null),
         isNull,
+      );
+    });
+
+    test('handleErrorWith', () {
+      expect(
+        leftOf1.handleErrorWith<String>((value) => value.right()),
+        Right<String, int>(1),
+      );
+      expect(
+        leftOf1.handleErrorWith<String>((value) => value.toString().left()),
+        Left<String, int>('1'),
+      );
+
+      expect(
+        rightOf1.handleErrorWith<String>((value) => value.right()),
+        rightOf1,
+      );
+      expect(
+        rightOf1.handleErrorWith<String>((value) => value.toString().left()),
+        rightOf1,
       );
     });
 

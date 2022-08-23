@@ -4,6 +4,7 @@ import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
 
 import 'binding.dart';
+import 'extensions.dart';
 import 'utils/semaphore.dart';
 
 /// Map [error] and [stackTrace] to a [T] value.
@@ -668,6 +669,22 @@ abstract class Either<L, R> {
         ifRight: predicate,
       );
 
+  /// Returns `true` if [Left] or returns the result of the application of
+  /// the given predicate to the [Right] value.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).all((v) => v > 10); // Result: true
+  /// Right<int, int>(7).all((v) => v > 10);  // Result: false
+  ///
+  /// Left<int, int>(12).all((v) => v > 10);  // Result: true
+  /// Left<int, int>(12).all((v) => v < 10);  // Result: true
+  /// ```
+  bool all(bool Function(R value) predicate) => _foldInternal(
+        ifLeft: _const(true),
+        ifRight: predicate,
+      );
+
   /// Returns the value from this [Right] or the given argument if this is a [Left].
   ///
   /// ### Example
@@ -705,6 +722,17 @@ abstract class Either<L, R> {
         ifRight: _identity,
       );
 
+  /// Returns the [Right.value] matching the given [predicate],
+  /// or `null` if this is a [Left] or [Right.value] does not match.
+  R? findOrNull(bool Function(R value) predicate) {
+    if (isLeft) {
+      return null;
+    }
+    assert(isRight);
+    final value = _unionValue as R;
+    return predicate(value) ? value : null;
+  }
+
   /// Applies [ifLeft] if this is a [Left] or [ifRight] if this is a [Right].
   ///
   /// This is quite similar to [fold], but with [fold], arguments will
@@ -736,6 +764,22 @@ abstract class Either<L, R> {
       return ifRight(this as Right<L, R>);
     }
   }
+
+  /// Applies the given function [f] if this is a [Left], otherwise returns this if this is a [Right].
+  /// This is like [flatMap] for the exception.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).handleErrorWith((v) => (v + 1).right<String>());   // Right(12)
+  /// Right<int, int>(12).handleErrorWith((v) => (v + 1).toString().left()); // Right(12)
+  /// Left<int, int>(12).handleErrorWith((v) => (v + 1).right<String>());    // Right(13)
+  /// Left<int, int>(12).handleErrorWith((v) => (v + 1).toString().left());  // Left('13')
+  /// ```
+  Either<C, R> handleErrorWith<C>(Either<C, R> Function(L value) f) =>
+      _foldInternal(
+        ifLeft: f,
+        ifRight: (v) => v.right<C>(),
+      );
 }
 
 /// The left side of the disjoint union, as opposed to the [Right] side.
