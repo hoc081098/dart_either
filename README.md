@@ -330,6 +330,38 @@ Either<String, int> right = 2.right<String>();
 - [thenFlatMapEither](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/AsyncFlatMapFutureExtension/thenFlatMapEither.html)
 - [thenMapEither](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/AsyncMapFutureExtension/thenMapEither.html)
 
+```dart
+Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
+  Either<AsyncError, dynamic> toJson(http.Response response) =>
+      response.statusCode >= 200 && response.statusCode < 300
+          ? Either<AsyncError, dynamic>.catchError(
+              toAsyncError,
+              () => jsonDecode(response.body),
+            )
+          : AsyncError(
+              HttpException(
+                'statusCode=${response.statusCode}, body=${response.body}',
+                uri: response.request?.url,
+              ),
+              StackTrace.current,
+            ).left<dynamic>();
+
+  Future<Either<AsyncError, http.Response>> httpGet(Uri uri) =>
+      Either.catchFutureError(toAsyncError, () => http.get(uri));
+
+  final uri =
+      Future.value(Either.catchError(toAsyncError, () => Uri.parse(uriString)));
+
+  return uri.thenFlatMapEither(httpGet).thenFlatMapEither<dynamic>(toJson);
+}
+
+Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
+
+Either<AsyncError, BuiltList<User>> result = httpGetAsEither('https://jsonplaceholder.typicode.com/users')
+    .thenMapEither((dynamic json) => json as List)
+    .thenFlatMapEither(toUsers);
+```
+
 ## Reference
 
 - [Functional Error Handling](https://arrow-kt.io/docs/patterns/error_handling/)
