@@ -34,6 +34,19 @@ but they only use `Either` class :). So I decided to write, port and adapt `Eith
   and supports `async map` and `async flatMap` hiding the boilerplate of working with asynchronous computations `Future<Either<L, R>>`.
 - Very **lightweight** and **simple** library (compare to [dartz](https://pub.dev/packages/dartz)).
 
+## Getting started
+
+In your Dart/Flutter project, add the dependency to your `pubspec.yaml`
+
+```yaml
+dependencies:
+  dart_either: ^1.0.0
+```
+
+## Documentation
+
+https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/dart_either-library.html
+
 ## Either monad
 
 `Either` is a type that represents either `Right` (usually represent a "desired" value)
@@ -116,15 +129,6 @@ right.fold(
 
 /// Convert to nullable value
 final nullableValue = right.orNull(); // 10
-```
-
-## Getting started
-
-In your Dart/Flutter project, add the dependency to your `pubspec.yaml`
-
-```yaml
-dependencies:
-  dart_either: ^1.0.0
 ```
 
 ## Use - [Documentation](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/dart_either-library.html)
