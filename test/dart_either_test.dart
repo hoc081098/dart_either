@@ -667,6 +667,38 @@ void main() {
       expect(leftOf1.swap(), rightOf1);
     });
 
+    test('tapLeft', () {
+      Object? value;
+      expect(
+        rightOf1.tapLeft((v) => value = v),
+        rightOf1,
+      );
+      expect(value, isNull);
+
+      value = null;
+      expect(
+        leftOf1.tapLeft((v) => value = v),
+        leftOf1,
+      );
+      expect(value, 1);
+    });
+
+    test('tap', () {
+      Object? value;
+      expect(
+        rightOf1.tap((v) => value = v),
+        rightOf1,
+      );
+      expect(value, 1);
+
+      value = null;
+      expect(
+        leftOf1.tap((v) => value = v),
+        leftOf1,
+      );
+      expect(value, isNull);
+    });
+
     test('map', () {
       expect(
         rightOf1.map((value) => value + 1),

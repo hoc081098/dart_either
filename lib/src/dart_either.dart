@@ -547,6 +547,36 @@ abstract class Either<L, R> {
         ifRight: (r) => Either.left(r),
       );
 
+  /// The given function is applied as a fire and forget effect if this is a [Left].
+  /// When applied the result is ignored and the original [Either] value is returned.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).tapLeft((_) => println('flower')); // Result: Right(12)
+  /// Left<int, int>(12).tapLeft((_) => println('flower'));  // Result: prints 'flower' and returns: Left(12)
+  /// ```
+  Either<L, R> tapLeft(void Function(L value) f) {
+    if (isLeft) {
+      f(_unionValue as L);
+    }
+    return this;
+  }
+
+  /// The given function is applied as a fire and forget effect if this is a [Right].
+  /// When applied the result is ignored and the original [Either] value is returned.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).tapLeft((_) => println('flower')); // Result: prints 'flower' and returns: Right(12)
+  /// Left<int, int>(12).tapLeft((_) => println('flower'));  // Result: Left(12)
+  /// ```
+  Either<L, R> tap(void Function(R value) f) {
+    if (isRight) {
+      f(_unionValue as R);
+    }
+    return this;
+  }
+
   /// The given function is applied if this is a `Right`.
   ///
   /// ### Example
