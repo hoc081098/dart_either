@@ -363,6 +363,48 @@ Either<AsyncError, BuiltList<User>> result = await httpGetAsEither('https://json
     .thenFlatMapEither(toUsers);
 ```
 
+### 4. Monad comprehensions
+
+You can use `Monad comprehensions` via `Either.binding` and `Either.futureBinding`.
+
+```dart
+Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
+    Either.futureBinding<AsyncError, dynamic>((e) async {
+      final uri =
+          Either.catchError(toAsyncError, () => Uri.parse(uriString)).bind(e);
+
+      final response = await Either.catchFutureError(
+        toAsyncError,
+        () async {
+          await delay(500);
+          return http.get(uri);
+        },
+      ).bind(e);
+
+      e.ensure(
+        response.statusCode >= 200 && response.statusCode < 300,
+        () => AsyncError(
+          HttpException(
+            'statusCode=${response.statusCode}, body=${response.body}',
+            uri: response.request?.url,
+          ),
+          StackTrace.current,
+        ),
+      );
+
+      return Either<AsyncError, dynamic>.catchError(
+          toAsyncError, () => jsonDecode(response.body)).bind(e);
+    });
+
+Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
+
+Either<AsyncError, BuiltList<User>> result = await Either.futureBinding<AsyncError, BuiltList<User>>((e) async {
+  final dynamic json = await httpGetAsEither('https://jsonplaceholder.typicode.com/users').bind(e);
+  final BuiltList<User> users = await toUsers(json as List).bind(e);
+  return users;
+});
+```
+
 ## Reference
 
 - [Functional Error Handling](https://arrow-kt.io/docs/patterns/error_handling/)
