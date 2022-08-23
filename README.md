@@ -175,6 +175,7 @@ Either.catchError(
 ```dart
 import 'package:http/http.dart' as http;
 
+/// Either.catchFutureError
 Future<Either<String, http.Response>> eitherFuture = Either.catchFutureError(
   (e, s) => 'Error: $e',
   () async {
@@ -185,6 +186,7 @@ Future<Either<String, http.Response>> eitherFuture = Either.catchFutureError(
 (await eitherFuture).fold(ifLeft: print, ifRight: print);
 
 
+/// Either.catchStreamError
 Stream<int> genStream() async* {
   for (var i = 0; i < 5; i++) {
     yield i;
@@ -198,11 +200,11 @@ Stream<Either<String, int>> eitherStream = Either.catchStreamError(
 eitherStream.listen(print);
 
 
-// Left(null)
-Either.fromNullable<int>(null);
-// Right(1)
-Either.fromNullable<int>(1);
+/// Either.fromNullable
+Either.fromNullable<int>(null); // Left(null)
+Either.fromNullable<int>(1);    // Right(1)
 
+/// Either.futureBinding
 String url1 = 'url1';
 String url2 = 'url2';
 Either.futureBinding<String, http.Response>((e) async {
