@@ -56,6 +56,9 @@ or `Left` (usually represent a "undesired" value or error value).
 - [Haskell Data.Either](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Either.html).
 - [Rust Result](https://doc.rust-lang.org/std/result/enum.Result.html).
 
+<details>
+  <summary>Click to expand</summary>
+
 In day-to-day programming, it is fairly common to find ourselves writing functions that can fail.
 For instance, querying a service may result in a connection issue, or some unexpected `JSON` response.
 
@@ -130,6 +133,8 @@ right.fold(
 /// Convert to nullable value
 final nullableValue = right.orNull(); // 10
 ```
+
+</details>
 
 ## Use - [Documentation](https://pub.dev/documentation/dart_either/1.0.0-beta05/dart_either/dart_either-library.html)
 
