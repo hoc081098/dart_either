@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
 
+import '../dart_either.dart';
 import 'binding.dart';
 import 'extensions.dart';
 import 'utils/semaphore.dart';
@@ -765,6 +766,8 @@ abstract class Either<L, R> {
     }
   }
 
+  /// Handle any error, potentially recovering from it, by mapping it to an [Either] value.
+  ///
   /// Applies the given function [f] if this is a [Left], otherwise returns this if this is a [Right].
   /// This is like [flatMap] for the exception.
   ///
@@ -779,6 +782,42 @@ abstract class Either<L, R> {
       _foldInternal(
         ifLeft: f,
         ifRight: (v) => v.right<C>(),
+      );
+
+  /// Handle any error, potentially recovering from it, by mapping it to an [Either] value.
+  ///
+  /// Applies the given function [f] if this is a [Left] and return the result wrapped in a [Right],
+  /// otherwise returns this if this is a [Right].
+  Either<L, R> handleError(R Function(L value) f) => _foldInternal(
+        ifLeft: (v) => f(v).right(),
+        ifRight: (v) => v.right(),
+      );
+
+  /// Redeem an [Either] to an [Either] by resolving the error **or** mapping the value [R] to [C].
+  ///
+  /// [redeem] is derived from [map] and [handleError].
+  /// This is functionally equivalent to `map(rightOperation).handleError(leftOperation)`.
+  Either<L, C> redeem<C>({
+    required C Function(L value) leftOperation,
+    required C Function(R value) rightOperation,
+  }) =>
+      _foldInternal(
+        ifLeft: (v) => leftOperation(v).right(),
+        ifRight: (v) => rightOperation(v).right(),
+      );
+
+  /// Redeem an [Either] to an [Either] by resolving the error
+  /// **or** mapping the value [R] to [C] **with** an [Either].
+  ///
+  /// [redeemWith] is derived from [flatMap] and [handleErrorWith].
+  /// This is functionally equivalent to `flatMap(rightOperation).handleErrorWith(leftOperation)`.
+  Either<C, D> redeemWith<C, D>({
+    required Either<C, D> Function(L value) leftOperation,
+    required Either<C, D> Function(R value) rightOperation,
+  }) =>
+      _foldInternal(
+        ifLeft: leftOperation,
+        ifRight: rightOperation,
       );
 }
 

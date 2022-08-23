@@ -858,6 +858,61 @@ void main() {
       );
     });
 
+    test('handleError', () {
+      expect(rightOf1.handleError((value) => throw value), rightOf1);
+      expect(leftOf1.handleError((value) => value + 1), Right<int, int>(2));
+    });
+
+    test('redeem', () {
+      expect(
+        rightOf1.redeem(
+          leftOperation: (v) => v.toString(),
+          rightOperation: (v) => v.toString(),
+        ),
+        Right<String, String>('1'),
+      );
+
+      expect(
+        leftOf1.redeem(
+          leftOperation: (v) => v.toString(),
+          rightOperation: (v) => v.toString(),
+        ),
+        Right<String, String>('1'),
+      );
+    });
+
+    test('redeemWith', () {
+      expect(
+        rightOf1.redeemWith(
+          leftOperation: (v) => throw v,
+          rightOperation: (v) => v.toString().right<String>(),
+        ),
+        Right<String, String>('1'),
+      );
+      expect(
+        rightOf1.redeemWith(
+          leftOperation: (v) => throw v,
+          rightOperation: (v) => v.toString().left<String>(),
+        ),
+        Left<String, String>('1'),
+      );
+
+      expect(
+        leftOf1.redeemWith(
+          leftOperation: (v) => v.toString().right<String>(),
+          rightOperation: (v) => throw v,
+        ),
+        Right<String, String>('1'),
+      );
+      expect(
+        leftOf1.redeemWith(
+          leftOperation: (v) => v.toString().left<String>(),
+          rightOperation: (v) => throw v,
+        ),
+        Left<String, String>('1'),
+      );
+    });
+
     test('toFuture', () async {
       await expectLater(rightOf1.toFuture(), completion(1));
       await expectLater(leftOf1.toFuture(), throwsA(1));
