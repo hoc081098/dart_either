@@ -204,6 +204,7 @@ eitherStream.listen(print);
 Either.fromNullable<int>(null); // Left(null)
 Either.fromNullable<int>(1);    // Right(1)
 
+
 /// Either.futureBinding
 String url1 = 'url1';
 String url2 = 'url2';
@@ -229,6 +230,33 @@ Either.futureBinding<String, http.Response>((e) async {
     },
   ).bind(e);
 });
+
+
+/// Either.sequence
+List<Either<String, http.Response>> eithers = await Future.wait(
+  [1, 2, 3, 4, 5].map((id) {
+    final url = 'url?id=$id';
+
+    return Either.catchFutureError(
+      (e, s) => 'Get $url: $e',
+      () async {
+        final uri = Uri.parse(url);
+        return http.get(uri);
+      },
+    );
+  }),
+);
+Either<String, BuiltList<http.Response>> result = Either.sequence(eithers);
+
+
+/// Either.traverse
+Either<String, BuiltList<Uri>> urisEither = Either.traverse(
+  ['url1', 'url2', '::invalid::'],
+  (String uriString) => Either.catchError(
+    (e, s) => 'Failed to parse $uriString: $e',
+    () => Uri.parse(uriString),
+  ),
+); // Left(FormatException('Failed to parse ::invalid:::...'))
 ```
 
 #### 1.3. Extension methods
