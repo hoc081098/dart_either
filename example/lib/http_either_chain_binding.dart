@@ -10,7 +10,20 @@ import 'package:tuple/tuple.dart';
 
 typedef UserAndPosts = Tuple2<User, BuiltList<Post>>;
 
-AsyncError toAsyncError(Object e, StackTrace s) => AsyncError(e, s);
+class AppError {
+  final Object error;
+  final StackTrace stackTrace;
+  final String message;
+
+  AppError(this.error, this.stackTrace, this.message);
+
+  @override
+  String toString() =>
+      'AppError {\n    error: $error, \n    stackTrace: $stackTrace, \n    message: $message\n}';
+}
+
+AppError Function(Object, StackTrace) toAppError(String message) =>
+    (e, s) => AppError(e, s, message);
 
 //------------------------------------MODELS------------------------------------
 
@@ -31,9 +44,9 @@ class User {
         username: json['username'] as String,
       );
 
-  static Either<AsyncError, User> fromJsonAsEither(dynamic json) =>
-      Either.catchError(
-          toAsyncError, () => User.fromJson(json as Map<String, dynamic>));
+  static Either<AppError, User> fromJsonAsEither(dynamic json) =>
+      Either.catchError(toAppError('User.fromJsonAsEither: $json'),
+          () => User.fromJson(json as Map<String, dynamic>));
 
   @override
   String toString() => 'User{id: $id, name: $name, username: $username}';
@@ -56,83 +69,84 @@ class Post {
         userId: json['userId'] as int,
       );
 
-  static Either<AsyncError, Post> fromJsonAsEither(dynamic json) =>
-      Either.catchError(
-          toAsyncError, () => Post.fromJson(json as Map<String, dynamic>));
+  static Either<AppError, Post> fromJsonAsEither(dynamic json) =>
+      Either.catchError(toAppError('Post.fromJsonAsEither: $json'),
+          () => Post.fromJson(json as Map<String, dynamic>));
 
   @override
   String toString() => 'Post{id: $id, userId: $userId, title: $title}';
 }
 
-Either<AsyncError, BuiltList<User>> toUsers(dynamic list) =>
-    Either.traverse<AsyncError, User, dynamic>(
+Either<AppError, BuiltList<User>> toUsers(dynamic list) =>
+    Either.traverse<AppError, User, dynamic>(
       list as List,
       User.fromJsonAsEither,
     );
 
-Either<AsyncError, BuiltList<Post>> toPosts(dynamic list) =>
-    Either.traverse<AsyncError, Post, dynamic>(
+Either<AppError, BuiltList<Post>> toPosts(dynamic list) =>
+    Either.traverse<AppError, Post, dynamic>(
       list as List,
       Post.fromJsonAsEither,
     );
 
 //-------------------------------------HTTP-------------------------------------
 
-Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
-    Either.futureBinding<AsyncError, dynamic>((e) async {
-      final uri =
-          Either.catchError(toAsyncError, () => Uri.parse(uriString)).bind(e);
+Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
+    Either.futureBinding<AppError, dynamic>((e) async {
+      final uri = Either.catchError(
+          toAppError('Parse $uriString'), () => Uri.parse(uriString)).bind(e);
 
       final response = await Either.catchFutureError(
-        toAsyncError,
+        toAppError('http.get($uri)'),
         () async {
           await delay(500);
           return http.get(uri);
         },
       ).bind(e);
 
+      final statusCode = response.statusCode;
+      final body = response.body;
+
       e.ensure(
-        response.statusCode >= 200 && response.statusCode < 300,
-        () => AsyncError(
+        statusCode >= 200 && statusCode < 300,
+        () => AppError(
           HttpException(
-            'statusCode=${response.statusCode}, body=${response.body}',
+            'statusCode=$statusCode, body=${body}',
             uri: response.request?.url,
           ),
           StackTrace.current,
+          'statusCode: $statusCode',
         ),
       );
 
-      return Either<AsyncError, dynamic>.catchError(
-          toAsyncError, () => jsonDecode(response.body)).bind(e);
+      return Either<AppError, dynamic>.catchError(
+          toAppError('jsonDecode: $body'), () => jsonDecode(body)).bind(e);
     });
 
 //------------------------------------EXAMPLE-----------------------------------
 
 void main() async {
-  Future<Either<AsyncError, BuiltList<UserAndPosts>>> getPosts(
+  Future<Either<AppError, BuiltList<UserAndPosts>>> getPosts(
     BuiltList<User> users,
   ) =>
       Either.parTraverseN(
         users,
-        (User user) => () {
-          print('Get posts for $user...');
+        (User user) => () => Either.futureBinding((e) async {
+              print('Get posts for $user...');
 
-          return Either.futureBinding((e) async {
-            final dynamic list = await httpGetAsEither(
-                    'https://jsonplaceholder.typicode.com/posts?userId=${user.id}')
-                .bind(e);
+              final dynamic list = await httpGetAsEither(
+                      'https://jsonplaceholder.typicode.com/posts?userId=${user.id}')
+                  .bind(e);
 
-            final posts = toPosts(list).bind(e);
+              final posts = toPosts(list).bind(e);
 
-            return Tuple2(user, posts);
-          });
-        },
+              return Tuple2(user, posts);
+            }),
         3,
       );
 
   final result =
-      await Either.futureBinding<AsyncError, BuiltList<UserAndPosts>>(
-          (e) async {
+      await Either.futureBinding<AppError, BuiltList<UserAndPosts>>((e) async {
     final dynamic list =
         await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
             .bind(e);
