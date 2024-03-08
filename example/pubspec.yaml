@@ -11,7 +11,7 @@ dependencies:
   built_collection: ^5.1.1
   http: ^1.0.0
   rxdart_ext: ^0.2.5
-  lints: ^2.0.0
+  lints: ^3.0.0
   dart_either:
 
 dependency_overrides:
