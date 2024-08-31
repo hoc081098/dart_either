@@ -725,6 +725,7 @@ sealed class Either<L, R> {
       };
 
   /// Applies [ifLeft] if this is a [Left] or [ifRight] if this is a [Right].
+  /// Since Dart 3.0.0, you can use "switch expression" instead of this method.
   ///
   /// This is quite similar to [fold], but with [fold], arguments will
   /// be called with [Right.value] or [Left.value], while the arguments of [when]
@@ -748,12 +749,8 @@ sealed class Either<L, R> {
     required C Function(Left<L, R> left) ifLeft,
     required C Function(Right<L, R> right) ifRight,
   }) {
-    if (isLeft) {
-      return ifLeft(this as Left<L, R>);
-    } else {
-      assert(isRight);
-      return ifRight(this as Right<L, R>);
-    }
+    final self = this;
+    return switch (self) { Left() => ifLeft(self), Right() => ifRight(self) };
   }
 
   /// Handle any error, potentially recovering from it, by mapping it to an [Either] value.
