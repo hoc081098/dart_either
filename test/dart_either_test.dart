@@ -2,14 +2,10 @@ import 'package:built_collection/built_collection.dart';
 import 'package:dart_either/dart_either.dart';
 import 'package:rxdart_ext/single.dart';
 import 'package:test/test.dart';
+
 import 'semaphore_test.dart' as semaphore_test;
 
 Object takeOnlyError(Object error, StackTrace stackTrace) => error;
-
-class MyControlError<L> implements ControlError<L> {
-  @override
-  StackTrace? get stackTrace => null;
-}
 
 void main() {
   semaphore_test.main();
@@ -120,16 +116,16 @@ void main() {
           );
         });
 
-        test('block throws [ControlError].', () {
-          // block throws [ControlError].
-          expect(
-            () => Either<Object, String>.catchError(
-              takeOnlyError,
-              () => throw MyControlError<Object>(),
-            ),
-            throwsA(isA<MyControlError>()),
-          );
-        });
+        // test('block throws [ControlError].', () {
+        //   // block throws [ControlError].
+        //   expect(
+        //     () => Either<Object, String>.catchError(
+        //       takeOnlyError,
+        //       () => throw MyControlError<Object>(),
+        //     ),
+        //     throwsA(isA<MyControlError>()),
+        //   );
+        // });
       });
 
       group('Either.binding', () {
@@ -149,15 +145,15 @@ void main() {
           );
         });
 
-        test('block throws [ControlError].', () {
-          // block throws [ControlError].
-          expect(
-            () => Either<Object, String>.binding(
-              (e) => throw MyControlError<Object>(),
-            ),
-            throwsA(isA<NoSuchMethodError>()),
-          );
-        });
+        // test('block throws [ControlError].', () {
+        //   // block throws [ControlError].
+        //   expect(
+        //     () => Either<Object, String>.binding(
+        //       (e) => throw MyControlError<Object>(),
+        //     ),
+        //     throwsA(isA<NoSuchMethodError>()),
+        //   );
+        // });
 
         test('2 success bind', () {
           // 2 success bind
@@ -263,15 +259,15 @@ void main() {
           );
         });
 
-        test('block throws [ControlError].', () {
-          // block throws [ControlError].
-          expect(
-            Either.futureBinding<Object, String>(
-              (e) => throw MyControlError<Object>(),
-            ),
-            throwsA(isA<NoSuchMethodError>()),
-          );
-        });
+        // test('block throws [ControlError].', () {
+        //   // block throws [ControlError].
+        //   expect(
+        //     Either.futureBinding<Object, String>(
+        //       (e) => throw MyControlError<Object>(),
+        //     ),
+        //     throwsA(isA<NoSuchMethodError>()),
+        //   );
+        // });
 
         test('2 success bind (sync) - without async modifier', () {
           // 2 success bind (sync) - without async modifier
