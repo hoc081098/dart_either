@@ -19,7 +19,7 @@ jobs:
 
     strategy:
       matrix:
-        sdk: [ beta, stable, 2.15.0, 2.12.0 ]
+        sdk: [ beta, stable, 3.0.0 ]
 
     steps:
       - uses: actions/checkout@v4
@@ -59,3 +59,7 @@ jobs:
         run: dart pub global run coverage:format_coverage --lcov --in=coverage.json --out=lcov.info --report-on=lib
 
       - uses: codecov/codecov-action@v4.1.0
+        with:
+          fail_ci_if_error: true # optional (default = false)
+          token: ${{ secrets.CODECOV_TOKEN }} # required
+          verbose: true # optional (default = false)
