@@ -71,10 +71,8 @@ T Function(Object?) _const<T>(T t) => (_) => t;
 /// we fix the left type parameter and leave the right one free. So, the map and flatMap methods are right-biased.
 @immutable
 @sealed
-abstract class Either<L, R> {
+sealed class Either<L, R> {
   const Either._();
-
-  Object? get _unionValue;
 
   @pragma('vm:always-consider-inlining')
   @pragma('vm:prefer-inline')
@@ -82,14 +80,11 @@ abstract class Either<L, R> {
   C _foldInternal<C>({
     required C Function(L value) ifLeft,
     required C Function(R value) ifRight,
-  }) {
-    if (isLeft) {
-      return ifLeft(_unionValue as L);
-    } else {
-      assert(isRight);
-      return ifRight(_unionValue as R);
-    }
-  }
+  }) =>
+      switch (this) {
+        Left(value: final l) => ifLeft(l),
+        Right(value: final r) => ifRight(r),
+      };
 
   // -----------------------------------------------------------------------------
   //
@@ -432,11 +427,11 @@ abstract class Either<L, R> {
     final result = ListBuilder<R>();
 
     for (final either in values) {
-      if (either.isLeft) {
-        return Either<L, BuiltList<R>>.left(either._unionValue as L);
-      } else {
-        assert(either.isRight);
-        result.add(either._unionValue as R);
+      switch (either) {
+        case Left(value: final l):
+          return Either<L, BuiltList<R>>.left(l);
+        case Right(value: final r):
+          result.add(r);
       }
     }
 
@@ -557,8 +552,8 @@ abstract class Either<L, R> {
   /// Left<int, int>(12).tapLeft((_) => println('flower'));  // Result: prints 'flower' and returns: Left(12)
   /// ```
   Either<L, R> tapLeft(void Function(L value) f) {
-    if (isLeft) {
-      f(_unionValue as L);
+    if (this case Left(value: final value)) {
+      f(value);
     }
     return this;
   }
@@ -572,8 +567,8 @@ abstract class Either<L, R> {
   /// Left<int, int>(12).tapLeft((_) => println('flower'));  // Result: Left(12)
   /// ```
   Either<L, R> tap(void Function(R value) f) {
-    if (isRight) {
-      f(_unionValue as R);
+    if (this case Right(value: final value)) {
+      f(value);
     }
     return this;
   }
@@ -724,14 +719,10 @@ abstract class Either<L, R> {
 
   /// Returns the [Right.value] matching the given [predicate],
   /// or `null` if this is a [Left] or [Right.value] does not match.
-  R? findOrNull(bool Function(R value) predicate) {
-    if (isLeft) {
-      return null;
-    }
-    assert(isRight);
-    final value = _unionValue as R;
-    return predicate(value) ? value : null;
-  }
+  R? findOrNull(bool Function(R value) predicate) => switch (this) {
+        Left() => null,
+        Right(value: final value) => predicate(value) ? value : null,
+      };
 
   /// Applies [ifLeft] if this is a [Left] or [ifRight] if this is a [Right].
   ///
@@ -844,9 +835,6 @@ class Left<L, R> extends Either<L, R> {
 
   @override
   String toString() => 'Either.Left($value)';
-
-  @override
-  L get _unionValue => value;
 }
 
 /// The right side of the disjoint union, as opposed to the [Left] side.
@@ -873,9 +861,6 @@ class Right<L, R> extends Either<L, R> {
 
   @override
   String toString() => 'Either.Right($value)';
-
-  @override
-  R get _unionValue => value;
 }
 
 // -----------------------------------------------------------------------------
@@ -898,7 +883,7 @@ class _MonadComprehensions {
 /// Used for monad comprehensions.
 /// Cannot implement or extend this class.
 @sealed
-abstract class EitherEffect<L> {
+sealed class EitherEffect<L> {
   EitherEffect._();
 
   /// Attempt to get right value of [either].
@@ -910,8 +895,7 @@ abstract class EitherEffect<L> {
 /// Error thrown by [EitherEffect].
 /// Must not be caught.
 /// Cannot implement or extend this class.
-@sealed
-class ControlError<T> extends Error {
+final class ControlError<T> extends Error {
   final _Token _token;
 
   /// The value inside [Left].

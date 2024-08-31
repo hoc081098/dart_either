@@ -111,7 +111,7 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
         statusCode >= 200 && statusCode < 300,
         () => AppError(
           HttpException(
-            'statusCode=$statusCode, body=${body}',
+            'statusCode=$statusCode, body=$body',
             uri: response.request?.url,
           ),
           StackTrace.current,
