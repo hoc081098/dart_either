@@ -10,7 +10,7 @@ dependencies:
   tuple: ^2.0.0
   built_collection: ^5.1.1
   http: ^1.0.0
-  rxdart_ext: ^0.2.5
+  rxdart_ext: ^0.3.0
   lints: ^2.0.0
   dart_either:
 
