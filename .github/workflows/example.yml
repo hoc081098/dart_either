@@ -33,5 +33,5 @@ jobs:
         run: |
           dart run lib/dart_either_readme.dart
           dart run lib/dart_either_styles.dart
-          dart run /lib/http_example/http_either_chain.dart
-          dart run /lib/http_example/http_either_binding.dart
+          dart run lib/http_example/http_either_chain.dart
+          dart run lib/http_example/http_either_binding.dart
