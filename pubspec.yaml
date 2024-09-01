@@ -7,9 +7,18 @@ version: 2.0.0
 homepage: https://github.com/hoc081098/dart_either.git
 repository: https://github.com/hoc081098/dart_either.git
 issue_tracker: https://github.com/hoc081098/dart_either/issues
+funding:
+  - https://www.buymeacoffee.com/hoc081098
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
+
+topics:
+  - hoc081098
+  - functional-programming
+  - fpdart
+  - dartz
+  - either
 
 dependencies:
   meta: ^1.7.0
