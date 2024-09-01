@@ -1,17 +1,16 @@
 name: dart_either_example
 description: dart_either_example
 publish_to: none
-version: 0.1.0
+version: 2.0.0
 
 environment:
-  sdk: '>=2.17.0 <3.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
-  tuple: ^2.0.0
   built_collection: ^5.1.1
   http: ^1.0.0
-  rxdart_ext: ^0.2.5
-  lints: ^2.0.0
+  rxdart_ext: ^0.3.0
+  lints: ^4.0.0
   dart_either:
 
 dependency_overrides:

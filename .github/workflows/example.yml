@@ -31,6 +31,7 @@ jobs:
 
       - name: Run example
         run: |
-          dart run lib/chain_either.dart
-          dart run lib/dart_either_example.dart
-          dart run lib/http_either_chain.dart
+          dart run lib/dart_either_readme.dart
+          dart run lib/dart_either_styles.dart
+          dart run /lib/http_example/http_either_chain.dart
+          dart run /lib/http_example/http_either_binding.dart
