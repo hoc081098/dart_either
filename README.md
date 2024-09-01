@@ -40,7 +40,7 @@ In your Dart/Flutter project, add the dependency to your `pubspec.yaml`
 
 ```yaml
 dependencies:
-  dart_either: ^1.0.0
+  dart_either: ^2.0.0
 ```
 
 ## Documentation & example
@@ -415,7 +415,7 @@ Either<AsyncError, BuiltList<User>> result = await Either.futureBinding((e) asyn
 });
 ```
 
-## Reference
+## References
 
 - [Functional Error Handling](https://arrow-kt.io/docs/patterns/error_handling/)
 - [Monad](https://arrow-kt.io/docs/patterns/monads/)
@@ -428,8 +428,9 @@ Please file feature requests and bugs at the [issue tracker][tracker].
 [tracker]: https://github.com/hoc081098/dart_either/issues
 
 ## License
+
 ```
 MIT License
 
-Copyright (c) 2021-2022 Petrus Nguyễn Thái Học
+Copyright (c) 2021-2024 Petrus Nguyễn Thái Học
 ```
