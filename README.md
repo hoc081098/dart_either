@@ -128,9 +128,21 @@ final flatMap = right.flatMap((a) => Either.right(a + 10)); // Either.Right(20)
 
 /// Pattern matching
 right.fold(
+  ifLeft: (l) => print('Left value: $l'),
+  ifRight: (r) => print('Right value: $r'),
+); // Right: 10
+right.when(
   ifLeft: (l) => print('Left: $l'),
   ifRight: (r) => print('Right: $r'),
-); // Right: 10
+); // Prints Right: Either.Right(10)
+
+// Or use Dart 3.0 switch expression syntax 🤘
+print(
+  switch (right) {
+    Left() => 'Left: $right',
+    Right() => 'Right: $right',
+  },
+); // Prints Right: Either.Right(10)
 
 /// Convert to nullable value
 final nullableValue = right.orNull(); // 10
