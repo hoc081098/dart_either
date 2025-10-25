@@ -27,10 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ); // Prints: Right: Either.Right(10)
   
   // Or use Dart 3.0 switch expressions 🚀
-  print(switch (either) {
-    Left() => 'Left: $either',
-    Right() => 'Right: $either',
-  }); // Prints: Right: Either.Right(10)
+  print(
+    switch (either) {
+      Left() => 'Left: $either',
+      Right() => 'Right: $either',
+    },
+  ); // Prints: Right: Either.Right(10)
   ```
 
 ## [1.0.0] - 2022-08-23
