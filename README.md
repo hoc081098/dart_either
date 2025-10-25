@@ -1,6 +1,6 @@
 # dart_either
 
-**Author: [Petrus Nguyễn Thái Học](https://github.com/hoc081098)**
+# Author: [Petrus Nguyễn Thái Học](https://github.com/hoc081098)
 
 ![Dart CI](https://github.com/hoc081098/dart_either/workflows/Dart%20CI/badge.svg)
 [![Pub](https://img.shields.io/pub/v/dart_either)](https://pub.dev/packages/dart_either)
