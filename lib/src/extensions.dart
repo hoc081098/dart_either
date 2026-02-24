@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:meta/meta.dart';
+
 import 'dart_either.dart';
 
 /// Provide [toEitherStream] extension on [Stream].
@@ -22,6 +24,7 @@ extension ToEitherStreamExtension<R> on Stream<R> {
   /// eitherStream.listen(print); // prints Either.Right(1), Either.Right(2),
   ///                             // Either.Right(3), Either.Right(4),
   /// ```
+  @useResult
   Stream<Either<L, R>> toEitherStream<L>(ErrorMapper<L> errorMapper) =>
       Either.catchStreamError<L, R>(errorMapper, this);
 }
@@ -97,6 +100,7 @@ extension ToEitherObjectExtension<T> on T {
   /// Either<int, Never> e1 = 1.left<Never>();
   /// Either<int, String> e2 = 1.left<String>();
   /// ```
+  @useResult
   Either<T, R> left<R>() => Either<T, R>.left(this);
 
   /// Return a [Right] that contains [this] value.
@@ -107,5 +111,6 @@ extension ToEitherObjectExtension<T> on T {
   /// Either<Never, int> e1 = 1.right<Never>();
   /// Either<String, int> e2 = 1.right<String>();
   /// ```
+  @useResult
   Either<L, T> right<L>() => Either<L, T>.right(this);
 }

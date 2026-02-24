@@ -1,3 +1,4 @@
+
 import 'dart_either.dart';
 
 /// Provide [toFuture] extension on [Either].

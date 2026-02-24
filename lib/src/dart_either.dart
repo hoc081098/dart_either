@@ -205,6 +205,7 @@ sealed class Either<L, R> {
   /// Either.fromNullable<String>(null);        // Result: Left(null)
   /// Either.fromNullable<String>('hoc081098'); // Result: Right('hoc081098')
   /// ```
+  @useResult
   static Either<void, R> fromNullable<R extends Object>(R? value) =>
       value == null ? const Either.left(null) : Either.right(value);
 
@@ -366,6 +367,7 @@ sealed class Either<L, R> {
   ///
   /// eitherStream.listen(print); // prints Either.Left(Exception)
   /// ```
+  @useResult
   static Stream<Either<L, R>> catchStreamError<L, R>(
     ErrorMapper<L> errorMapper,
     Stream<R> stream,
@@ -401,6 +403,7 @@ sealed class Either<L, R> {
   ///   (int i) => i.toString().right(),
   /// );
   /// ```
+  @useResult
   static Either<L, BuiltList<R>> traverse<L, R, T>(
     Iterable<T> values,
     Either<L, R> Function(T value) mapper,
@@ -423,6 +426,7 @@ sealed class Either<L, R> {
   /// Either.sequence<int, String>(
   ///     [1, 2, 3, 4, 5, 6].map((int i) => i.toString().right()));
   /// ```
+  @useResult
   static Either<L, BuiltList<R>> sequence<L, R>(Iterable<Either<L, R>> values) {
     final result = ListBuilder<R>();
 
@@ -538,6 +542,7 @@ sealed class Either<L, R> {
   /// Left<String, Never>('left').swap();   // Result: Right('left')
   /// Right<Never, String>('right').swap(); // Result: Left('right')
   /// ```
+  @useResult
   Either<R, L> swap() => _foldInternal(
         ifLeft: (l) => Either.right(l),
         ifRight: (r) => Either.left(r),
@@ -551,6 +556,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).tapLeft((_) => println('flower')); // Result: Right(12)
   /// Left<int, int>(12).tapLeft((_) => println('flower'));  // Result: prints 'flower' and returns: Left(12)
   /// ```
+  @useResult
   Either<L, R> tapLeft(void Function(L value) f) {
     if (this case Left(value: final value)) {
       f(value);
@@ -566,6 +572,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).tapLeft((_) => println('flower')); // Result: prints 'flower' and returns: Right(12)
   /// Left<int, int>(12).tapLeft((_) => println('flower'));  // Result: Left(12)
   /// ```
+  @useResult
   Either<L, R> tap(void Function(R value) f) {
     if (this case Right(value: final value)) {
       f(value);
@@ -580,6 +587,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).map((_) => 'flower'); // Result: Right('flower')
   /// Left<int, int>(12).map((_) => 'flower');  // Result: Left(12)
   /// ```
+  @useResult
   Either<L, C> map<C>(C Function(R value) f) => _foldInternal(
         ifLeft: (l) => Either<L, C>.left(l),
         ifRight: (r) => Either<L, C>.right(f(r)),
@@ -592,6 +600,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).mapLeft((_) => 'flower'); // Result: Right(12)
   /// Left<int, int>(12).mapLeft((_) => 'flower');  // Result: Left('flower')
   /// ```
+  @useResult
   Either<C, R> mapLeft<C>(C Function(L value) f) => _foldInternal(
         ifLeft: (l) => Either<C, R>.left(f(l)),
         ifRight: (r) => Either<C, R>.right(r),
@@ -612,6 +621,7 @@ sealed class Either<L, R> {
   /// Left<String, int>('12').flatMap((v) => Right<String, String>('flower $v')); // Result: Left('12')
   /// Left<String, int>('12').flatMap((v) => Left<String, String>('flower $v'));  // Result: Left('12')
   /// ```
+  @useResult
   Either<L, C> flatMap<C>(Either<L, C> Function(R value) f) => _foldInternal(
         ifLeft: (l) => Either<L, C>.left(l),
         ifRight: (r) => f(r),
@@ -639,6 +649,7 @@ sealed class Either<L, R> {
   ///   rightOperation: (int i) => i.toString(),
   /// );
   /// ```
+  @useResult
   Either<C, D> bimap<C, D>({
     required C Function(L value) leftOperation,
     required D Function(R value) rightOperation,
@@ -765,6 +776,7 @@ sealed class Either<L, R> {
   /// Left<int, int>(12).handleErrorWith((v) => (v + 1).right<String>());    // Right(13)
   /// Left<int, int>(12).handleErrorWith((v) => (v + 1).toString().left());  // Left('13')
   /// ```
+  @useResult
   Either<C, R> handleErrorWith<C>(Either<C, R> Function(L value) f) =>
       _foldInternal(
         ifLeft: f,
@@ -775,6 +787,7 @@ sealed class Either<L, R> {
   ///
   /// Applies the given function [f] if this is a [Left] and return the result wrapped in a [Right],
   /// otherwise returns this if this is a [Right].
+  @useResult
   Either<L, R> handleError(R Function(L value) f) => _foldInternal(
         ifLeft: (v) => f(v).right(),
         ifRight: (v) => v.right(),
@@ -784,6 +797,7 @@ sealed class Either<L, R> {
   ///
   /// [redeem] is derived from [map] and [handleError].
   /// This is functionally equivalent to `map(rightOperation).handleError(leftOperation)`.
+  @useResult
   Either<L, C> redeem<C>({
     required C Function(L value) leftOperation,
     required C Function(R value) rightOperation,
@@ -798,6 +812,7 @@ sealed class Either<L, R> {
   ///
   /// [redeemWith] is derived from [flatMap] and [handleErrorWith].
   /// This is functionally equivalent to `flatMap(rightOperation).handleErrorWith(leftOperation)`.
+  @useResult
   Either<C, D> redeemWith<C, D>({
     required Either<C, D> Function(L value) leftOperation,
     required Either<C, D> Function(R value) rightOperation,
