@@ -50,6 +50,7 @@ example/
     - ✅ `ensureNotNull<R>()` (returns non-nullable `R` that needs assignment for type-checking).
   - Do **NOT** use `@useResult` on:
     - ❌ Methods returning `Future<Either<...>>` (Future just needs `await`, no need to warn about assignment).
+    - ❌ Fire-and-forget side-effect helpers that intentionally support ignored results (e.g., `tapLeft`, `tap`).
     - ❌ Methods returning generic `C` that can be `void` (`fold`, `when` - often used for side effects).
   - Use `@monadComprehensions` on bind-related methods.
   - Use `@experimental` for unstable APIs.
@@ -107,6 +108,7 @@ dart pub publish --dry-run
      - `ensureNotNull<R>()` — returns non-nullable `R`, needs assignment for type-checking: `final ok = e.ensureNotNull(nullable);`
    - ❌ **DON'T** use on:
      - `Future<Either<...>>` returns (e.g., `toEitherFuture`, `futureBinding`) — just `await` is enough
+     - Fire-and-forget side-effect helpers that intentionally support ignored results (e.g., `tapLeft`, `tap`)
      - Generic `C` that can be `void` (e.g., `fold<C>`, `when<C>`) — often used for side effects
 4. **Use Dart 3 patterns** — prefer `switch` expressions and sealed class pattern matching over `is` type checks.
 5. **Keep the library lightweight** — avoid adding unnecessary dependencies.

@@ -558,7 +558,6 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).tapLeft((_) => println('flower')); // Result: Right(12)
   /// Left<int, int>(12).tapLeft((_) => println('flower'));  // Result: prints 'flower' and returns: Left(12)
   /// ```
-  @useResult
   Either<L, R> tapLeft(void Function(L value) f) {
     if (this case Left(value: final value)) {
       f(value);
@@ -571,10 +570,9 @@ sealed class Either<L, R> {
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).tapLeft((_) => println('flower')); // Result: prints 'flower' and returns: Right(12)
-  /// Left<int, int>(12).tapLeft((_) => println('flower'));  // Result: Left(12)
+  /// Right<int, int>(12).tap((_) => println('flower')); // Result: prints 'flower' and returns: Right(12)
+  /// Left<int, int>(12).tap((_) => println('flower'));  // Result: Left(12)
   /// ```
-  @useResult
   Either<L, R> tap(void Function(R value) f) {
     if (this case Right(value: final value)) {
       f(value);
