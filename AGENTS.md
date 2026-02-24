@@ -44,11 +44,13 @@ example/
 - **Dart 3 features**: Uses sealed classes, pattern matching (`switch` expressions with `case Left(value:)` / `case Right(value:)`).
 - **Immutable**: `Either` is `@immutable` and `@sealed`. `Left` and `Right` are `@sealed` final-like classes.
 - **Annotations**: 
-  - Use `@useResult` **ONLY** on methods that return `Either<...>` or `Stream<Either<...>>`.
+  - Use `@useResult` on methods/getters that return values **that must be used**:
+    - ✅ Methods returning `Either<...>` or `Stream<Either<...>>` (transformation results must be used).
+    - ✅ Methods returning `bool` (boolean results must be used for logic: `isLeft`, `isRight`, `exists`, `all`).
+    - ✅ `ensureNotNull<R>()` (returns non-nullable `R` that needs assignment for type-checking).
   - Do **NOT** use `@useResult` on:
-    - Methods returning `Future<Either<...>>` (Future just needs `await`, no need to warn about assignment).
-    - Methods returning generic types like `bool`, `R`, etc. (can be `void`).
-    - Pattern matching methods like `fold`, `when` (often used for side effects with `void` return).
+    - ❌ Methods returning `Future<Either<...>>` (Future just needs `await`, no need to warn about assignment).
+    - ❌ Methods returning generic `C` that can be `void` (`fold`, `when` - often used for side effects).
   - Use `@monadComprehensions` on bind-related methods.
   - Use `@experimental` for unstable APIs.
 - **Documentation**: Every public member MUST have a doc comment with `///`. Include `### Example` code blocks in doc comments. This is enforced by the `public_member_api_docs` lint rule.
@@ -98,11 +100,14 @@ dart pub publish --dry-run
 
 1. **Do NOT break the public API** — this is a published pub.dev package. Any breaking change requires a major version bump.
 2. **Maintain full documentation** — all public members must have `///` doc comments with examples. The `public_member_api_docs` lint will fail otherwise.
-3. **Use `@useResult` correctly** — ONLY on methods returning `Either<...>` or `Stream<Either<...>>`:
-   - ✅ **DO** use: `Either<L, R>`, `Either<void, R>`, `Stream<Either<L, R>>`
-   - ❌ **DON'T** use: `Future<Either<...>>` (just await), `bool`, generic `R`, `C fold<C>(...)`, etc.
-   - **Examples with `@useResult`**: `map`, `flatMap`, `swap`, `left()`, `right()`, `toEitherStream`
-   - **Examples without `@useResult`**: `toEitherFuture`, `fold`, `when`, `isLeft`, `exists`, `all`, `ensureNotNull`
+3. **Use `@useResult` correctly** — on methods returning values that **must be used**:
+   - ✅ **DO** use on:
+     - `Either<...>` and `Stream<Either<...>>` returns (e.g., `map`, `flatMap`, `swap`, `left()`, `right()`, `toEitherStream`)
+     - `bool` returns (e.g., `isLeft`, `isRight`, `exists`, `all`) — boolean results must be used for logic
+     - `ensureNotNull<R>()` — returns non-nullable `R`, needs assignment for type-checking: `final ok = e.ensureNotNull(nullable);`
+   - ❌ **DON'T** use on:
+     - `Future<Either<...>>` returns (e.g., `toEitherFuture`, `futureBinding`) — just `await` is enough
+     - Generic `C` that can be `void` (e.g., `fold<C>`, `when<C>`) — often used for side effects
 4. **Use Dart 3 patterns** — prefer `switch` expressions and sealed class pattern matching over `is` type checks.
 5. **Keep the library lightweight** — avoid adding unnecessary dependencies.
 6. **Run `dart analyze` and `dart test`** after any change to verify correctness.

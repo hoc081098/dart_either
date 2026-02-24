@@ -1,4 +1,6 @@
 
+import 'package:meta/meta.dart';
+
 import 'dart_either.dart';
 import 'extensions.dart';
 
@@ -51,6 +53,7 @@ extension EnsureNotNullEitherEffectExtension<L> on EitherEffect<L> {
   /// // println: '1'
   /// // res: Left('failed')
   /// ```
+  @useResult
   @monadComprehensions
   R ensureNotNull<R extends Object>(R? value, L Function() orLeft) =>
       value ?? bind(orLeft().left());

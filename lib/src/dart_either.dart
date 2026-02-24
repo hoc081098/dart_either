@@ -489,10 +489,12 @@ sealed class Either<L, R> {
 
   /// Returns `true` if this is a [Left], `false` otherwise.
   /// Used only for performance instead of [fold].
+  @useResult
   bool get isLeft;
 
   /// Returns `true` if this is a [Right], `false` otherwise.
   /// Used only for performance instead of [fold].
+  @useResult
   bool get isRight;
 
   /// Applies [ifLeft] if this is a [Left] or [ifRight] if this is a [Right].
@@ -670,6 +672,7 @@ sealed class Either<L, R> {
   /// Left<int, int>(12).exists((v) => v > 10);  // Result: false
   /// Left<int, int>(12).exists((v) => v < 10);  // Result: false
   /// ```
+  @useResult
   bool exists(bool Function(R value) predicate) => _foldInternal(
         ifLeft: _const(false),
         ifRight: predicate,
@@ -686,6 +689,7 @@ sealed class Either<L, R> {
   /// Left<int, int>(12).all((v) => v > 10);  // Result: true
   /// Left<int, int>(12).all((v) => v < 10);  // Result: true
   /// ```
+  @useResult
   bool all(bool Function(R value) predicate) => _foldInternal(
         ifLeft: _const(true),
         ifRight: predicate,
