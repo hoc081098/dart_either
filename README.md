@@ -195,7 +195,7 @@ final nullableValue = right.orNull(); // 10
 | [`Either.binding`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.binding.html)       | Sync monad comprehension    |
 | [`Either.catchError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.catchError.html) | Wraps a throwing expression |
 | [`Left`](https://pub.dev/documentation/dart_either/latest/dart_either/Left/Left.html)                             | Direct `Left` constructor   |
-| [`Right`](https://pub.dev/documentation/dart_either/latest/dart_either/Right-class.html)                          | Direct `Right` constructor  |
+| [`Right`](https://pub.dev/documentation/dart_either/latest/dart_either/Right/Right.html)                          | Direct `Right` constructor  |
 
 ```dart
 // Left('Left value')
