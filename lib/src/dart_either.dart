@@ -442,8 +442,35 @@ sealed class Either<L, R> {
     return Right(result.build());
   }
 
-  /// TODO(parTraverseN)
-  @experimental
+  /// Traverses the [values] iterable and runs [mapper] on each element with concurrency control.
+  ///
+  /// For each value in [values], applies [mapper] to get a function that returns `Future<Either<L, R>>`,
+  /// then runs these functions in parallel with concurrency limit [n].
+  ///
+  /// If [n] is `null`, all functions run concurrently without limit.
+  /// If any function returns a [Left], the operation short-circuits and returns that [Left].
+  /// Otherwise, collects all [Right] values into a [BuiltList].
+  ///
+  /// This is a shorthand for `Either.parSequenceN<L, R>(values.map(mapper), n)`.
+  ///
+  /// ### Example
+  /// ```dart
+  /// // Fetch numbers for IDs 1,2,3 with max 2 concurrent requests
+  /// final result = await Either.parTraverseN<String, int, int>(
+  ///   [1, 2, 3],
+  ///   (id) => () async => await fetchNumber(id),
+  ///   2, // max concurrency
+  /// );
+  /// ```
+  ///
+  /// ### Parameters
+  /// - [values]: The values to traverse.
+  /// - [mapper]: Function that takes a value and returns a function returning `Future<Either<L, R>>`.
+  /// - [n]: Maximum number of concurrent executions. If `null`, no limit.
+  ///
+  /// ### Returns
+  /// A [Future] containing either the first [Left] encountered, or a [Right] with all collected values.
+  @useResult
   static Future<Either<L, BuiltList<R>>> parTraverseN<L, R, T>(
     Iterable<T> values,
     Future<Either<L, R>> Function() Function(T value) mapper,
@@ -451,8 +478,37 @@ sealed class Either<L, R> {
   ) =>
       parSequenceN<L, R>(values.map(mapper), n);
 
-  /// TODO(parSequenceN)
-  @experimental
+  /// Sequences all [Future<Either<L, R>>] functions with concurrency control.
+  ///
+  /// Runs the functions in parallel, but limits the number of concurrent executions to [n].
+  /// If [n] is `null`, all functions run concurrently without limit.
+  ///
+  /// If any function returns a [Left], the operation short-circuits and returns that [Left].
+  /// Otherwise, collects all [Right] values into a [BuiltList].
+  ///
+  /// The concurrency is controlled using a semaphore to prevent overwhelming the system.
+  ///
+  /// ### Example
+  /// ```dart
+  /// // Run up to 2 concurrent requests
+  /// final result = await Either.parSequenceN<String, int>(
+  ///   [
+  ///     () async => await fetchNumber(1),
+  ///     () async => await fetchNumber(2),
+  ///     () async => await fetchNumber(3),
+  ///     () async => await fetchNumber(4),
+  ///   ],
+  ///   2, // max concurrency
+  /// );
+  /// ```
+  ///
+  /// ### Parameters
+  /// - [functions]: An iterable of functions that return `Future<Either<L, R>>`.
+  /// - [n]: Maximum number of concurrent executions. If `null`, no limit.
+  ///
+  /// ### Returns
+  /// A [Future] containing either the first [Left] encountered, or a [Right] with all collected values.
+  @useResult
   static Future<Either<L, BuiltList<R>>> parSequenceN<L, R>(
     Iterable<Future<Either<L, R>> Function()> functions,
     int? n,
