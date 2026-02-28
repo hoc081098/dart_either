@@ -100,10 +100,17 @@ Then, to handle these exceptions, we have to make sure we catch them at the call
 all becomes even more unwieldy when we try to compose exception-throwing procedures.
 
 ```dart
+// What exceptions can this throw? You have to dig through the source to find out.
 double throwsSomeStuff(int i) => throw UnimplementedError();
+
+// Same here — no way to know from the type signature alone.
 String throwsOtherThings(double d) => throw UnimplementedError();
+
+// And here too.
 List<int> moreThrowing(String s) => throw UnimplementedError();
-List<int> magic(int i) => moreThrowing(throwsOtherThings(throwsSomeStuff(i)));
+
+// Any of the three above can throw — good luck tracking which one failed!
+List<int> magic(int i) => moreThrowing( throwsOtherThings( throwsSomeStuff(i) ) );
 ```
 
 Assume we happily throw exceptions in our code. Looking at the types of the functions above,
