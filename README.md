@@ -68,7 +68,7 @@ dart pub get
 
 | Resource             | Link                                                                                  |
 |----------------------|---------------------------------------------------------------------------------------|
-| 📖 API Documentation | https://pub.dev/documentation/dart_either/latest/dart_either/dart_either-library.html |
+| 📖 API Documentation | https://pub.dev/documentation/dart_either/latest/dart_either/ |
 | 💡 Examples          | https://github.com/hoc081098/dart_either/tree/master/example/lib                      |
 | 🐦 Flutter Example   | https://github.com/hoc081098/node-auth-flutter-BLoC-pattern-RxDart                    |
 
