@@ -58,8 +58,8 @@ void main() async {
     BuiltList<User> users,
   ) =>
       Either.parTraverseN(
-        users,
-        (User user) => () {
+        values: users,
+        mapper: (User user) => () {
           print('--> Get posts for $user...');
 
           return httpGetAsEither(
@@ -67,7 +67,7 @@ void main() async {
               .thenFlatMapEither(toPosts)
               .thenMapEither((posts) => (user: user, posts: posts));
         },
-        3,
+        maxConcurrent: 3,
       );
 
   await httpGetAsEither('https://jsonplaceholder.typicode.com/users')

@@ -59,8 +59,8 @@ void main() async {
     BuiltList<User> users,
   ) =>
       Either.parTraverseN(
-        users,
-        (User user) => () => Either.futureBinding((e) async {
+        values: users,
+        mapper: (User user) => () => Either.futureBinding((e) async {
               print('--> Get posts for $user...');
 
               // Get posts for user
@@ -74,7 +74,7 @@ void main() async {
               // Return user and posts
               return (user: user, posts: posts);
             }),
-        3,
+        maxConcurrent: 3,
       );
 
   final result = await Either.futureBinding<AppError, BuiltList<UserAndPosts>>(
