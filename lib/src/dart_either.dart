@@ -445,13 +445,13 @@ sealed class Either<L, R> {
   /// Traverses the [values] iterable and runs [mapper] on each element with concurrency control.
   ///
   /// For each value in [values], applies [mapper] to get a function that returns `Future<Either<L, R>>`,
-  /// then runs these functions in parallel with concurrency limit [n].
+  /// then runs these functions in parallel with concurrency limit [maxConcurrent].
   ///
-  /// If [n] is `null`, all functions run concurrently without limit.
+  /// If [maxConcurrent] is `null`, all functions run concurrently without limit.
   /// If any function returns a [Left], the operation short-circuits and returns that [Left].
   /// Otherwise, collects all [Right] values into a [BuiltList].
   ///
-  /// This is a shorthand for `Either.parSequenceN<L, R>(values.map(mapper), n)`.
+  /// This is a shorthand for `Either.parSequenceN<L, R>(values.map(mapper), maxConcurrent)`.
   ///
   /// ### Example
   /// ```dart
@@ -459,29 +459,32 @@ sealed class Either<L, R> {
   /// final result = await Either.parTraverseN<String, int, int>(
   ///   [1, 2, 3],
   ///   (id) => () async => await fetchNumber(id),
-  ///   2, // max concurrency
+  ///   2, // max concurrent
   /// );
   /// ```
   ///
   /// ### Parameters
   /// - [values]: The values to traverse.
   /// - [mapper]: Function that takes a value and returns a function returning `Future<Either<L, R>>`.
-  /// - [n]: Maximum number of concurrent executions. If `null`, no limit.
+  /// - [maxConcurrent]: Maximum number of concurrent executions. If `null`, no limit.
   ///
   /// ### Returns
   /// A [Future] containing either the first [Left] encountered, or a [Right] with all collected values.
   @useResult
-  static Future<Either<L, BuiltList<R>>> parTraverseN<L, R, T>(
-    Iterable<T> values,
-    Future<Either<L, R>> Function() Function(T value) mapper,
-    int? n,
-  ) =>
-      parSequenceN<L, R>(values.map(mapper), n);
+  static Future<Either<L, BuiltList<R>>> parTraverseN<L, R, T>({
+    required Iterable<T> values,
+    required Future<Either<L, R>> Function() Function(T value) mapper,
+    int? maxConcurrent,
+  }) =>
+      parSequenceN<L, R>(
+        functions: values.map(mapper),
+        maxConcurrent: maxConcurrent,
+      );
 
   /// Sequences all [Future<Either<L, R>>] functions with concurrency control.
   ///
-  /// Runs the functions in parallel, but limits the number of concurrent executions to [n].
-  /// If [n] is `null`, all functions run concurrently without limit.
+  /// Runs the functions in parallel, but limits the number of concurrent executions to [maxConcurrent].
+  /// If [maxConcurrent] is `null`, all functions run concurrently without limit.
   ///
   /// If any function returns a [Left], the operation short-circuits and returns that [Left].
   /// Otherwise, collects all [Right] values into a [BuiltList].
@@ -498,23 +501,23 @@ sealed class Either<L, R> {
   ///     () async => await fetchNumber(3),
   ///     () async => await fetchNumber(4),
   ///   ],
-  ///   2, // max concurrency
+  ///   2, // max concurrent
   /// );
   /// ```
   ///
   /// ### Parameters
   /// - [functions]: An iterable of functions that return `Future<Either<L, R>>`.
-  /// - [n]: Maximum number of concurrent executions. If `null`, no limit.
+  /// - [maxConcurrent]: Maximum number of concurrent executions. If `null`, no limit.
   ///
   /// ### Returns
   /// A [Future] containing either the first [Left] encountered, or a [Right] with all collected values.
   @useResult
-  static Future<Either<L, BuiltList<R>>> parSequenceN<L, R>(
-    Iterable<Future<Either<L, R>> Function()> functions,
-    int? n,
-  ) async {
+  static Future<Either<L, BuiltList<R>>> parSequenceN<L, R>({
+    required Iterable<Future<Either<L, R>> Function()> functions,
+    int? maxConcurrent,
+  }) async {
     final futureFunctions = functions.toList(growable: false);
-    final semaphore = Semaphore(n ?? futureFunctions.length);
+    final semaphore = Semaphore(maxConcurrent ?? futureFunctions.length);
     final token = _Token();
 
     Future<R> Function() run(Future<Either<L, R>> Function() f) {

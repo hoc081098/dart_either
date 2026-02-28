@@ -625,14 +625,14 @@ void main() {
           final delays = [100, 50, 200]; // Different delays to test concurrency
 
           final result = await Either.parSequenceN<String, int>(
-            delays.map(
+            functions: delays.map(
               (delay) => () async {
                 await Future.delayed(Duration(milliseconds: delay));
                 values.add(delay);
                 return Either<String, int>.right(delay);
               },
             ),
-            2, // max concurrency
+            maxConcurrent: 2,
           );
 
           expect(result, Right<String, BuiltList<int>>(delays.build()));
@@ -644,14 +644,14 @@ void main() {
           final delays = [100, 50, 200];
 
           final result = await Either.parSequenceN<String, int>(
-            delays.map(
+            functions: delays.map(
               (delay) => () async {
                 await Future.delayed(Duration(milliseconds: delay));
                 values.add(delay);
                 return Either<String, int>.right(delay);
               },
             ),
-            null, // no limit
+            maxConcurrent: null, // no limit
           );
 
           expect(result, Right<String, BuiltList<int>>(delays.build()));
@@ -664,7 +664,7 @@ void main() {
           const anchor = 1;
 
           final result = await Either.parSequenceN<String, int>(
-            items.map(
+            functions: items.map(
               (index) => () async {
                 await Future.delayed(Duration(milliseconds: (index + 1) * 50));
                 values.add(index);
@@ -673,7 +673,7 @@ void main() {
                     : Either<String, int>.left('error$index');
               },
             ),
-            2,
+            maxConcurrent: 2,
           );
 
           expect(result, Left<String, BuiltList<int>>('error$anchor'));
@@ -685,7 +685,7 @@ void main() {
           final delays = [200, 200, 200]; // Same delay to test concurrency
 
           final result = await Either.parSequenceN<String, int>(
-            delays.map(
+            functions: delays.map(
               (delay) => () async {
                 activeCount.add(1);
                 await Future.delayed(Duration(milliseconds: delay));
@@ -693,7 +693,7 @@ void main() {
                 return Either<String, int>.right(delay);
               },
             ),
-            2, // max 2 concurrent
+            maxConcurrent: 2, // max 2 concurrent
           );
 
           expect(result.isRight, isTrue);
@@ -713,13 +713,13 @@ void main() {
           final factor = 10;
 
           final result = await Either.parTraverseN<String, int, int>(
-            ids,
-            (id) => () async {
+            values: ids,
+            mapper: (id) => () async {
               await Future.delayed(Duration(milliseconds: id * 50));
               values.add(id);
               return Either<String, int>.right(id * factor);
             },
-            2,
+            maxConcurrent: 2,
           );
 
           final expectedValues = [
@@ -736,15 +736,15 @@ void main() {
           final factor = 10;
 
           final result = await Either.parTraverseN<String, int, int>(
-            ids,
-            (id) => () async {
+            values: ids,
+            mapper: (id) => () async {
               await Future.delayed(Duration(milliseconds: id * 50));
               values.add(id);
               return id < anchor
                   ? Either<String, int>.right(id * factor)
                   : Either<String, int>.left('error$id');
             },
-            2,
+            maxConcurrent: 2,
           );
 
           expect(result, Left<String, BuiltList<int>>('error$anchor'));
