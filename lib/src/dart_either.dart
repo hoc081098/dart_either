@@ -776,13 +776,23 @@ sealed class Either<L, R> {
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).getOrElse(() => 17); // Result: 12
-  /// Left<int, int>(12).getOrElse(() => 17);  // Result: 17
+  /// Right<int, int>(12).getOrDefault(() => 17); // Result: 12
+  /// Left<int, int>(12).getOrDefault(() => 17);  // Result: 17
   /// ```
-  R getOrElse(R Function() defaultValue) => _foldInternal(
+  R getOrDefault(R Function() defaultValue) => _foldInternal(
         ifLeft: (_) => defaultValue(),
         ifRight: _identity,
       );
+
+  /// Alias of [getOrDefault].
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).getOrElse(() => 17); // Result: 12
+  /// Left<int, int>(12).getOrElse(() => 17);  // Result: 17
+  /// ```
+  @Deprecated('Use getOrDefault instead.')
+  R getOrElse(R Function() defaultValue) => getOrDefault(defaultValue);
 
   /// Returns the [Right]'s value if it exists, otherwise `null`.
   ///

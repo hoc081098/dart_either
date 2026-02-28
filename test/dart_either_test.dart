@@ -952,8 +952,15 @@ void main() {
       );
     });
 
-    test('getOrElse', () {
+    test('getOrDefault', () {
+      expect(rightOf1.getOrDefault(() => 2), 1);
+      expect(leftOf1.getOrDefault(() => 2), 2);
+    });
+
+    test('getOrElse (deprecated alias)', () {
+      // ignore: deprecated_member_use_from_same_package
       expect(rightOf1.getOrElse(() => 2), 1);
+      // ignore: deprecated_member_use_from_same_package
       expect(leftOf1.getOrElse(() => 2), 2);
     });
 
