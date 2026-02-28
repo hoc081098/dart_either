@@ -373,7 +373,7 @@ Either<String, int> right = 2.right<String>();
 | [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/flatMap.html)                          | Chains computations                           |
 | [`bimap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)                              | Transforms both sides                         |
 | [`exists`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/exists.html)                            | Tests the `Right` value with a predicate      |
-| [`all`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)                                  | Tests all `Right` values with a predicate     |
+| [`all`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)                                  | Returns `true` for `Left` or if `Right` matches the predicate |
 | [`getOrElse`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrElse.html)                      | Extracts `Right` or falls back to a default   |
 | [`orNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/orNull.html)                            | Extracts `Right` or returns `null`            |
 | [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrHandle.html)                  | Extracts `Right` or maps `Left` to a value    |
