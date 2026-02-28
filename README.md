@@ -429,7 +429,8 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
 
 Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
 
-Either<AsyncError, BuiltList<User>> result = await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
+Either<AsyncError, BuiltList<User>> result = await httpGetAsEither(
+        'https://jsonplaceholder.typicode.com/users')
     .thenMapEither((dynamic json) => json as List)
     .thenFlatMapEither(toUsers);
 ```
