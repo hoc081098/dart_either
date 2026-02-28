@@ -1,65 +1,94 @@
 # dart_either
 
-## Author: [Petrus Nguyễn Thái Học](https://github.com/hoc081098)
+> **Author:** [Petrus Nguyễn Thái Học](https://github.com/hoc081098)
 
-![Dart CI](https://github.com/hoc081098/dart_either/workflows/Dart%20CI/badge.svg)
-[![Pub](https://img.shields.io/pub/v/dart_either)](https://pub.dev/packages/dart_either)
-[![Pub](https://img.shields.io/pub/v/dart_either?include_prereleases)](https://pub.dev/packages/dart_either)
+[![Dart CI](https://github.com/hoc081098/dart_either/workflows/Dart%20CI/badge.svg)](https://github.com/hoc081098/dart_either/actions)
+[![pub version](https://img.shields.io/pub/v/dart_either)](https://pub.dev/packages/dart_either)
+[![pub prerelease](https://img.shields.io/pub/v/dart_either?include_prereleases)](https://pub.dev/packages/dart_either)
 [![codecov](https://codecov.io/gh/hoc081098/dart_either/branch/master/graph/badge.svg)](https://codecov.io/gh/hoc081098/dart_either)
-[![GitHub](https://img.shields.io/github/license/hoc081098/dart_either?color=4EB1BA)](https://opensource.org/licenses/MIT)
-[![Style](https://img.shields.io/badge/style-lints-40c4ff.svg)](https://pub.dev/packages/lints)
-[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fhoc081098%2Fdart_either&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
+[![License: MIT](https://img.shields.io/github/license/hoc081098/dart_either?color=4EB1BA)](https://opensource.org/licenses/MIT)
+[![Style: lints](https://img.shields.io/badge/style-lints-40c4ff.svg)](https://pub.dev/packages/lints)
+[![Hits](https://hits.sh/github.com/hoc081098/dart_either.svg)](https://hits.sh/github.com/hoc081098/dart_either/)
 
-Either monad for Dart language and Flutter framework.
-The library for error handling and railway oriented programming.
-Supports `Monad comprehensions` (both `sync` and `async` versions).
-Supports `async map` and `async flatMap` hiding the boilerplate of working with asynchronous computations `Future<Either<L, R>>`.
-Error handler library for type-safe and easy work with errors on Dart and Flutter.
-Either is an alternative to Nullable value and Exceptions.
+**Either monad for Dart & Flutter** — a type-safe, lightweight library for error handling and railway-oriented programming.
 
-## Credits: port and adapt from [Λrrow-kt](https://github.com/arrow-kt/arrow).
+- ✅ **Monad comprehensions** — both `sync` (`Either.binding`) and `async` (`Either.futureBinding`) versions.
+- ✅ **Async `map` / `flatMap`** — hides the boilerplate of working with `Future<Either<L, R>>`.
+- ✅ **Type-safe** — an explicit, compiler-friendly alternative to nullable values and thrown exceptions.
 
-Liked some of my work? Buy me a coffee (or more likely a beer)
+> **Credits:** Ported and adapted from [Λrrow-kt](https://github.com/arrow-kt/arrow).
 
-<a href="https://www.buymeacoffee.com/hoc081098" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" height=64></a>
+---
 
-## Difference from other implementations ([dartz](https://pub.dev/packages/dartz) and [fpdart](https://pub.dev/packages/fpdart))
+## Support the project
 
-I have seen a lot of people importing whole libraries such as [dartz](https://pub.dev/packages/dartz) and [fpdart](https://pub.dev/packages/fpdart), ...
-but they only use `Either` class :). So I decided to write, port and adapt `Either` class from [Λrrow-kt](https://github.com/arrow-kt/arrow).
+If you find this library useful, consider buying me a coffee ☕
 
-- Inspired by [Λrrow-kt](https://github.com/arrow-kt/arrow), [Scala Cats](https://typelevel.org/cats/typeclasses.html#type-classes-in-cats).
-- **Fully documented**, **tested** and **many examples**. Every method/function in this library is documented with examples.
-- This library is **most complete** `Either` implementation, which supports **`Monad comprehensions` (both `sync` and `async` versions)**,
-  and supports `async map` and `async flatMap` hiding the boilerplate of working with asynchronous computations `Future<Either<L, R>>`.
-- Very **lightweight** and **simple** library (compare to [dartz](https://pub.dev/packages/dartz)).
+<a href="https://www.buymeacoffee.com/hoc081098" target="_blank" rel="noopener noreferrer">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" height="64">
+</a>
+
+---
+
+## Why `dart_either`?
+
+### Difference from [dartz](https://pub.dev/packages/dartz) and [fpdart](https://pub.dev/packages/fpdart)
+
+Many projects import entire FP libraries (dartz, fpdart, …) but only use `Either`. This library extracts and adapts just the `Either` class from [Λrrow-kt](https://github.com/arrow-kt/arrow), keeping things focused and lightweight.
+
+| Feature              | dart_either                                                                                                                   |
+|----------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| Inspired by          | [Λrrow-kt](https://github.com/arrow-kt/arrow), [Scala Cats](https://typelevel.org/cats/typeclasses.html#type-classes-in-cats) |
+| Documentation        | **Fully documented** — every method/function has doc comments and examples                                                    |
+| Test coverage        | **Fully tested**                                                                                                              |
+| Completeness         | **Most complete** `Either` implementation available for Dart/Flutter                                                          |
+| Monad comprehensions | ✅ Both `sync` and `async`                                                                                                     |
+| Async map / flatMap  | ✅ `thenMapEither`, `thenFlatMapEither`                                                                                        |
+| Bundle size          | Very **lightweight** and **simple** (compare to dartz)                                                                        |
+
+---
 
 ## Getting started
 
-In your Dart/Flutter project, add the dependency to your `pubspec.yaml`
+Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
   dart_either: ^2.0.0
 ```
 
-## Documentation & example
+Then run:
 
- - **Documentation**: https://pub.dev/documentation/dart_either/latest/dart_either/dart_either-library.html
- - **Example**: https://github.com/hoc081098/dart_either/tree/master/example/lib
- - **Flutter Example**: https://github.com/hoc081098/node-auth-flutter-BLoC-pattern-RxDart
+```bash
+dart pub get
+```
+
+---
+
+## Documentation & Examples
+
+| Resource             | Link                                                                                  |
+|----------------------|---------------------------------------------------------------------------------------|
+| 📖 API Documentation | https://pub.dev/documentation/dart_either/latest/dart_either/ |
+| 💡 Examples          | https://github.com/hoc081098/dart_either/tree/master/example/lib                      |
+| 🐦 Flutter Example   | https://github.com/hoc081098/node-auth-flutter-BLoC-pattern-RxDart                    |
+
+---
 
 ## Either monad
 
-`Either` is a type that represents either `Right` (usually represent a "desired" value)
-or `Left` (usually represent a "undesired" value or error value).
+`Either<L, R>` represents one of two possible values:
 
-- [Elm Result](https://package.elm-lang.org/packages/elm-lang/core/5.1.1/Result).
-- [Haskell Data.Either](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Either.html).
-- [Rust Result](https://doc.rust-lang.org/std/result/enum.Result.html).
+- **`Right(R)`** — the "desired" / success value (right-biased).
+- **`Left(L)`** — the "undesired" / error value.
+
+Related implementations in other languages:
+- [Elm Result](https://package.elm-lang.org/packages/elm-lang/core/5.1.1/Result)
+- [Haskell Data.Either](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Either.html)
+- [Rust Result](https://doc.rust-lang.org/std/result/enum.Result.html)
 
 <details>
-  <summary>Click to expand</summary>
+  <summary>Why Either? (click to expand)</summary>
 
 In day-to-day programming, it is fairly common to find ourselves writing functions that can fail.
 For instance, querying a service may result in a connection issue, or some unexpected `JSON` response.
@@ -71,30 +100,36 @@ Then, to handle these exceptions, we have to make sure we catch them at the call
 all becomes even more unwieldy when we try to compose exception-throwing procedures.
 
 ```dart
+// What exceptions can this throw? You have to dig through the source to find out.
 double throwsSomeStuff(int i) => throw UnimplementedError();
-///
+
+// Same here — no way to know from the type signature alone.
 String throwsOtherThings(double d) => throw UnimplementedError();
-///
+
+// And here too.
 List<int> moreThrowing(String s) => throw UnimplementedError();
-///
+
+// Any of the three above can throw — good luck tracking which one failed!
 List<int> magic(int i) => moreThrowing( throwsOtherThings( throwsSomeStuff(i) ) );
 ```
 
 Assume we happily throw exceptions in our code. Looking at the types of the functions above,
-any could throw a number of exceptions -- we do not know. When we compose, exceptions from any of the constituent
-functions can be thrown. Moreover, they may throw the same kind of exception
+any could throw a number of exceptions — we do not know. When we compose, exceptions from any
+of the constituent functions can be thrown. Moreover, they may throw the same kind of exception
 (e.g., `ArgumentError`) and, thus, it gets tricky tracking exactly where an exception came from.
 
-How then do we communicate an error? By making it explicit in the data type we return.
+**How then do we communicate an error? By making it explicit in the data type we return.**
 
 `Either` is used to short-circuit a computation upon the first error.
 By convention, the right side of an `Either` is used to hold successful values.
 
 Because `Either` is right-biased, it is possible to define a `Monad` instance for it.
-Since we only ever want the computation to continue in the case of `Right` (as captured by the right-bias nature),
-we fix the left type parameter and leave the right one free. So, the `map` and `flatMap` methods are right-biased.
+Since we only ever want the computation to continue in the case of `Right` (as captured by
+the right-bias nature), we fix the left type parameter and leave the right one free.
+So, the `map` and `flatMap` methods are right-biased.
 
-Example:
+**Example:**
+
 ```dart
 /// Create an instance of [Right]
 final right = Either<String, int>.right(10); // Either.Right(10)
@@ -108,8 +143,7 @@ final mapRight = right.map((a) => 'String: $a'); // Either.Right(String: 10)
 /// Map the left value to a [int]
 final mapLeft = right.mapLeft((a) => a.length); // Either.Right(10)
 
-/// Return [Left] if the function throws an error.
-/// Otherwise return [Right].
+/// Return [Left] if the function throws an error, otherwise return [Right]
 final catchError = Either.catchError(
   (e, s) => 'Error: $e',
   () => int.parse('invalid'),
@@ -130,7 +164,8 @@ final flatMap = right.flatMap((a) => Either.right(a + 10)); // Either.Right(20)
 right.fold(
   ifLeft: (l) => print('Left value: $l'),
   ifRight: (r) => print('Right value: $r'),
-); // Right: 10
+); // Right value: 10
+
 right.when(
   ifLeft: (l) => print('Left: $l'),
   ifRight: (r) => print('Right: $r'),
@@ -150,27 +185,35 @@ final nullableValue = right.orNull(); // 10
 
 </details>
 
-## Use - [Documentation](https://pub.dev/documentation/dart_either/latest/dart_either/dart_either-library.html)
+---
+
+## API Reference
+
+> Full API docs: https://pub.dev/documentation/dart_either/latest/dart_either/
 
 ### 1. Creation
 
 #### 1.1. Factory constructors
 
-- [Either.left](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.left.html)
-- [Either.right](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.right.html)
-- [Either.binding](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.binding.html)
-- [Either.catchError](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.catchError.html)
-- [Left](https://pub.dev/documentation/dart_either/latest/dart_either/Left/Left.html)
-- [Right](https://pub.dev/documentation/dart_either/latest/dart_either/Right-class.html)
+| Constructor                                                                                                       | Description                 |
+|-------------------------------------------------------------------------------------------------------------------|-----------------------------|
+| [`Either.left`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.left.html)             | Creates a `Left` value      |
+| [`Either.right`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.right.html)           | Creates a `Right` value     |
+| [`Either.binding`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.binding.html)       | Sync monad comprehension    |
+| [`Either.catchError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.catchError.html) | Wraps a throwing expression |
+| [`Left`](https://pub.dev/documentation/dart_either/latest/dart_either/Left/Left.html)                             | Direct `Left` constructor   |
+| [`Right`](https://pub.dev/documentation/dart_either/latest/dart_either/Right/Right.html)                          | Direct `Right` constructor  |
 
 ```dart
 // Left('Left value')
-final left = Either<Object, String>.left('Left value'); // or Left<Object, String>('Left value');
+final left = Either<Object, String>.left('Left value');
+// or: Left<Object, String>('Left value')
 
 // Right(1)
-final right = Either<Object, int>.right(1); // or Right<Object, int>(1);
+final right = Either<Object, int>.right(1);
+// or: Right<Object, int>(1)
 
-// Left('Left value')
+// Left('Left value') — short-circuits on the first bind that returns Left
 Either<Object, String>.binding((e) {
   final String s = left.bind(e);
   final int i = right.bind(e);
@@ -186,19 +229,21 @@ Either.catchError(
 
 #### 1.2. Static methods
 
-- [Either.catchFutureError](https://pub.dev/documentation/dart_either/latest/dart_either/Either/catchFutureError.html)
-- [Either.catchStreamError](https://pub.dev/documentation/dart_either/latest/dart_either/Either/catchStreamError.html)
-- [Either.fromNullable](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fromNullable.html)
-- [Either.futureBinding](https://pub.dev/documentation/dart_either/latest/dart_either/Either/futureBinding.html)
-- [Either.parSequenceN](https://pub.dev/documentation/dart_either/latest/dart_either/Either/parSequenceN.html)
-- [Either.parTraverseN](https://pub.dev/documentation/dart_either/latest/dart_either/Either/parTraverseN.html)
-- [Either.sequence](https://pub.dev/documentation/dart_either/latest/dart_either/Either/sequence.html)
-- [Either.traverse](https://pub.dev/documentation/dart_either/latest/dart_either/Either/traverse.html)
+| Method                                                                                                                 | Description                              |
+|------------------------------------------------------------------------------------------------------------------------|------------------------------------------|
+| [`Either.catchFutureError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/catchFutureError.html) | Wraps an async throwing expression       |
+| [`Either.catchStreamError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/catchStreamError.html) | Wraps a stream that may throw            |
+| [`Either.fromNullable`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fromNullable.html)         | Converts a nullable value                |
+| [`Either.futureBinding`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/futureBinding.html)       | Async monad comprehension                |
+| [`Either.parSequenceN`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/parSequenceN.html)         | Parallel sequence with concurrency limit |
+| [`Either.parTraverseN`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/parTraverseN.html)         | Parallel traverse with concurrency limit |
+| [`Either.sequence`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/sequence.html)                 | Sequences a list of `Either`s            |
+| [`Either.traverse`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/traverse.html)                 | Maps + sequences a list                  |
 
 ```dart
 import 'package:http/http.dart' as http;
 
-/// Either.catchFutureError
+// ─── Either.catchFutureError ─────────────────────────────────────────────────
 Future<Either<String, http.Response>> eitherFuture = Either.catchFutureError(
   (e, s) => 'Error: $e',
   () async {
@@ -209,7 +254,7 @@ Future<Either<String, http.Response>> eitherFuture = Either.catchFutureError(
 (await eitherFuture).fold(ifLeft: print, ifRight: print);
 
 
-/// Either.catchStreamError
+// ─── Either.catchStreamError ─────────────────────────────────────────────────
 Stream<int> genStream() async* {
   for (var i = 0; i < 5; i++) {
     yield i;
@@ -223,12 +268,12 @@ Stream<Either<String, int>> eitherStream = Either.catchStreamError(
 eitherStream.listen(print);
 
 
-/// Either.fromNullable
+// ─── Either.fromNullable ─────────────────────────────────────────────────────
 Either.fromNullable<int>(null); // Left(null)
 Either.fromNullable<int>(1);    // Right(1)
 
 
-/// Either.futureBinding
+// ─── Either.futureBinding ────────────────────────────────────────────────────
 String url1 = 'url1';
 String url2 = 'url2';
 Either.futureBinding<String, http.Response>((e) async {
@@ -255,11 +300,10 @@ Either.futureBinding<String, http.Response>((e) async {
 });
 
 
-/// Either.sequence
+// ─── Either.sequence ─────────────────────────────────────────────────────────
 List<Either<String, http.Response>> eithers = await Future.wait(
   [1, 2, 3, 4, 5].map((id) {
     final url = 'url?id=$id';
-
     return Either.catchFutureError(
       (e, s) => 'Get $url: $e',
       () async {
@@ -272,7 +316,7 @@ List<Either<String, http.Response>> eithers = await Future.wait(
 Either<String, BuiltList<http.Response>> result = Either.sequence(eithers);
 
 
-/// Either.traverse
+// ─── Either.traverse ─────────────────────────────────────────────────────────
 Either<String, BuiltList<Uri>> urisEither = Either.traverse(
   ['url1', 'url2', '::invalid::'],
   (String uriString) => Either.catchError(
@@ -283,66 +327,80 @@ Either<String, BuiltList<Uri>> urisEither = Either.traverse(
 ```
 
 #### 1.3. Extension methods
-- [Stream.toEitherStream](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherStreamExtension/toEitherStream.html)
-- [Future.toEitherFuture](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherFutureExtension/toEitherFuture.html)
-- [T.left](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/left.html)
-- [T.right](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/right.html)
+
+| Extension                                                                                                                           | Description                                    |
+|-------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------|
+| [`Stream.toEitherStream`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherStreamExtension/toEitherStream.html) | Converts a stream, catching errors into `Left` |
+| [`Future.toEitherFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherFutureExtension/toEitherFuture.html) | Converts a future, catching errors into `Left` |
+| [`T.left`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/left.html)                          | Wraps any value as `Left`                      |
+| [`T.right`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/right.html)                        | Wraps any value as `Right`                     |
 
 ```dart
-/// Stream.toEitherStream
+// ─── Stream.toEitherStream ───────────────────────────────────────────────────
 Stream<int> genStream() async* {
   for (var i = 0; i < 5; i++) {
     yield i;
   }
   throw Exception('Fatal');
 }
-Stream<Either<String, int>> eitherStream = genStream().toEitherStream((e, s) => 'Error: $e');
+Stream<Either<String, int>> eitherStream =
+    genStream().toEitherStream((e, s) => 'Error: $e');
 eitherStream.listen(print);
 
 
-/// Future.toEitherFuture
-Future<Either<Object, int>> f1 = Future<int>.error('An error').toEitherFuture((e, s) => e);
-Future<Either<Object, int>> f2 = Future<int>.value(1).toEitherFuture((e, s) => e);
+// ─── Future.toEitherFuture ───────────────────────────────────────────────────
+Future<Either<Object, int>> f1 =
+    Future<int>.error('An error').toEitherFuture((e, s) => e);
+Future<Either<Object, int>> f2 =
+    Future<int>.value(1).toEitherFuture((e, s) => e);
 await f1; // Left('An error')
 await f2; // Right(1)
 
 
-/// T.left, T.right
+// ─── T.left / T.right ────────────────────────────────────────────────────────
 Either<int, String> left = 1.left<String>();
 Either<String, int> right = 2.right<String>();
 ```
 
+---
+
 ### 2. Operations
 
-- [isLeft](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isLeft.html)
-- [isRight](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRight.html)
-- [fold](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fold.html)
-- [foldLeft](https://pub.dev/documentation/dart_either/latest/dart_either/Either/foldLeft.html)
-- [swap](https://pub.dev/documentation/dart_either/latest/dart_either/Either/swap.html)
-- [tapLeft](https://pub.dev/documentation/dart_either/latest/dart_either/Either/tapLeft.html)
-- [tap](https://pub.dev/documentation/dart_either/latest/dart_either/Either/tap.html)
-- [map](https://pub.dev/documentation/dart_either/latest/dart_either/Either/map.html)
-- [mapLeft](https://pub.dev/documentation/dart_either/latest/dart_either/Either/mapLeft.html)
-- [flatMap](https://pub.dev/documentation/dart_either/latest/dart_either/Either/flatMap.html)
-- [bimap](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)
-- [exists](https://pub.dev/documentation/dart_either/latest/dart_either/Either/exists.html)
-- [all](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)
-- [getOrElse](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrElse.html)
-- [orNull](https://pub.dev/documentation/dart_either/latest/dart_either/Either/orNull.html)
-- [getOrHandle](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrHandle.html)
-- [findOrNull](https://pub.dev/documentation/dart_either/latest/dart_either/Either/findOrNull.html)
-- [when](https://pub.dev/documentation/dart_either/latest/dart_either/Either/when.html)
-- [handleErrorWith](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleErrorWith.html)
-- [handleError](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleError.html)
-- [redeem](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeem.html)
-- [redeemWith](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeemWith.html)
-- [toFuture](https://pub.dev/documentation/dart_either/latest/dart_either/AsFutureEitherExtension/toFuture.html)
-- [getOrThrow](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrThrowEitherExtension/getOrThrow.html)
+| Method                                                                                                                 | Description                                   |
+|------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------|
+| [`isLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isLeft.html)                            | Returns `true` if this is a `Left`            |
+| [`isRight`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRight.html)                          | Returns `true` if this is a `Right`           |
+| [`fold`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fold.html)                                | Applies one of two functions based on variant |
+| [`foldLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/foldLeft.html)                        | Left fold with an initial value               |
+| [`swap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/swap.html)                                | Swaps `Left` and `Right`                      |
+| [`tapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/tapLeft.html)                          | Side-effect on `Left`                         |
+| [`tap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/tap.html)                                  | Side-effect on `Right`                        |
+| [`map`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/map.html)                                  | Transforms the `Right` value                  |
+| [`mapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/mapLeft.html)                          | Transforms the `Left` value                   |
+| [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/flatMap.html)                          | Chains computations                           |
+| [`bimap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)                              | Transforms both sides                         |
+| [`exists`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/exists.html)                            | Tests the `Right` value with a predicate      |
+| [`all`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)                                  | Returns `true` for `Left` or if `Right` matches the predicate |
+| [`getOrElse`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrElse.html)                      | Extracts `Right` or falls back to a default   |
+| [`orNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/orNull.html)                            | Extracts `Right` or returns `null`            |
+| [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrHandle.html)                  | Extracts `Right` or maps `Left` to a value    |
+| [`findOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/findOrNull.html)                    | Finds `Right` matching a predicate            |
+| [`when`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/when.html)                                | Pattern-match returning the matched value     |
+| [`handleErrorWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleErrorWith.html)          | Recovers from `Left` with a new `Either`      |
+| [`handleError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleError.html)                  | Recovers from `Left` with a new `Right` value |
+| [`redeem`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeem.html)                            | Maps both sides to the same type              |
+| [`redeemWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeemWith.html)                    | Maps both sides to a new `Either`             |
+| [`toFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/AsFutureEitherExtension/toFuture.html)       | Converts to a `Future`                        |
+| [`getOrThrow`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrThrowEitherExtension/getOrThrow.html) | Extracts `Right` or throws the `Left` value   |
 
-### 3. Extensions on `Future<Either<L, R>>`.
+---
 
-- [thenFlatMapEither](https://pub.dev/documentation/dart_either/latest/dart_either/AsyncFlatMapFutureExtension/thenFlatMapEither.html)
-- [thenMapEither](https://pub.dev/documentation/dart_either/latest/dart_either/AsyncMapFutureExtension/thenMapEither.html)
+### 3. Extensions on `Future<Either<L, R>>`
+
+| Method                                                                                                                                 | Description                           |
+|----------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| [`thenFlatMapEither`](https://pub.dev/documentation/dart_either/latest/dart_either/AsyncFlatMapFutureExtension/thenFlatMapEither.html) | Async `flatMap` on a `Future<Either>` |
+| [`thenMapEither`](https://pub.dev/documentation/dart_either/latest/dart_either/AsyncMapFutureExtension/thenMapEither.html)             | Async `map` on a `Future<Either>`     |
 
 ```dart
 Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
@@ -371,14 +429,18 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
 
 Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
 
-Either<AsyncError, BuiltList<User>> result = await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
+Either<AsyncError, BuiltList<User>> result = await httpGetAsEither(
+        'https://jsonplaceholder.typicode.com/users')
     .thenMapEither((dynamic json) => json as List)
     .thenFlatMapEither(toUsers);
 ```
 
+---
+
 ### 4. Monad comprehensions
 
-You can use `Monad comprehensions` via `Either.binding` and `Either.futureBinding`.
+Use `Either.binding` (sync) or `Either.futureBinding` (async) for do-notation style sequential
+computations that short-circuit on the first `Left`.
 
 ```dart
 Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
@@ -403,34 +465,41 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
       );
 
       return Either<AsyncError, dynamic>.catchError(
-          toAsyncError, () => jsonDecode(response.body)).bind(e);
+        toAsyncError,
+        () => jsonDecode(response.body),
+      ).bind(e);
     });
 
 Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
 
 Either<AsyncError, BuiltList<User>> result = await Either.futureBinding((e) async {
-  final dynamic json = await httpGetAsEither('https://jsonplaceholder.typicode.com/users').bind(e);
+  final dynamic json =
+      await httpGetAsEither('https://jsonplaceholder.typicode.com/users').bind(e);
   final BuiltList<User> users = toUsers(json as List).bind(e);
   return users;
 });
 ```
 
+---
+
 ## References
 
-- [Functional Error Handling](https://arrow-kt.io/docs/patterns/error_handling/)
-- [Monad](https://arrow-kt.io/docs/patterns/monads/)
-- [Monad Comprehensions](https://arrow-kt.io/docs/patterns/monad_comprehensions/)
+- [Functional Error Handling — Arrow-kt](https://arrow-kt.io/docs/patterns/error_handling/)
+- [Monad — Arrow-kt](https://arrow-kt.io/docs/patterns/monads/)
+- [Monad Comprehensions — Arrow-kt](https://arrow-kt.io/docs/patterns/monad_comprehensions/)
+
+---
 
 ## Features and bugs
 
-Please file feature requests and bugs at the [issue tracker][tracker].
+Please file feature requests and bugs at the [issue tracker](https://github.com/hoc081098/dart_either/issues).
 
-[tracker]: https://github.com/hoc081098/dart_either/issues
+---
 
 ## License
 
 ```
 MIT License
 
-Copyright (c) 2021-2024 Petrus Nguyễn Thái Học
+Copyright (c) 2021-2026 Petrus Nguyễn Thái Học
 ```
