@@ -618,6 +618,139 @@ void main() {
           expect(values, Iterable.generate(anchor + 1, (i) => i).toList());
         });
       });
+
+      group('Either.parSequenceN', () {
+        test('right path with concurrency limit', () async {
+          final values = <int>[];
+          final delays = [100, 50, 200]; // Different delays to test concurrency
+
+          final result = await Either.parSequenceN<String, int>(
+            delays.map(
+              (delay) => () async {
+                await Future.delayed(Duration(milliseconds: delay));
+                values.add(delay);
+                return Either<String, int>.right(delay);
+              },
+            ),
+            2, // max concurrency
+          );
+
+          expect(result, Right<String, BuiltList<int>>(delays.build()));
+          expect(values, containsAll(delays)); // All executed
+        });
+
+        test('right path without concurrency limit', () async {
+          final values = <int>[];
+          final delays = [100, 50, 200];
+
+          final result = await Either.parSequenceN<String, int>(
+            delays.map(
+              (delay) => () async {
+                await Future.delayed(Duration(milliseconds: delay));
+                values.add(delay);
+                return Either<String, int>.right(delay);
+              },
+            ),
+            null, // no limit
+          );
+
+          expect(result, Right<String, BuiltList<int>>(delays.build()));
+          expect(values, containsAll(delays));
+        });
+
+        test('left path short-circuits', () async {
+          final values = <int>[];
+          final items = [0, 1, 2]; // Use indices directly
+          const anchor = 1;
+
+          final result = await Either.parSequenceN<String, int>(
+            items.map(
+              (index) => () async {
+                await Future.delayed(Duration(milliseconds: (index + 1) * 50));
+                values.add(index);
+                return index < anchor
+                    ? Either<String, int>.right(index)
+                    : Either<String, int>.left('error$index');
+              },
+            ),
+            2,
+          );
+
+          expect(result, Left<String, BuiltList<int>>('error$anchor'));
+          expect(values.length, anchor + 1); // Only up to the error
+        });
+
+        test('concurrency actually limited', () async {
+          final activeCount = <int>[];
+          final delays = [200, 200, 200]; // Same delay to test concurrency
+
+          final result = await Either.parSequenceN<String, int>(
+            delays.map(
+              (delay) => () async {
+                activeCount.add(1);
+                await Future.delayed(Duration(milliseconds: delay));
+                activeCount.add(-1);
+                return Either<String, int>.right(delay);
+              },
+            ),
+            2, // max 2 concurrent
+          );
+
+          expect(result.isRight, isTrue);
+          expect(activeCount.where((x) => x == 1).length, 3); // 3 starts
+          expect(activeCount.where((x) => x == -1).length, 3); // 3 ends
+          expect(
+            activeCount,
+            [1, 1, -1, 1, -1, -1],
+          ); // No more than 2 active at once
+        });
+      });
+
+      group('Either.parTraverseN', () {
+        test('right path with concurrency limit', () async {
+          final values = <int>[];
+          final ids = [1, 2, 3];
+          final factor = 10;
+
+          final result = await Either.parTraverseN<String, int, int>(
+            ids,
+            (id) => () async {
+              await Future.delayed(Duration(milliseconds: id * 50));
+              values.add(id);
+              return Either<String, int>.right(id * factor);
+            },
+            2,
+          );
+
+          final expectedValues = [
+            for (final v in ids) v * factor,
+          ].build();
+          expect(result, Right<String, BuiltList<int>>(expectedValues));
+          expect(values, containsAll(ids));
+        });
+
+        test('left path short-circuits', () async {
+          final values = <int>[];
+          final ids = [1, 2, 3];
+          const anchor = 2;
+          final factor = 10;
+
+          final result = await Either.parTraverseN<String, int, int>(
+            ids,
+            (id) => () async {
+              await Future.delayed(Duration(milliseconds: id * 50));
+              values.add(id);
+              return id < anchor
+                  ? Either<String, int>.right(id * factor)
+                  : Either<String, int>.left('error$id');
+            },
+            2,
+          );
+
+          expect(result, Left<String, BuiltList<int>>('error$anchor'));
+          expect(values.length, anchor); // Only up to the error
+        });
+      });
     });
 
     test('extension .left() and .right()', () {
