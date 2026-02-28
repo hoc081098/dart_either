@@ -324,6 +324,24 @@ Either<String, BuiltList<Uri>> urisEither = Either.traverse(
     () => Uri.parse(uriString),
   ),
 ); // Left(FormatException('Failed to parse ::invalid:::...'))
+
+
+// ─── Either.parSequenceN ─────────────────────────────────────────────────────
+Future<Either<String, BuiltList<int>>> result = Either.parSequenceN(
+  functions: [
+    () async => fetchNumber(1),
+    () async => fetchNumber(2),
+    () async => fetchNumber(3),
+  ],
+  maxConcurrent: 2,
+);
+
+// ─── Either.parTraverseN ─────────────────────────────────────────────────────
+Future<Either<String, BuiltList<int>>> idsEither = Either.parTraverseN(
+  values: [1, 2, 3],
+  mapper: (id) => () async => fetchNumber(id),
+  maxConcurrent: 2,
+);
 ```
 
 #### 1.3. Extension methods

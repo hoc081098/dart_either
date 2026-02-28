@@ -451,15 +451,15 @@ sealed class Either<L, R> {
   /// If any function returns a [Left], the operation short-circuits and returns that [Left].
   /// Otherwise, collects all [Right] values into a [BuiltList].
   ///
-  /// This is a shorthand for `Either.parSequenceN<L, R>(values.map(mapper), maxConcurrent)`.
+  /// This is a shorthand for `Either.parSequenceN<L, R>(functions: values.map(mapper), maxConcurrent: maxConcurrent)`.
   ///
   /// ### Example
   /// ```dart
   /// // Fetch numbers for IDs 1,2,3 with max 2 concurrent requests
   /// final result = await Either.parTraverseN<String, int, int>(
-  ///   [1, 2, 3],
-  ///   (id) => () async => await fetchNumber(id),
-  ///   2, // max concurrent
+  ///   values: [1, 2, 3],
+  ///   mapper: (id) => () async => fetchNumber(id),
+  ///   maxConcurrent: 2,
   /// );
   /// ```
   ///
@@ -495,13 +495,13 @@ sealed class Either<L, R> {
   /// ```dart
   /// // Run up to 2 concurrent requests
   /// final result = await Either.parSequenceN<String, int>(
-  ///   [
-  ///     () async => await fetchNumber(1),
-  ///     () async => await fetchNumber(2),
-  ///     () async => await fetchNumber(3),
-  ///     () async => await fetchNumber(4),
+  ///   functions: [
+  ///     () async => fetchNumber(1),
+  ///     () async => fetchNumber(2),
+  ///     () async => fetchNumber(3),
+  ///     () async => fetchNumber(4),
   ///   ],
-  ///   2, // max concurrent
+  ///   maxConcurrent: 2,
   /// );
   /// ```
   ///

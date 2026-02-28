@@ -12,7 +12,6 @@ import 'package:meta/meta.dart';
 /// Semaphores are mostly used to limit the number of coroutines that have an access to particular resource.
 /// Semaphore with `permits = 1` is essentially a [Mutex].
 ///
-@experimental
 abstract class Semaphore {
   /// Creates new [Semaphore] instance.
   /// [permits] is the number of permits available in this semaphore.
@@ -76,7 +75,6 @@ extension SemaphoreExtension on Semaphore {
   /// and releasing it after the [action] is completed.
   ///
   /// Returns the return value of the [action].
-  @experimental
   Future<T> withPermit<T>(Future<T> Function() action) async {
     await acquire();
     try {
