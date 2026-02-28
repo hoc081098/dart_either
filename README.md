@@ -189,7 +189,7 @@ final nullableValue = right.orNull(); // 10
 
 ## API Reference
 
-> Full API docs: https://pub.dev/documentation/dart_either/latest/dart_either/dart_either-library.html
+> Full API docs: https://pub.dev/documentation/dart_either/latest/dart_either/
 
 ### 1. Creation
 
@@ -429,8 +429,7 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
 
 Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
 
-Either<AsyncError, BuiltList<User>> result = await httpGetAsEither(
-        'https://jsonplaceholder.typicode.com/users')
+Either<AsyncError, BuiltList<User>> result = await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
     .thenMapEither((dynamic json) => json as List)
     .thenFlatMapEither(toUsers);
 ```
