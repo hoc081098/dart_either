@@ -24,7 +24,7 @@
 
 If you find this library useful, consider buying me a coffee ☕
 
-<a href="https://www.buymeacoffee.com/hoc081098" target="_blank">
+<a href="https://www.buymeacoffee.com/hoc081098" target="_blank" rel="noopener noreferrer">
   <img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" height="64">
 </a>
 
