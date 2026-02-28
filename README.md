@@ -39,11 +39,12 @@ Many projects import entire FP libraries (dartz, fpdart, …) but only use `Eith
 | Feature              | dart_either                                                                                                                   |
 |----------------------|-------------------------------------------------------------------------------------------------------------------------------|
 | Inspired by          | [Λrrow-kt](https://github.com/arrow-kt/arrow), [Scala Cats](https://typelevel.org/cats/typeclasses.html#type-classes-in-cats) |
-| Documentation        | Fully documented — every method has doc comments and examples                                                                 |
-| Test coverage        | Fully tested                                                                                                                  |
+| Documentation        | **Fully documented** — every method/function has doc comments and examples                                                    |
+| Test coverage        | **Fully tested**                                                                                                              |
+| Completeness         | **Most complete** `Either` implementation available for Dart/Flutter                                                          |
 | Monad comprehensions | ✅ Both `sync` and `async`                                                                                                     |
 | Async map / flatMap  | ✅ `thenMapEither`, `thenFlatMapEither`                                                                                        |
-| Bundle size          | Very lightweight (compare to dartz)                                                                                           |
+| Bundle size          | Very **lightweight** and **simple** (compare to dartz)                                                                        |
 
 ---
 
@@ -102,7 +103,6 @@ all becomes even more unwieldy when we try to compose exception-throwing procedu
 double throwsSomeStuff(int i) => throw UnimplementedError();
 String throwsOtherThings(double d) => throw UnimplementedError();
 List<int> moreThrowing(String s) => throw UnimplementedError();
-
 List<int> magic(int i) => moreThrowing(throwsOtherThings(throwsSomeStuff(i)));
 ```
 
