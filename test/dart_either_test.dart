@@ -796,35 +796,63 @@ void main() {
       expect(leftOf1.swap(), rightOf1);
     });
 
-    test('tapLeft', () {
+    test('onLeft', () {
       Object? value;
       expect(
-        rightOf1.tapLeft((v) => value = v),
+        rightOf1.onLeft((v) => value = v),
         rightOf1,
       );
       expect(value, isNull);
 
       value = null;
       expect(
-        leftOf1.tapLeft((v) => value = v),
+        leftOf1.onLeft((v) => value = v),
         leftOf1,
       );
       expect(value, 1);
     });
 
-    test('tap', () {
+    test('tapLeft (deprecated alias)', () {
+      Object? value;
+      // ignore: deprecated_member_use_from_same_package
+      final rightTapped = rightOf1.tapLeft((v) => value = v);
+      expect(rightTapped, rightOf1);
+      expect(value, isNull);
+
+      value = null;
+      // ignore: deprecated_member_use_from_same_package
+      final leftTapped = leftOf1.tapLeft((v) => value = v);
+      expect(leftTapped, leftOf1);
+      expect(value, 1);
+    });
+
+    test('onRight', () {
       Object? value;
       expect(
-        rightOf1.tap((v) => value = v),
+        rightOf1.onRight((v) => value = v),
         rightOf1,
       );
       expect(value, 1);
 
       value = null;
       expect(
-        leftOf1.tap((v) => value = v),
+        leftOf1.onRight((v) => value = v),
         leftOf1,
       );
+      expect(value, isNull);
+    });
+
+    test('tap (deprecated alias)', () {
+      Object? value;
+      // ignore: deprecated_member_use_from_same_package
+      final rightTapped = rightOf1.tap((v) => value = v);
+      expect(rightTapped, rightOf1);
+      expect(value, 1);
+
+      value = null;
+      // ignore: deprecated_member_use_from_same_package
+      final leftTapped = leftOf1.tap((v) => value = v);
+      expect(leftTapped, leftOf1);
       expect(value, isNull);
     });
 
@@ -929,8 +957,15 @@ void main() {
       expect(leftOf1.getOrElse(() => 2), 2);
     });
 
-    test('orNull', () {
+    test('getOrNull', () {
+      expect(rightOf1.getOrNull(), 1);
+      expect(leftOf1.getOrNull(), isNull);
+    });
+
+    test('orNull (deprecated alias)', () {
+      // ignore: deprecated_member_use_from_same_package
       expect(rightOf1.orNull(), 1);
+      // ignore: deprecated_member_use_from_same_package
       expect(leftOf1.orNull(), isNull);
     });
 

@@ -56,6 +56,6 @@ void main() {
   ); // Prints Right: Either.Right(10)
 
   /// Convert to nullable value
-  final nullableValue = right.orNull();
+  final nullableValue = right.getOrNull();
   print(nullableValue); // Prints 10
 }
