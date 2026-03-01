@@ -953,8 +953,23 @@ void main() {
     });
 
     test('getOrDefault', () {
-      expect(rightOf1.getOrDefault(() => 2), 1);
-      expect(leftOf1.getOrDefault(() => 2), 2);
+      expect(rightOf1.getOrDefault(2), 1);
+      expect(leftOf1.getOrDefault(2), 2);
+    });
+
+    test('getOrDefault is eager', () {
+      var called = 0;
+      int makeDefault() {
+        called += 1;
+        return 2;
+      }
+
+      expect(rightOf1.getOrDefault(makeDefault()), 1);
+      expect(called, 1);
+
+      called = 0;
+      expect(leftOf1.getOrDefault(makeDefault()), 2);
+      expect(called, 1);
     });
 
     test('getOrElse (deprecated alias)', () {
@@ -979,6 +994,19 @@ void main() {
     test('getOrHandle', () {
       expect(rightOf1.getOrHandle((l) => l + 1), 1);
       expect(leftOf1.getOrHandle((l) => l + 1), 2);
+
+      var called = 0;
+      rightOf1.getOrHandle((_) {
+        called += 1;
+        return 2;
+      });
+      expect(called, 0);
+
+      leftOf1.getOrHandle((_) {
+        called += 1;
+        return 2;
+      });
+      expect(called, 1);
     });
 
     test('findOrNull', () {

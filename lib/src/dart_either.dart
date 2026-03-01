@@ -772,15 +772,18 @@ sealed class Either<L, R> {
         ifRight: predicate,
       );
 
-  /// Returns the value from this [Right] or the given argument if this is a [Left].
+  /// Returns the value from this [Right] or [defaultValue] if this is a [Left].
+  ///
+  /// [defaultValue] is eager, so it is evaluated before the call.
+  /// For lazy fallback computation, use [getOrHandle].
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).getOrDefault(() => 17); // Result: 12
-  /// Left<int, int>(12).getOrDefault(() => 17);  // Result: 17
+  /// Right<int, int>(12).getOrDefault(17); // Result: 12
+  /// Left<int, int>(12).getOrDefault(17);  // Result: 17
   /// ```
-  R getOrDefault(R Function() defaultValue) => _foldInternal(
-        ifLeft: (_) => defaultValue(),
+  R getOrDefault(R defaultValue) => _foldInternal(
+        ifLeft: (_) => defaultValue,
         ifRight: _identity,
       );
 
@@ -791,8 +794,10 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).getOrElse(() => 17); // Result: 12
   /// Left<int, int>(12).getOrElse(() => 17);  // Result: 17
   /// ```
-  @Deprecated('Use getOrDefault instead.')
-  R getOrElse(R Function() defaultValue) => getOrDefault(defaultValue);
+  @Deprecated(
+    'Use getOrDefault(value) for eager fallback, or getOrHandle for lazy fallback.',
+  )
+  R getOrElse(R Function() defaultValue) => getOrHandle((_) => defaultValue());
 
   /// Returns the [Right]'s value if it exists, otherwise `null`.
   ///
