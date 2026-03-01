@@ -154,7 +154,7 @@ final catchError = Either.catchError(
 // )
 
 /// Extract the value from [Either]
-final value1 = right.getOrElse(() => -1); // 10
+final value1 = right.getOrDefault(-1); // 10
 final value2 = right.getOrHandle((l) => -1); // 10
 
 /// Chain computations
@@ -180,7 +180,7 @@ print(
 ); // Prints Right: Either.Right(10)
 
 /// Convert to nullable value
-final nullableValue = right.orNull(); // 10
+final nullableValue = right.getOrNull(); // 10
 ```
 
 </details>
@@ -391,16 +391,16 @@ Either<String, int> right = 2.right<String>();
 | [`fold`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fold.html)                                | Applies one of two functions based on variant |
 | [`foldLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/foldLeft.html)                        | Left fold with an initial value               |
 | [`swap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/swap.html)                                | Swaps `Left` and `Right`                      |
-| [`tapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/tapLeft.html)                          | Side-effect on `Left`                         |
-| [`tap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/tap.html)                                  | Side-effect on `Right`                        |
+| [`onLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/onLeft.html)                            | Side-effect on `Left`                         |
+| [`onRight`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/onRight.html)                          | Side-effect on `Right`                        |
 | [`map`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/map.html)                                  | Transforms the `Right` value                  |
 | [`mapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/mapLeft.html)                          | Transforms the `Left` value                   |
 | [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/flatMap.html)                          | Chains computations                           |
 | [`bimap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)                              | Transforms both sides                         |
-| [`exists`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/exists.html)                            | Tests the `Right` value with a predicate      |
+| [`isRightAnd`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRightAnd.html)                    | Tests the `Right` value with a predicate      |
 | [`all`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)                                  | Returns `true` for `Left` or if `Right` matches the predicate |
-| [`getOrElse`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrElse.html)                      | Extracts `Right` or falls back to a default   |
-| [`orNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/orNull.html)                            | Extracts `Right` or returns `null`            |
+| [`getOrDefault`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrDefault.html)                | Extracts `Right` or falls back to an eager default value |
+| [`getOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrNull.html)                      | Extracts `Right` or returns `null`            |
 | [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrHandle.html)                  | Extracts `Right` or maps `Left` to a value    |
 | [`findOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/findOrNull.html)                    | Finds `Right` matching a predicate            |
 | [`when`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/when.html)                                | Pattern-match returning the matched value     |
@@ -410,6 +410,9 @@ Either<String, int> right = 2.right<String>();
 | [`redeemWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeemWith.html)                    | Maps both sides to a new `Either`             |
 | [`toFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/AsFutureEitherExtension/toFuture.html)       | Converts to a `Future`                        |
 | [`getOrThrow`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrThrowEitherExtension/getOrThrow.html) | Extracts `Right` or throws the `Left` value   |
+
+> Deprecated aliases: `tapLeft -> onLeft`, `tap -> onRight`, `orNull -> getOrNull`, `exists -> isRightAnd`.
+> `getOrElse` is deprecated. Prefer `getOrDefault(<value>)` for eager fallback, or `getOrHandle((_) => <value>)` for lazy fallback.
 
 ---
 

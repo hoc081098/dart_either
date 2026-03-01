@@ -611,35 +611,55 @@ sealed class Either<L, R> {
         ifRight: (r) => Either.left(r),
       );
 
-  /// The given function is applied as a fire and forget effect if this is a [Left].
-  /// When applied the result is ignored and the original [Either] value is returned.
+  /// Performs the given [action] on the encapsulated [L] if this is a [Left].
+  /// Returns the original [Either] unchanged.
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).tapLeft((_) => println('flower')); // Result: Right(12)
-  /// Left<int, int>(12).tapLeft((_) => println('flower'));  // Result: prints 'flower' and returns: Left(12)
+  /// Right<int, int>(12).onLeft((_) => print('flower')); // Result: Right(12)
+  /// Left<int, int>(12).onLeft((_) => print('flower'));  // Result: prints 'flower' and returns: Left(12)
   /// ```
-  Either<L, R> tapLeft(void Function(L value) f) {
+  Either<L, R> onLeft(void Function(L value) action) {
     if (this case Left(value: final value)) {
-      f(value);
+      action(value);
     }
     return this;
   }
 
-  /// The given function is applied as a fire and forget effect if this is a [Right].
-  /// When applied the result is ignored and the original [Either] value is returned.
+  /// Alias of [onLeft].
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).tap((_) => println('flower')); // Result: prints 'flower' and returns: Right(12)
-  /// Left<int, int>(12).tap((_) => println('flower'));  // Result: Left(12)
+  /// Right<int, int>(12).tapLeft((_) => print('flower')); // Result: Right(12)
+  /// Left<int, int>(12).tapLeft((_) => print('flower'));  // Result: prints 'flower' and returns: Left(12)
   /// ```
-  Either<L, R> tap(void Function(R value) f) {
+  @Deprecated('Use onLeft instead.')
+  Either<L, R> tapLeft(void Function(L value) action) => onLeft(action);
+
+  /// Performs the given [action] on the encapsulated [R] value if this is a [Right].
+  /// Returns the original [Either] unchanged.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).onRight((_) => print('flower')); // Result: prints 'flower' and returns: Right(12)
+  /// Left<int, int>(12).onRight((_) => print('flower'));  // Result: Left(12)
+  /// ```
+  Either<L, R> onRight(void Function(R value) action) {
     if (this case Right(value: final value)) {
-      f(value);
+      action(value);
     }
     return this;
   }
+
+  /// Alias of [onRight].
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).tap((_) => print('flower')); // Result: prints 'flower' and returns: Right(12)
+  /// Left<int, int>(12).tap((_) => print('flower'));  // Result: Left(12)
+  /// ```
+  @Deprecated('Use onRight instead.')
+  Either<L, R> tap(void Function(R value) action) => onRight(action);
 
   /// The given function is applied if this is a `Right`.
   ///
@@ -725,17 +745,28 @@ sealed class Either<L, R> {
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).exists((v) => v > 10); // Result: true
-  /// Right<int, int>(7).exists((v) => v > 10);  // Result: false
+  /// Right<int, int>(12).isRightAnd((v) => v > 10); // Result: true
+  /// Right<int, int>(7).isRightAnd((v) => v > 10);  // Result: false
   ///
-  /// Left<int, int>(12).exists((v) => v > 10);  // Result: false
-  /// Left<int, int>(12).exists((v) => v < 10);  // Result: false
+  /// Left<int, int>(12).isRightAnd((v) => v > 10);  // Result: false
+  /// Left<int, int>(12).isRightAnd((v) => v < 10);  // Result: false
   /// ```
   @useResult
-  bool exists(bool Function(R value) predicate) => _foldInternal(
+  bool isRightAnd(bool Function(R value) predicate) => _foldInternal(
         ifLeft: _const(false),
         ifRight: predicate,
       );
+
+  /// Alias of [isRightAnd].
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).exists((v) => v > 10); // Result: true
+  /// Left<int, int>(12).exists((v) => v > 10);  // Result: false
+  /// ```
+  @Deprecated('Use isRightAnd instead.')
+  @useResult
+  bool exists(bool Function(R value) predicate) => isRightAnd(predicate);
 
   /// Returns `true` if [Left] or returns the result of the application of
   /// the given predicate to the [Right] value.
@@ -754,29 +785,61 @@ sealed class Either<L, R> {
         ifRight: predicate,
       );
 
-  /// Returns the value from this [Right] or the given argument if this is a [Left].
+  /// Returns the value from this [Right] or [defaultValue] if this is a [Left].
+  ///
+  /// [defaultValue] is eager, so it is evaluated before the call.
+  /// For lazy fallback computation, use [getOrHandle].
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).getOrDefault(17); // Result: 12
+  /// Left<int, int>(12).getOrDefault(17);  // Result: 17
+  /// ```
+  R getOrDefault(R defaultValue) => _foldInternal(
+        ifLeft: (_) => defaultValue,
+        ifRight: _identity,
+      );
+
+  /// Deprecated lazy fallback helper.
+  ///
+  /// This preserves the historical lazy behavior (`defaultValue` is evaluated only
+  /// when this is [Left]), so it is **not** equivalent to [getOrDefault], which is eager.
+  ///
+  /// Prefer:
+  /// - [getOrDefault] for eager fallback values.
+  /// - [getOrHandle] for lazy fallback computation.
   ///
   /// ### Example
   /// ```dart
   /// Right<int, int>(12).getOrElse(() => 17); // Result: 12
   /// Left<int, int>(12).getOrElse(() => 17);  // Result: 17
   /// ```
-  R getOrElse(R Function() defaultValue) => _foldInternal(
-        ifLeft: (_) => defaultValue(),
+  @Deprecated(
+    'Use getOrDefault(value) for eager fallback, or getOrHandle for lazy fallback.',
+  )
+  R getOrElse(R Function() defaultValue) => getOrHandle((_) => defaultValue());
+
+  /// Returns the [Right]'s value if it exists, otherwise `null`.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).getOrNull(); // Result: 12
+  /// Left<int, int>(12).getOrNull();  // Result: null
+  /// ```
+  R? getOrNull() => _foldInternal(
+        ifLeft: _const(null),
         ifRight: _identity,
       );
 
-  /// Returns the [Right]'s value if it exists, otherwise `null`.
+  /// Alias of [getOrNull].
   ///
   /// ### Example
   /// ```dart
   /// Right<int, int>(12).orNull(); // Result: 12
   /// Left<int, int>(12).orNull();  // Result: null
   /// ```
-  R? orNull() => _foldInternal(
-        ifLeft: _const(null),
-        ifRight: _identity,
-      );
+  @Deprecated('Use getOrNull instead.')
+  R? orNull() => getOrNull();
 
   /// Returns the value from this [Right]
   /// or allows clients to transform the value of [Left] to the final result.

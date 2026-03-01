@@ -30,7 +30,7 @@ void main() {
   // )
 
   /// Extract the value from [Either]
-  final value1 = right.getOrElse(() => -1);
+  final value1 = right.getOrDefault(-1);
   final value2 = right.getOrHandle((l) => -1);
   print('$value1, $value2'); // Prints 10, 10
 
@@ -56,6 +56,6 @@ void main() {
   ); // Prints Right: Either.Right(10)
 
   /// Convert to nullable value
-  final nullableValue = right.orNull();
+  final nullableValue = right.getOrNull();
   print(nullableValue); // Prints 10
 }
