@@ -517,7 +517,7 @@ sealed class Either<L, R> {
     required int? maxConcurrent,
   }) async {
     final futureFunctions = functions.toList(growable: false);
-    final semaphore = Semaphore(maxConcurrent ?? futureFunctions.length);
+    final semaphore = maxConcurrent != null ? Semaphore(maxConcurrent) : null;
     final token = _Token();
 
     Future<R> Function() run(Future<Either<L, R>> Function() f) {
@@ -526,8 +526,10 @@ sealed class Either<L, R> {
           );
     }
 
-    Future<R> runWithPermit(Future<Either<L, R>> Function() f) =>
-        semaphore.withPermit(run(f));
+    Future<R> runWithPermit(Future<Either<L, R>> Function() f) {
+      final action = run(f);
+      return semaphore?.withPermit(action) ?? action();
+    }
 
     return Future.wait(
       futureFunctions.map(runWithPermit),
