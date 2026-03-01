@@ -474,7 +474,7 @@ sealed class Either<L, R> {
   static Future<Either<L, BuiltList<R>>> parTraverseN<L, R, T>({
     required Iterable<T> values,
     required Future<Either<L, R>> Function() Function(T value) mapper,
-    int? maxConcurrent,
+    required int? maxConcurrent,
   }) =>
       parSequenceN<L, R>(
         functions: values.map(mapper),
@@ -514,10 +514,10 @@ sealed class Either<L, R> {
   @useResult
   static Future<Either<L, BuiltList<R>>> parSequenceN<L, R>({
     required Iterable<Future<Either<L, R>> Function()> functions,
-    int? maxConcurrent,
+    required int? maxConcurrent,
   }) async {
     final futureFunctions = functions.toList(growable: false);
-    final semaphore = Semaphore(maxConcurrent ?? futureFunctions.length);
+    final semaphore = maxConcurrent != null ? Semaphore(maxConcurrent) : null;
     final token = _Token();
 
     Future<R> Function() run(Future<Either<L, R>> Function() f) {
@@ -526,8 +526,10 @@ sealed class Either<L, R> {
           );
     }
 
-    Future<R> runWithPermit(Future<Either<L, R>> Function() f) =>
-        semaphore.withPermit(run(f));
+    Future<R> runWithPermit(Future<Either<L, R>> Function() f) {
+      final action = run(f);
+      return semaphore?.withPermit(action) ?? action();
+    }
 
     return Future.wait(
       futureFunctions.map(runWithPermit),
