@@ -743,17 +743,28 @@ sealed class Either<L, R> {
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).exists((v) => v > 10); // Result: true
-  /// Right<int, int>(7).exists((v) => v > 10);  // Result: false
+  /// Right<int, int>(12).isRightAnd((v) => v > 10); // Result: true
+  /// Right<int, int>(7).isRightAnd((v) => v > 10);  // Result: false
   ///
-  /// Left<int, int>(12).exists((v) => v > 10);  // Result: false
-  /// Left<int, int>(12).exists((v) => v < 10);  // Result: false
+  /// Left<int, int>(12).isRightAnd((v) => v > 10);  // Result: false
+  /// Left<int, int>(12).isRightAnd((v) => v < 10);  // Result: false
   /// ```
   @useResult
-  bool exists(bool Function(R value) predicate) => _foldInternal(
+  bool isRightAnd(bool Function(R value) predicate) => _foldInternal(
         ifLeft: _const(false),
         ifRight: predicate,
       );
+
+  /// Alias of [isRightAnd].
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).exists((v) => v > 10); // Result: true
+  /// Left<int, int>(12).exists((v) => v > 10);  // Result: false
+  /// ```
+  @Deprecated('Use isRightAnd instead.')
+  @useResult
+  bool exists(bool Function(R value) predicate) => isRightAnd(predicate);
 
   /// Returns `true` if [Left] or returns the result of the application of
   /// the given predicate to the [Right] value.

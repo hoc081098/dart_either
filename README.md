@@ -397,7 +397,7 @@ Either<String, int> right = 2.right<String>();
 | [`mapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/mapLeft.html)                          | Transforms the `Left` value                   |
 | [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/flatMap.html)                          | Chains computations                           |
 | [`bimap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)                              | Transforms both sides                         |
-| [`exists`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/exists.html)                            | Tests the `Right` value with a predicate      |
+| [`isRightAnd`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRightAnd.html)                    | Tests the `Right` value with a predicate      |
 | [`all`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)                                  | Returns `true` for `Left` or if `Right` matches the predicate |
 | [`getOrDefault`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrDefault.html)                | Extracts `Right` or falls back to an eager default value |
 | [`getOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrNull.html)                      | Extracts `Right` or returns `null`            |
@@ -411,7 +411,7 @@ Either<String, int> right = 2.right<String>();
 | [`toFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/AsFutureEitherExtension/toFuture.html)       | Converts to a `Future`                        |
 | [`getOrThrow`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrThrowEitherExtension/getOrThrow.html) | Extracts `Right` or throws the `Left` value   |
 
-> Deprecated aliases: `tapLeft -> onLeft`, `tap -> onRight`, `orNull -> getOrNull`, `getOrElse -> getOrDefault`.
+> Deprecated aliases: `tapLeft -> onLeft`, `tap -> onRight`, `orNull -> getOrNull`, `getOrElse -> getOrDefault`, `exists -> isRightAnd`.
 > For lazy fallback computation, use `getOrHandle((_) => ...)`.
 
 ---

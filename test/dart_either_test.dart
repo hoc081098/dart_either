@@ -924,18 +924,30 @@ void main() {
       );
     });
 
-    test('exists', () {
-      expect(rightOf1.exists((value) => value > 0), isTrue);
-      expect(rightOf1.exists((value) => value > 1), isFalse);
+    test('isRightAnd', () {
+      expect(rightOf1.isRightAnd((value) => value > 0), isTrue);
+      expect(rightOf1.isRightAnd((value) => value > 1), isFalse);
 
       expect(
-        leftOf1.exists((value) => value > 0),
+        leftOf1.isRightAnd((value) => value > 0),
         isFalse,
       );
       expect(
-        leftOf1.exists((value) => value > 1),
+        leftOf1.isRightAnd((value) => value > 1),
         isFalse,
       );
+    });
+
+    test('exists (deprecated alias)', () {
+      // ignore: deprecated_member_use_from_same_package
+      expect(rightOf1.exists((value) => value > 0), isTrue);
+      // ignore: deprecated_member_use_from_same_package
+      expect(rightOf1.exists((value) => value > 1), isFalse);
+
+      // ignore: deprecated_member_use_from_same_package
+      expect(leftOf1.exists((value) => value > 0), isFalse);
+      // ignore: deprecated_member_use_from_same_package
+      expect(leftOf1.exists((value) => value > 1), isFalse);
     });
 
     test('all', () {
