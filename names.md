@@ -1,22 +1,22 @@
-Chuẩn. Nếu muốn Dart API “nghe giống Arrow/Kotlin” hơn nhưng vẫn hợp Dart, mình gợi ý như sau:
+This file tracks naming alignment proposals to make the Dart API feel closer to Arrow/Kotlin while staying idiomatic in Dart.
 
-| Dart hiện tại        | Gợi ý tên mới                     | Vì sao                                               | Status |
-|----------------------|-----------------------------------|------------------------------------------------------|--------|
-| `tap`                | `onRight`                         | Trùng mental model Arrow                             | DONE   | 
-| `tapLeft`            | `onLeft`                          | Trùng mental model Arrow                             | DONE   | 
-| `orNull`             | `getOrNull`                       | Đồng bộ với Kotlin/Arrow                             | DONE   | 
-| `getOrHandle`        | `getOrElse`                       | Semantics đúng với `getOrElse((L) -> R)` của Arrow   |
-| `getOrElse(() => R)` | `getOrDefault` hoặc `orElseGet`   | Tách rõ khỏi `getOrElse((L)->R)` để tránh nhập nhằng | DONE   |
-| `exists`             | `isRightAnd` hoặc `isRightWhere`  | Gần nghĩa `isRight(predicate)`                       | DONE   |
-| *(chưa có)*          | `isLeftAnd` hoặc `isLeftWhere`    | Bổ sung cặp đối xứng với `isRightAnd`                |        |
-| `handleError`        | `recover`                         | Gần Arrow hơn                                        |        |
-| `handleErrorWith`    | `recoverWith` *(hoặc giữ nguyên)* | Nếu muốn naming family đồng nhất với `recover`       |        |
-| `catchError`         | `catch`                           | Tên ngắn, khớp Arrow                                 |        |
-| `catchFutureError`   | `catchFuture`                     | Đồng bộ tên với `catch`                              |        |
-| `catchStreamError`   | `catchStream`                     | Đồng bộ tên với `catch`                              |        |
+| Current Dart API      | Suggested Name                    | Rationale                                      | Status |
+|-----------------------|-----------------------------------|------------------------------------------------|--------|
+| `tap`                 | `onRight`                         | Matches Arrow mental model                     | DONE   |
+| `tapLeft`             | `onLeft`                          | Matches Arrow mental model                     | DONE   |
+| `orNull`              | `getOrNull`                       | Aligns with Kotlin/Arrow naming                | DONE   |
+| `getOrHandle`         | `getOrElse`                       | Semantics match Arrow `getOrElse((L) -> R)`    |        |
+| `getOrElse(() => R)`  | `getOrDefault` or `orElseGet`     | Disambiguates from `getOrElse((L) -> R)` style | DONE   |
+| `exists`              | `isRightAnd` or `isRightWhere`    | Closer to `isRight(predicate)` semantics       | DONE   |
+| *(not available yet)* | `isLeftAnd` or `isLeftWhere`      | Symmetric pair with `isRightAnd`               |        |
+| `handleError`         | `recover`                         | Closer to Arrow naming                         |        |
+| `handleErrorWith`     | `recoverWith` *(or keep current)* | Keeps naming family aligned with `recover`     |        |
+| `catchError`          | `catch`                           | Shorter and aligned with Arrow                 |        |
+| `catchFutureError`    | `catchFuture`                     | Naming consistency with `catch`                |        |
+| `catchStreamError`    | `catchStream`                     | Naming consistency with `catch`                |        |
 
-Gợi ý rollout an toàn (vì package public):
+Safe rollout guidance (published package):
 
-1. Thêm tên mới dưới dạng alias.
-2. `@Deprecated` tên cũ (message chỉ rõ tên thay thế).
-3. Đợi 1-2 minor releases rồi mới remove ở major release.
+1. Introduce the new name first.
+2. Keep the old name as an alias and mark it `@Deprecated` with replacement guidance.
+3. Remove deprecated APIs only in a future major release (after 1-2 minor releases).

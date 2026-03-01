@@ -798,7 +798,14 @@ sealed class Either<L, R> {
         ifRight: _identity,
       );
 
-  /// Alias of [getOrDefault].
+  /// Deprecated lazy fallback helper.
+  ///
+  /// This preserves the historical lazy behavior (`defaultValue` is evaluated only
+  /// when this is [Left]), so it is **not** equivalent to [getOrDefault], which is eager.
+  ///
+  /// Prefer:
+  /// - [getOrDefault] for eager fallback values.
+  /// - [getOrHandle] for lazy fallback computation.
   ///
   /// ### Example
   /// ```dart
