@@ -7,7 +7,7 @@ Chuẩn. Nếu muốn Dart API “nghe giống Arrow/Kotlin” hơn nhưng vẫn
 | `orNull`             | `getOrNull`                       | Đồng bộ với Kotlin/Arrow                             | DONE   | 
 | `getOrHandle`        | `getOrElse`                       | Semantics đúng với `getOrElse((L) -> R)` của Arrow   |
 | `getOrElse(() => R)` | `getOrDefault` hoặc `orElseGet`   | Tách rõ khỏi `getOrElse((L)->R)` để tránh nhập nhằng | DONE   |
-| `exists`             | `isRightAnd` hoặc `isRightWhere`  | Gần nghĩa `isRight(predicate)`                       |        |
+| `exists`             | `isRightAnd` hoặc `isRightWhere`  | Gần nghĩa `isRight(predicate)`                       | DONE   |
 | *(chưa có)*          | `isLeftAnd` hoặc `isLeftWhere`    | Bổ sung cặp đối xứng với `isRightAnd`                |        |
 | `handleError`        | `recover`                         | Gần Arrow hơn                                        |        |
 | `handleErrorWith`    | `recoverWith` *(hoặc giữ nguyên)* | Nếu muốn naming family đồng nhất với `recover`       |        |
