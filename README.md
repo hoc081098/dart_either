@@ -425,6 +425,31 @@ Either<String, int> right = 2.right<String>();
 | [`toFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/AsFutureEitherExtension/toFuture.html)       | Converts to a `Future`                        |
 | [`getOrThrow`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrThrowEitherExtension/getOrThrow.html) | Extracts `Right` or throws the `Left` value   |
 
+```dart
+final ok = Either<String, int>.right(10);
+final err = Either<String, int>.left('boom');
+
+// Predicates
+ok.isRightAnd((v) => v > 0); // true
+err.all((_) => false); // true
+
+// Transformations
+ok.map((v) => v + 1); // Right(11)
+ok.combine(
+  Either<String, int>.right(2),
+  combineLeft: (a, b) => '$a,$b',
+  combineRight: (a, b) => a + b,
+); // Right(12)
+Either<String, Either<String, int>>.right(ok).flatten(); // Right(10)
+
+// Extractions
+ok.getOrDefault(0); // 10
+err.getOrHandle((l) => l.length); // 4
+ok.getOrNull(); // 10
+err.leftOrNull(); // 'boom'
+Either<int, int>.right(10).merge(); // 10
+```
+
 > Deprecated aliases: `tapLeft -> onLeft`, `tap -> onRight`, `orNull -> getOrNull`, `exists -> isRightAnd`.
 > `getOrElse` is deprecated. Prefer `getOrDefault(<value>)` for eager fallback, or `getOrHandle((_) => <value>)` for lazy fallback.
 

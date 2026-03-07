@@ -1,44 +1,35 @@
-## Unreleased - Mar 01, 2026
+## Unreleased
 
 - API naming alignment (non-breaking) toward Arrow/Kotlin naming:
   - Added new APIs:
     - `onLeft` (from `tapLeft`)
     - `onRight` (from `tap`)
     - `getOrNull` (from `orNull`)
-    - `getOrDefault` (from `getOrElse`)
+    - `getOrDefault` (eager fallback value)
     - `isRightAnd` (from `exists`)
   - Kept old APIs as deprecated aliases for compatibility:
     - `tapLeft -> onLeft`
     - `tap -> onRight`
     - `orNull -> getOrNull`
-    - `getOrElse -> getOrDefault`
     - `exists -> isRightAnd`
+  - Kept `getOrElse` as deprecated lazy fallback helper:
+    - Use `getOrDefault(<value>)` for eager fallback.
+    - Use `getOrHandle((left) => <value>)` for lazy fallback.
 
-- `getOrDefault` now uses eager fallback value semantics:
-  - Signature: `R getOrDefault(R defaultValue)`.
-  - Use `getOrHandle((_) => ...)` for lazy fallback computation.
+- Added new operations:
+  - `Either.combine`
+  - `Either.leftOrNull`
+  - `Either.flatten`
+  - `Either.merge`
 
-- Added `Either.combine`:
-  - Combines two `Either<L, R>` values.
-  - If both are `Right`, uses `combineRight`.
-  - If both are `Left`, uses `combineLeft`.
-  - If one is `Left` and the other is `Right`, returns the sole `Left`.
-- Updated docs, examples, and tests for `Either.combine`.
-
-- Added `Either.leftOrNull`, `Either.flatten`, and `Either.merge`.
-- Updated docs, examples, and tests for `leftOrNull`, `flatten`, and `merge`.
-
-- Updated docs and examples to the new names:
-  - `README.md` API table and snippets.
+- Updated docs and examples:
+  - `README.md` API tables and operation snippets.
   - `example/lib/dart_either_readme.dart`.
 
 - Expanded tests for:
-  - New API names.
-  - Deprecated alias compatibility.
-  - Eager (`getOrDefault`) vs lazy (`getOrHandle`) fallback behavior.
-
-- Added repository skill documentation for API rename workflow:
-  - `.github/skills/api-rename-flow/SKILL.md`.
+  - New API names and deprecated alias compatibility.
+  - Eager (`getOrDefault`) vs lazy (`getOrHandle` / `getOrElse`) fallback behavior.
+  - New operations: `combine`, `leftOrNull`, `flatten`, `merge`.
 
 ## 2.1.0 - Mar 07, 2026
 
