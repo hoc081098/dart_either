@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 
 import 'binding.dart';
 import 'extensions.dart';
+import 'internal.dart';
 import 'utils/semaphore.dart';
 
 /// Map [error] and [stackTrace] to a [T] value.
@@ -20,8 +21,6 @@ extension on Object {
     return this;
   }
 }
-
-T _identity<T>(T t) => t;
 
 T Function(Object?) _const<T>(T t) => (_) => t;
 
@@ -840,7 +839,7 @@ sealed class Either<L, R> {
   /// ```
   R getOrDefault(R defaultValue) => _foldInternal(
         ifLeft: (_) => defaultValue,
-        ifRight: _identity,
+        ifRight: identity,
       );
 
   /// Deprecated lazy fallback helper.
@@ -871,7 +870,19 @@ sealed class Either<L, R> {
   /// ```
   R? getOrNull() => _foldInternal(
         ifLeft: _const(null),
-        ifRight: _identity,
+        ifRight: identity,
+      );
+
+  /// Returns the [Left]'s value if it exists, otherwise `null`.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).leftOrNull(); // Result: null
+  /// Left<int, int>(12).leftOrNull();  // Result: 12
+  /// ```
+  L? leftOrNull() => _foldInternal(
+        ifLeft: identity,
+        ifRight: _const(null),
       );
 
   /// Alias of [getOrNull].
@@ -894,7 +905,7 @@ sealed class Either<L, R> {
   /// ```
   R getOrHandle(R Function(L value) defaultValue) => _foldInternal(
         ifLeft: defaultValue,
-        ifRight: _identity,
+        ifRight: identity,
       );
 
   /// Returns the [Right.value] matching the given [predicate],

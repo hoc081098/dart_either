@@ -983,6 +983,28 @@ void main() {
       expect(rightCalls, 0);
     });
 
+    test('flatten', () {
+      expect(
+        const Right<int, Either<int, int>>(Right<int, int>(2)).flatten(),
+        const Right<int, int>(2),
+      );
+
+      expect(
+        const Right<int, Either<int, int>>(Left<int, int>(2)).flatten(),
+        const Left<int, int>(2),
+      );
+
+      expect(
+        const Left<int, Either<int, int>>(1).flatten(),
+        const Left<int, int>(1),
+      );
+    });
+
+    test('merge', () {
+      expect(const Right<int, int>(2).merge(), 2);
+      expect(const Left<int, int>(1).merge(), 1);
+    });
+
     test('isRightAnd', () {
       expect(rightOf1.isRightAnd((value) => value > 0), isTrue);
       expect(rightOf1.isRightAnd((value) => value > 1), isFalse);
@@ -1053,6 +1075,11 @@ void main() {
     test('getOrNull', () {
       expect(rightOf1.getOrNull(), 1);
       expect(leftOf1.getOrNull(), isNull);
+    });
+
+    test('leftOrNull', () {
+      expect(rightOf1.leftOrNull(), isNull);
+      expect(leftOf1.leftOrNull(), 1);
     });
 
     test('orNull (deprecated alias)', () {

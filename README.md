@@ -164,6 +164,10 @@ final combined = right.combine(
   combineLeft: (a, b) => '$a,$b',
   combineRight: (a, b) => a + b,
 ); // Either.Right(15)
+final flattened = Either<String, Either<String, int>>.right(
+  Either<String, int>.right(10),
+).flatten(); // Either.Right(10)
+final merged = Either<int, int>.right(10).merge(); // 10
 
 /// Pattern matching
 right.fold(
@@ -186,6 +190,7 @@ print(
 
 /// Convert to nullable value
 final nullableValue = right.getOrNull(); // 10
+final leftValue = left.leftOrNull(); // 'none'
 ```
 
 </details>
@@ -407,7 +412,10 @@ Either<String, int> right = 2.right<String>();
 | [`all`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)                                  | Returns `true` for `Left` or if `Right` matches the predicate |
 | [`getOrDefault`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrDefault.html)                | Extracts `Right` or falls back to an eager default value |
 | [`getOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrNull.html)                      | Extracts `Right` or returns `null`            |
+| [`leftOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/leftOrNull.html)                    | Extracts `Left` or returns `null`             |
 | [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrHandle.html)                  | Extracts `Right` or maps `Left` to a value    |
+| [`flatten`](https://pub.dev/documentation/dart_either/latest/dart_either/FlattenEitherExtension/flatten.html)          | Flattens nested `Either`                      |
+| [`merge`](https://pub.dev/documentation/dart_either/latest/dart_either/MergeEitherExtension/merge.html)                | Extracts value when both sides have same type |
 | [`findOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/findOrNull.html)                    | Finds `Right` matching a predicate            |
 | [`when`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/when.html)                                | Pattern-match returning the matched value     |
 | [`handleErrorWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleErrorWith.html)          | Recovers from `Left` with a new `Either`      |

@@ -46,6 +46,14 @@ void main() {
   );
   print(combined); // Prints Either.Right(15)
 
+  final flattened = Either<String, Either<String, int>>.right(
+    Either<String, int>.right(10),
+  ).flatten();
+  print(flattened); // Prints Either.Right(10)
+
+  final merged = Either<int, int>.right(10).merge();
+  print(merged); // Prints 10
+
   /// Pattern matching
   right.fold(
     ifLeft: (l) => print('Left value: $l'),
@@ -65,5 +73,7 @@ void main() {
 
   /// Convert to nullable value
   final nullableValue = right.getOrNull();
+  final leftValue = left.leftOrNull();
+  print(leftValue); // Prints none
   print(nullableValue); // Prints 10
 }

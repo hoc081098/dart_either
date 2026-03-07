@@ -19,11 +19,14 @@
   - Use `getOrHandle((_) => ...)` for lazy fallback computation.
 
 - Added `Either.combine`:
-    - Combines two `Either<L, R>` values.
-    - If both are `Right`, uses `combineRight`.
-    - If both are `Left`, uses `combineLeft`.
-    - If one is `Left` and the other is `Right`, returns the sole `Left`.
-    - Updated docs, examples, and tests for `Either.combine`.
+  - Combines two `Either<L, R>` values.
+  - If both are `Right`, uses `combineRight`.
+  - If both are `Left`, uses `combineLeft`.
+  - If one is `Left` and the other is `Right`, returns the sole `Left`.
+- Updated docs, examples, and tests for `Either.combine`.
+
+- Added `Either.leftOrNull`, `Either.flatten`, and `Either.merge`.
+- Updated docs, examples, and tests for `leftOrNull`, `flatten`, and `merge`.
 
 - Updated docs and examples to the new names:
   - `README.md` API table and snippets.
