@@ -1,6 +1,10 @@
 import 'package:dart_either/dart_either.dart';
 
 void main() {
+  // ---------------------------------------------------------------------------
+  // 1) Creation
+  // ---------------------------------------------------------------------------
+
   /// Create an instance of [Right]
   final right = Either<String, int>.right(10);
   print(right); // Prints Either.Right(10)
@@ -29,20 +33,48 @@ void main() {
   // ^
   // )
 
-  /// Extract the value from [Either]
-  final value1 = right.getOrElse(() => -1);
-  final value2 = right.getOrHandle((l) => -1);
-  print('$value1, $value2'); // Prints 10, 10
+  // ---------------------------------------------------------------------------
+  // 2) Operations: extraction, transformation, composition
+  // ---------------------------------------------------------------------------
 
-  /// Chain computations
+  /// Extract values from [Either]
+  final value1 = right.getOrDefault(-1);
+  final value2 = right.getOrHandle((l) => -1);
+  final nullableValue = right.getOrNull();
+  final leftValue = left.leftOrNull();
+  print('$value1, $value2'); // Prints 10, 10
+  print(leftValue); // Prints none
+  print(nullableValue); // Prints 10
+
+  /// Transform and compose
   final flatMap = right.flatMap((a) => Either.right(a + 10));
   print(flatMap); // Prints Either.Right(20)
+
+  /// Combine two Either values
+  final combined = right.combine(
+    Either<String, int>.right(5),
+    combineLeft: (a, b) => '$a,$b',
+    combineRight: (a, b) => a + b,
+  );
+  print(combined); // Prints Either.Right(15)
+
+  final flattened = Either<String, Either<String, int>>.right(
+    Either<String, int>.right(10),
+  ).flatten();
+  print(flattened); // Prints Either.Right(10)
+
+  final merged = Either<int, int>.right(10).merge();
+  print(merged); // Prints 10
+
+  // ---------------------------------------------------------------------------
+  // 3) Pattern matching
+  // ---------------------------------------------------------------------------
 
   /// Pattern matching
   right.fold(
     ifLeft: (l) => print('Left value: $l'),
     ifRight: (r) => print('Right value: $r'),
-  ); // Prints Right(10)
+  ); // Prints Right value: 10
   right.when(
     ifLeft: (l) => print('Left: $l'),
     ifRight: (r) => print('Right: $r'),
@@ -54,8 +86,4 @@ void main() {
       Right() => 'Right: $right',
     },
   ); // Prints Right: Either.Right(10)
-
-  /// Convert to nullable value
-  final nullableValue = right.orNull();
-  print(nullableValue); // Prints 10
 }

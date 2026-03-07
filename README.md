@@ -131,19 +131,20 @@ So, the `map` and `flatMap` methods are right-biased.
 **Example:**
 
 ```dart
-/// Create an instance of [Right]
+// 1) Creation
+// Create an instance of [Right]
 final right = Either<String, int>.right(10); // Either.Right(10)
 
-/// Create an instance of [Left]
+// Create an instance of [Left]
 final left = Either<String, int>.left('none'); // Either.Left(none)
 
-/// Map the right value to a [String]
+// Map the right value to a [String]
 final mapRight = right.map((a) => 'String: $a'); // Either.Right(String: 10)
 
-/// Map the left value to a [int]
+// Map the left value to a [int]
 final mapLeft = right.mapLeft((a) => a.length); // Either.Right(10)
 
-/// Return [Left] if the function throws an error, otherwise return [Right]
+// Return [Left] if the function throws an error, otherwise return [Right]
 final catchError = Either.catchError(
   (e, s) => 'Error: $e',
   () => int.parse('invalid'),
@@ -153,14 +154,25 @@ final catchError = Either.catchError(
 // ^
 // )
 
-/// Extract the value from [Either]
-final value1 = right.getOrElse(() => -1); // 10
+// 2) Operations
+// Extract the value from [Either]
+final value1 = right.getOrDefault(-1); // 10
 final value2 = right.getOrHandle((l) => -1); // 10
 
-/// Chain computations
+// Chain computations
 final flatMap = right.flatMap((a) => Either.right(a + 10)); // Either.Right(20)
+final combined = right.combine(
+  Either<String, int>.right(5),
+  combineLeft: (a, b) => '$a,$b',
+  combineRight: (a, b) => a + b,
+); // Either.Right(15)
+final flattened = Either<String, Either<String, int>>.right(
+  Either<String, int>.right(10),
+).flatten(); // Either.Right(10)
+final merged = Either<int, int>.right(10).merge(); // 10
 
-/// Pattern matching
+// 3) Pattern matching
+// Pattern matching
 right.fold(
   ifLeft: (l) => print('Left value: $l'),
   ifRight: (r) => print('Right value: $r'),
@@ -179,8 +191,11 @@ print(
   },
 ); // Prints Right: Either.Right(10)
 
-/// Convert to nullable value
-final nullableValue = right.orNull(); // 10
+// Convert to nullable value
+final nullableValue = right.getOrNull(); // 10
+final leftValue = left.leftOrNull(); // 'none'
+print(leftValue); // 'none'
+print(nullableValue); // 10
 ```
 
 </details>
@@ -205,22 +220,21 @@ final nullableValue = right.orNull(); // 10
 | [`Right`](https://pub.dev/documentation/dart_either/latest/dart_either/Right/Right.html)                          | Direct `Right` constructor  |
 
 ```dart
-// Left('Left value')
+// 1) Create Left/Right
 final left = Either<Object, String>.left('Left value');
 // or: Left<Object, String>('Left value')
 
-// Right(1)
 final right = Either<Object, int>.right(1);
 // or: Right<Object, int>(1)
 
-// Left('Left value') — short-circuits on the first bind that returns Left
+// 2) Sync monad comprehension (short-circuits on first Left)
 Either<Object, String>.binding((e) {
   final String s = left.bind(e);
   final int i = right.bind(e);
   return '$s $i';
 });
 
-// Left(FormatException(...))
+// 3) Catch thrown exception into Left
 Either.catchError(
   (e, s) => 'Error: $e',
   () => int.parse('invalid'),
@@ -241,9 +255,13 @@ Either.catchError(
 | [`Either.traverse`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/traverse.html)                 | Maps + sequences a list                  |
 
 ```dart
+import 'dart:convert';
+
+import 'package:built_collection/built_collection.dart';
+import 'package:dart_either/dart_either.dart';
 import 'package:http/http.dart' as http;
 
-// ─── Either.catchFutureError ─────────────────────────────────────────────────
+// 1) Either.catchFutureError
 Future<Either<String, http.Response>> eitherFuture = Either.catchFutureError(
   (e, s) => 'Error: $e',
   () async {
@@ -254,7 +272,7 @@ Future<Either<String, http.Response>> eitherFuture = Either.catchFutureError(
 (await eitherFuture).fold(ifLeft: print, ifRight: print);
 
 
-// ─── Either.catchStreamError ─────────────────────────────────────────────────
+// 2) Either.catchStreamError
 Stream<int> genStream() async* {
   for (var i = 0; i < 5; i++) {
     yield i;
@@ -268,12 +286,12 @@ Stream<Either<String, int>> eitherStream = Either.catchStreamError(
 eitherStream.listen(print);
 
 
-// ─── Either.fromNullable ─────────────────────────────────────────────────────
+// 3) Either.fromNullable
 Either.fromNullable<int>(null); // Left(null)
 Either.fromNullable<int>(1);    // Right(1)
 
 
-// ─── Either.futureBinding ────────────────────────────────────────────────────
+// 4) Either.futureBinding
 String url1 = 'url1';
 String url2 = 'url2';
 Either.futureBinding<String, http.Response>((e) async {
@@ -300,7 +318,7 @@ Either.futureBinding<String, http.Response>((e) async {
 });
 
 
-// ─── Either.sequence ─────────────────────────────────────────────────────────
+// 5) Either.sequence
 List<Either<String, http.Response>> eithers = await Future.wait(
   [1, 2, 3, 4, 5].map((id) {
     final url = 'url?id=$id';
@@ -313,10 +331,12 @@ List<Either<String, http.Response>> eithers = await Future.wait(
     );
   }),
 );
-Either<String, BuiltList<http.Response>> result = Either.sequence(eithers);
+Either<String, BuiltList<http.Response>> sequencedResponses = Either.sequence(
+  eithers,
+);
 
 
-// ─── Either.traverse ─────────────────────────────────────────────────────────
+// 6) Either.traverse
 Either<String, BuiltList<Uri>> urisEither = Either.traverse(
   ['url1', 'url2', '::invalid::'],
   (String uriString) => Either.catchError(
@@ -326,8 +346,8 @@ Either<String, BuiltList<Uri>> urisEither = Either.traverse(
 ); // Left(FormatException('Failed to parse ::invalid:::...'))
 
 
-// ─── Either.parSequenceN ─────────────────────────────────────────────────────
-Future<Either<String, BuiltList<int>>> result = Either.parSequenceN(
+// 7) Either.parSequenceN
+Future<Either<String, BuiltList<int>>> parallelSequence = Either.parSequenceN(
   functions: [
     () async => fetchNumber(1),
     () async => fetchNumber(2),
@@ -336,8 +356,8 @@ Future<Either<String, BuiltList<int>>> result = Either.parSequenceN(
   maxConcurrent: 2,
 );
 
-// ─── Either.parTraverseN ─────────────────────────────────────────────────────
-Future<Either<String, BuiltList<int>>> idsEither = Either.parTraverseN(
+// 8) Either.parTraverseN
+Future<Either<String, BuiltList<int>>> parallelTraverse = Either.parTraverseN(
   values: [1, 2, 3],
   mapper: (id) => () async => fetchNumber(id),
   maxConcurrent: 2,
@@ -354,7 +374,7 @@ Future<Either<String, BuiltList<int>>> idsEither = Either.parTraverseN(
 | [`T.right`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/right.html)                        | Wraps any value as `Right`                     |
 
 ```dart
-// ─── Stream.toEitherStream ───────────────────────────────────────────────────
+// 1) Stream.toEitherStream
 Stream<int> genStream() async* {
   for (var i = 0; i < 5; i++) {
     yield i;
@@ -366,7 +386,7 @@ Stream<Either<String, int>> eitherStream =
 eitherStream.listen(print);
 
 
-// ─── Future.toEitherFuture ───────────────────────────────────────────────────
+// 2) Future.toEitherFuture
 Future<Either<Object, int>> f1 =
     Future<int>.error('An error').toEitherFuture((e, s) => e);
 Future<Either<Object, int>> f2 =
@@ -375,7 +395,7 @@ await f1; // Left('An error')
 await f2; // Right(1)
 
 
-// ─── T.left / T.right ────────────────────────────────────────────────────────
+// 3) T.left / T.right
 Either<int, String> left = 1.left<String>();
 Either<String, int> right = 2.right<String>();
 ```
@@ -391,17 +411,21 @@ Either<String, int> right = 2.right<String>();
 | [`fold`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fold.html)                                | Applies one of two functions based on variant |
 | [`foldLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/foldLeft.html)                        | Left fold with an initial value               |
 | [`swap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/swap.html)                                | Swaps `Left` and `Right`                      |
-| [`tapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/tapLeft.html)                          | Side-effect on `Left`                         |
-| [`tap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/tap.html)                                  | Side-effect on `Right`                        |
+| [`onLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/onLeft.html)                            | Side-effect on `Left`                         |
+| [`onRight`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/onRight.html)                          | Side-effect on `Right`                        |
 | [`map`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/map.html)                                  | Transforms the `Right` value                  |
 | [`mapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/mapLeft.html)                          | Transforms the `Left` value                   |
 | [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/flatMap.html)                          | Chains computations                           |
 | [`bimap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)                              | Transforms both sides                         |
-| [`exists`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/exists.html)                            | Tests the `Right` value with a predicate      |
+| [`combine`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/combine.html)                          | Combines two `Either` values                  |
+| [`isRightAnd`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRightAnd.html)                    | Tests the `Right` value with a predicate      |
 | [`all`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)                                  | Returns `true` for `Left` or if `Right` matches the predicate |
-| [`getOrElse`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrElse.html)                      | Extracts `Right` or falls back to a default   |
-| [`orNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/orNull.html)                            | Extracts `Right` or returns `null`            |
+| [`getOrDefault`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrDefault.html)                | Extracts `Right` or falls back to an eager default value |
+| [`getOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrNull.html)                      | Extracts `Right` or returns `null`            |
+| [`leftOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/leftOrNull.html)                    | Extracts `Left` or returns `null`             |
 | [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrHandle.html)                  | Extracts `Right` or maps `Left` to a value    |
+| [`flatten`](https://pub.dev/documentation/dart_either/latest/dart_either/FlattenEitherExtension/flatten.html)          | Flattens nested `Either`                      |
+| [`merge`](https://pub.dev/documentation/dart_either/latest/dart_either/MergeEitherExtension/merge.html)                | Extracts value when both sides have same type |
 | [`findOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/findOrNull.html)                    | Finds `Right` matching a predicate            |
 | [`when`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/when.html)                                | Pattern-match returning the matched value     |
 | [`handleErrorWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleErrorWith.html)          | Recovers from `Left` with a new `Either`      |
@@ -410,6 +434,48 @@ Either<String, int> right = 2.right<String>();
 | [`redeemWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeemWith.html)                    | Maps both sides to a new `Either`             |
 | [`toFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/AsFutureEitherExtension/toFuture.html)       | Converts to a `Future`                        |
 | [`getOrThrow`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrThrowEitherExtension/getOrThrow.html) | Extracts `Right` or throws the `Left` value   |
+
+```dart
+final ok = Either<String, int>.right(10);
+final err = Either<String, int>.left('boom');
+
+// Predicates
+ok.isRightAnd((v) => v > 0); // true
+err.all((_) => false); // true
+
+// Side effects
+ok.onRight(print); // prints 10
+err.onLeft(print); // prints boom
+
+// Transformations and composition
+ok.map((v) => v + 1); // Right(11)
+ok.combine(
+  Either<String, int>.right(2),
+  combineLeft: (a, b) => '$a,$b',
+  combineRight: (a, b) => a + b,
+); // Right(12)
+Either<String, Either<String, int>>.right(ok).flatten(); // Right(10)
+
+// Recovery
+err.handleError((l) => l.length); // Right(4)
+err.handleErrorWith((l) => Either<String, int>.right(l.length)); // Right(4)
+
+// Extractions
+ok.getOrDefault(0); // 10
+err.getOrHandle((l) => l.length); // 4
+ok.getOrNull(); // 10
+err.leftOrNull(); // 'boom'
+Either<int, int>.right(10).merge(); // 10
+
+// Pattern matching
+ok.fold(
+  ifLeft: (l) => 'Left: $l',
+  ifRight: (r) => 'Right: $r',
+); // Right: 10
+```
+
+> Deprecated aliases: `tapLeft -> onLeft`, `tap -> onRight`, `orNull -> getOrNull`, `exists -> isRightAnd`.
+> `getOrElse` is deprecated. Prefer `getOrDefault(<value>)` for eager fallback, or `getOrHandle((_) => <value>)` for lazy fallback.
 
 ---
 
@@ -421,6 +487,7 @@ Either<String, int> right = 2.right<String>();
 | [`thenMapEither`](https://pub.dev/documentation/dart_either/latest/dart_either/AsyncMapFutureExtension/thenMapEither.html)             | Async `map` on a `Future<Either>`     |
 
 ```dart
+// 1) Define a reusable async pipeline with thenFlatMapEither / thenMapEither
 Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
   Either<AsyncError, dynamic> toJson(http.Response response) =>
       response.statusCode >= 200 && response.statusCode < 300
@@ -447,7 +514,8 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
 
 Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
 
-Either<AsyncError, BuiltList<User>> result = await httpGetAsEither(
+// 2) Build end-to-end flow
+Either<AsyncError, BuiltList<User>> usersEither = await httpGetAsEither(
         'https://jsonplaceholder.typicode.com/users')
     .thenMapEither((dynamic json) => json as List)
     .thenFlatMapEither(toUsers);
@@ -461,6 +529,7 @@ Use `Either.binding` (sync) or `Either.futureBinding` (async) for do-notation st
 computations that short-circuit on the first `Left`.
 
 ```dart
+// 1) Define a reusable async pipeline with Either.futureBinding
 Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
     Either.futureBinding<AsyncError, dynamic>((e) async {
       final uri =
@@ -490,12 +559,16 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
 
 Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
 
-Either<AsyncError, BuiltList<User>> result = await Either.futureBinding((e) async {
-  final dynamic json =
-      await httpGetAsEither('https://jsonplaceholder.typicode.com/users').bind(e);
-  final BuiltList<User> users = toUsers(json as List).bind(e);
-  return users;
-});
+// 2) Compose another flow by binding previous steps
+Either<AsyncError, BuiltList<User>> usersEither = await Either.futureBinding(
+  (e) async {
+    final dynamic json =
+        await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
+            .bind(e);
+    final BuiltList<User> users = toUsers(json as List).bind(e);
+    return users;
+  },
+);
 ```
 
 ---

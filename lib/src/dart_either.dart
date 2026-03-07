@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 
 import 'binding.dart';
 import 'extensions.dart';
+import 'internal.dart';
 import 'utils/semaphore.dart';
 
 /// Map [error] and [stackTrace] to a [T] value.
@@ -20,8 +21,6 @@ extension on Object {
     return this;
   }
 }
-
-T _identity<T>(T t) => t;
 
 T Function(Object?) _const<T>(T t) => (_) => t;
 
@@ -611,35 +610,55 @@ sealed class Either<L, R> {
         ifRight: (r) => Either.left(r),
       );
 
-  /// The given function is applied as a fire and forget effect if this is a [Left].
-  /// When applied the result is ignored and the original [Either] value is returned.
+  /// Performs the given [action] on the encapsulated [L] if this is a [Left].
+  /// Returns the original [Either] unchanged.
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).tapLeft((_) => println('flower')); // Result: Right(12)
-  /// Left<int, int>(12).tapLeft((_) => println('flower'));  // Result: prints 'flower' and returns: Left(12)
+  /// Right<int, int>(12).onLeft((_) => print('flower')); // Result: Right(12)
+  /// Left<int, int>(12).onLeft((_) => print('flower'));  // Result: prints 'flower' and returns: Left(12)
   /// ```
-  Either<L, R> tapLeft(void Function(L value) f) {
+  Either<L, R> onLeft(void Function(L value) action) {
     if (this case Left(value: final value)) {
-      f(value);
+      action(value);
     }
     return this;
   }
 
-  /// The given function is applied as a fire and forget effect if this is a [Right].
-  /// When applied the result is ignored and the original [Either] value is returned.
+  /// Alias of [onLeft].
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).tap((_) => println('flower')); // Result: prints 'flower' and returns: Right(12)
-  /// Left<int, int>(12).tap((_) => println('flower'));  // Result: Left(12)
+  /// Right<int, int>(12).tapLeft((_) => print('flower')); // Result: Right(12)
+  /// Left<int, int>(12).tapLeft((_) => print('flower'));  // Result: prints 'flower' and returns: Left(12)
   /// ```
-  Either<L, R> tap(void Function(R value) f) {
+  @Deprecated('Use onLeft instead.')
+  Either<L, R> tapLeft(void Function(L value) action) => onLeft(action);
+
+  /// Performs the given [action] on the encapsulated [R] value if this is a [Right].
+  /// Returns the original [Either] unchanged.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).onRight((_) => print('flower')); // Result: prints 'flower' and returns: Right(12)
+  /// Left<int, int>(12).onRight((_) => print('flower'));  // Result: Left(12)
+  /// ```
+  Either<L, R> onRight(void Function(R value) action) {
     if (this case Right(value: final value)) {
-      f(value);
+      action(value);
     }
     return this;
   }
+
+  /// Alias of [onRight].
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).tap((_) => print('flower')); // Result: prints 'flower' and returns: Right(12)
+  /// Left<int, int>(12).tap((_) => print('flower'));  // Result: Left(12)
+  /// ```
+  @Deprecated('Use onRight instead.')
+  Either<L, R> tap(void Function(R value) action) => onRight(action);
 
   /// The given function is applied if this is a `Right`.
   ///
@@ -720,22 +739,76 @@ sealed class Either<L, R> {
         ifRight: (r) => Either.right(rightOperation(r)),
       );
 
+  /// Combines this [Either] with [other].
+  ///
+  /// If both values are [Right], combines their right values using [combineRight].
+  /// If both values are [Left], combines their left values using [combineLeft].
+  /// Otherwise, returns the sole [Left] value.
+  ///
+  /// ### Example
+  /// ```dart
+  /// final rr = Right<String, int>(1).combine(
+  ///   Right<String, int>(2),
+  ///   combineLeft: (a, b) => '$a,$b',
+  ///   combineRight: (a, b) => a + b,
+  /// ); // Right(3)
+  ///
+  /// final ll = Left<String, int>('a').combine(
+  ///   Left<String, int>('b'),
+  ///   combineLeft: (a, b) => '$a,$b',
+  ///   combineRight: (a, b) => a + b,
+  /// ); // Left('a,b')
+  ///
+  /// final lr = Left<String, int>('a').combine(
+  ///   Right<String, int>(2),
+  ///   combineLeft: (a, b) => '$a,$b',
+  ///   combineRight: (a, b) => a + b,
+  /// ); // Left('a')
+  /// ```
+  @useResult
+  Either<L, R> combine(
+    Either<L, R> other, {
+    required L Function(L left1, L left2) combineLeft,
+    required R Function(R right1, R right2) combineRight,
+  }) =>
+      switch (this) {
+        Left(value: final one) => switch (other) {
+            Left(value: final two) => Either.left(combineLeft(one, two)),
+            Right() => this,
+          },
+        Right(value: final one) => switch (other) {
+            Left() => other,
+            Right(value: final two) => Either.right(combineRight(one, two)),
+          },
+      };
+
   /// Returns `false` if [Left] or returns the result of the application of
   /// the given [predicate] to the [Right] value.
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).exists((v) => v > 10); // Result: true
-  /// Right<int, int>(7).exists((v) => v > 10);  // Result: false
+  /// Right<int, int>(12).isRightAnd((v) => v > 10); // Result: true
+  /// Right<int, int>(7).isRightAnd((v) => v > 10);  // Result: false
   ///
-  /// Left<int, int>(12).exists((v) => v > 10);  // Result: false
-  /// Left<int, int>(12).exists((v) => v < 10);  // Result: false
+  /// Left<int, int>(12).isRightAnd((v) => v > 10);  // Result: false
+  /// Left<int, int>(12).isRightAnd((v) => v < 10);  // Result: false
   /// ```
   @useResult
-  bool exists(bool Function(R value) predicate) => _foldInternal(
+  bool isRightAnd(bool Function(R value) predicate) => _foldInternal(
         ifLeft: _const(false),
         ifRight: predicate,
       );
+
+  /// Alias of [isRightAnd].
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).exists((v) => v > 10); // Result: true
+  /// Left<int, int>(12).exists((v) => v > 10);  // Result: false
+  /// ```
+  @Deprecated('Use isRightAnd instead.')
+  @useResult
+  bool exists(bool Function(R value) predicate) => isRightAnd(predicate);
 
   /// Returns `true` if [Left] or returns the result of the application of
   /// the given predicate to the [Right] value.
@@ -754,29 +827,73 @@ sealed class Either<L, R> {
         ifRight: predicate,
       );
 
-  /// Returns the value from this [Right] or the given argument if this is a [Left].
+  /// Returns the value from this [Right] or [defaultValue] if this is a [Left].
+  ///
+  /// [defaultValue] is eager, so it is evaluated before the call.
+  /// For lazy fallback computation, use [getOrHandle].
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).getOrDefault(17); // Result: 12
+  /// Left<int, int>(12).getOrDefault(17);  // Result: 17
+  /// ```
+  R getOrDefault(R defaultValue) => _foldInternal(
+        ifLeft: (_) => defaultValue,
+        ifRight: identity,
+      );
+
+  /// Deprecated lazy fallback helper.
+  ///
+  /// This preserves the historical lazy behavior (`defaultValue` is evaluated only
+  /// when this is [Left]), so it is **not** equivalent to [getOrDefault], which is eager.
+  ///
+  /// Prefer:
+  /// - [getOrDefault] for eager fallback values.
+  /// - [getOrHandle] for lazy fallback computation.
   ///
   /// ### Example
   /// ```dart
   /// Right<int, int>(12).getOrElse(() => 17); // Result: 12
   /// Left<int, int>(12).getOrElse(() => 17);  // Result: 17
   /// ```
-  R getOrElse(R Function() defaultValue) => _foldInternal(
-        ifLeft: (_) => defaultValue(),
-        ifRight: _identity,
-      );
+  @Deprecated(
+    'Use getOrDefault(value) for eager fallback, or getOrHandle for lazy fallback.',
+  )
+  R getOrElse(R Function() defaultValue) => getOrHandle((_) => defaultValue());
 
   /// Returns the [Right]'s value if it exists, otherwise `null`.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).getOrNull(); // Result: 12
+  /// Left<int, int>(12).getOrNull();  // Result: null
+  /// ```
+  R? getOrNull() => _foldInternal(
+        ifLeft: _const(null),
+        ifRight: identity,
+      );
+
+  /// Returns the [Left]'s value if it exists, otherwise `null`.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).leftOrNull(); // Result: null
+  /// Left<int, int>(12).leftOrNull();  // Result: 12
+  /// ```
+  L? leftOrNull() => _foldInternal(
+        ifLeft: identity,
+        ifRight: _const(null),
+      );
+
+  /// Alias of [getOrNull].
   ///
   /// ### Example
   /// ```dart
   /// Right<int, int>(12).orNull(); // Result: 12
   /// Left<int, int>(12).orNull();  // Result: null
   /// ```
-  R? orNull() => _foldInternal(
-        ifLeft: _const(null),
-        ifRight: _identity,
-      );
+  @Deprecated('Use getOrNull instead.')
+  R? orNull() => getOrNull();
 
   /// Returns the value from this [Right]
   /// or allows clients to transform the value of [Left] to the final result.
@@ -788,7 +905,7 @@ sealed class Either<L, R> {
   /// ```
   R getOrHandle(R Function(L value) defaultValue) => _foldInternal(
         ifLeft: defaultValue,
-        ifRight: _identity,
+        ifRight: identity,
       );
 
   /// Returns the [Right.value] matching the given [predicate],

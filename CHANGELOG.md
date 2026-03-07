@@ -1,3 +1,36 @@
+## Unreleased
+
+- API naming alignment (non-breaking) toward Arrow/Kotlin naming:
+  - Added new APIs:
+    - `onLeft` (from `tapLeft`)
+    - `onRight` (from `tap`)
+    - `getOrNull` (from `orNull`)
+    - `getOrDefault` (eager fallback value)
+    - `isRightAnd` (from `exists`)
+  - Kept old APIs as deprecated aliases for compatibility:
+    - `tapLeft -> onLeft`
+    - `tap -> onRight`
+    - `orNull -> getOrNull`
+    - `exists -> isRightAnd`
+  - Kept `getOrElse` as deprecated lazy fallback helper:
+    - Use `getOrDefault(<value>)` for eager fallback.
+    - Use `getOrHandle((left) => <value>)` for lazy fallback.
+
+- Added new operations:
+  - `Either.combine`
+  - `Either.leftOrNull`
+  - `Either.flatten`
+  - `Either.merge`
+
+- Updated docs and examples:
+  - `README.md` API tables and operation snippets.
+  - `example/lib/dart_either_readme.dart`.
+
+- Expanded tests for:
+  - New API names and deprecated alias compatibility.
+  - Eager (`getOrDefault`) vs lazy (`getOrHandle` / `getOrElse`) fallback behavior.
+  - New operations: `combine`, `leftOrNull`, `flatten`, `merge`.
+
 ## 2.1.0 - Mar 07, 2026
 
 - Promoted `Either.parSequenceN` and `Either.parTraverseN` from experimental to stable.
