@@ -38,6 +38,14 @@ void main() {
   final flatMap = right.flatMap((a) => Either.right(a + 10));
   print(flatMap); // Prints Either.Right(20)
 
+  /// Combine two Either values
+  final combined = right.combine(
+    Either<String, int>.right(5),
+    combineLeft: (a, b) => '$a,$b',
+    combineRight: (a, b) => a + b,
+  );
+  print(combined); // Prints Either.Right(15)
+
   /// Pattern matching
   right.fold(
     ifLeft: (l) => print('Left value: $l'),

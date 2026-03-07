@@ -159,6 +159,11 @@ final value2 = right.getOrHandle((l) => -1); // 10
 
 /// Chain computations
 final flatMap = right.flatMap((a) => Either.right(a + 10)); // Either.Right(20)
+final combined = right.combine(
+  Either<String, int>.right(5),
+  combineLeft: (a, b) => '$a,$b',
+  combineRight: (a, b) => a + b,
+); // Either.Right(15)
 
 /// Pattern matching
 right.fold(
@@ -397,6 +402,7 @@ Either<String, int> right = 2.right<String>();
 | [`mapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/mapLeft.html)                          | Transforms the `Left` value                   |
 | [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/flatMap.html)                          | Chains computations                           |
 | [`bimap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)                              | Transforms both sides                         |
+| [`combine`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/combine.html)                          | Combines two `Either` values                  |
 | [`isRightAnd`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRightAnd.html)                    | Tests the `Right` value with a predicate      |
 | [`all`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)                                  | Returns `true` for `Left` or if `Right` matches the predicate |
 | [`getOrDefault`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrDefault.html)                | Extracts `Right` or falls back to an eager default value |
