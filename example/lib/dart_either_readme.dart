@@ -74,7 +74,7 @@ void main() {
   right.fold(
     ifLeft: (l) => print('Left value: $l'),
     ifRight: (r) => print('Right value: $r'),
-  ); // Prints Right(10)
+  ); // Prints Right value: 10
   right.when(
     ifLeft: (l) => print('Left: $l'),
     ifRight: (r) => print('Right: $r'),

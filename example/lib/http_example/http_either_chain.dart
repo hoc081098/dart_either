@@ -9,7 +9,9 @@ import 'package:rxdart_ext/rxdart_ext.dart';
 
 import 'shared_model.dart';
 
-//-------------------------------------HTTP-------------------------------------
+// ---------------------------------------------------------------------------
+// 1) HTTP helper (flatMap chain style)
+// ---------------------------------------------------------------------------
 
 /// Get response from Uri as either using flatMap.
 Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) {
@@ -51,7 +53,9 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) {
   return uri.thenFlatMapEither(httpGet).thenFlatMapEither(toJson);
 }
 
-//------------------------------------EXAMPLE-----------------------------------
+// ---------------------------------------------------------------------------
+// 2) Demo flow: users + posts
+// ---------------------------------------------------------------------------
 
 void main() async {
   Future<Either<AppError, BuiltList<UserAndPosts>>> getPosts(
