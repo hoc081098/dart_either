@@ -30,37 +30,41 @@
 - Added repository skill documentation for API rename workflow:
   - `.github/skills/api-rename-flow/SKILL.md`.
 
-## 2.1.0 - Feb 28, 2026
+## 2.1.0 - Mar 07, 2026
 
-- Promote `Either.parSequenceN` and `Either.parTraverseN` from experimental to stable:
-  - Removed `@experimental` annotation.
-  - Changed from positional parameters to **named parameters** for clarity.
-  - Added full documentation with examples.
-  - Added unit tests.
+- Promoted `Either.parSequenceN` and `Either.parTraverseN` from experimental to stable.
+- Added complete API docs and examples for `Either.parSequenceN` and `Either.parTraverseN`.
+- Added unit tests for `Either.parSequenceN` and `Either.parTraverseN`, including concurrency-limit and short-circuit cases.
+- Added `@useResult` annotations to public APIs that should not be ignored (for example: `isLeft`, `isRight`, `map`, `flatMap`, `swap`, `exists`, `all`, `toEitherStream`, `left`, `right`, and others).
 
-- `Either.parSequenceN` — runs a list of async `Either`-returning functions in parallel with
-  an optional concurrency limit. Short-circuits on the first `Left`.
+### API migration notes
+
+- `Either.parSequenceN` changed from positional parameters to named parameters:
   ```dart
-  final result = await Either.parSequenceN<String, int>(
-    functions: [
-      () async => fetchNumber(1),
-      () async => fetchNumber(2),
-      () async => fetchNumber(3),
-    ],
-    maxConcurrent: 2,
+  // Before (2.0.0)
+  Either.parSequenceN<String, int>(functions, n);
+
+  // Now (2.1.0)
+  Either.parSequenceN<String, int>(
+    functions: functions,
+    maxConcurrent: n,
   );
   ```
-
-- `Either.parTraverseN` — traverses an iterable, maps each element to an async `Either`-returning
-  function, then runs them in parallel with an optional concurrency limit. Short-circuits on the
-  first `Left`. Shorthand for `Either.parSequenceN(functions: values.map(mapper), maxConcurrent: maxConcurrent)`.
+- `Either.parTraverseN` changed from positional parameters to named parameters:
   ```dart
-  final result = await Either.parTraverseN<String, int, int>(
-    values: [1, 2, 3],
-    mapper: (id) => () async => fetchNumber(id),
-    maxConcurrent: 2,
+  // Before (2.0.0)
+  Either.parTraverseN<String, int, int>(values, mapper, n);
+
+  // Now (2.1.0)
+  Either.parTraverseN<String, int, int>(
+    values: values,
+    mapper: mapper,
+    maxConcurrent: n,
   );
   ```
+- `maxConcurrent` controls concurrency.
+  - Pass a number (for example `2`) to limit concurrency.
+  - Pass `null` for unlimited concurrency.
 
 ## 2.0.0 - Sep 01, 2024
 
