@@ -924,6 +924,65 @@ void main() {
       );
     });
 
+    test('combine', () {
+      expect(
+        Right<String, int>(1).combine(
+          Right<String, int>(2),
+          combineLeft: (a, b) => '$a,$b',
+          combineRight: (a, b) => a + b,
+        ),
+        Right<String, int>(3),
+      );
+
+      expect(
+        Left<String, int>('a').combine(
+          Left<String, int>('b'),
+          combineLeft: (a, b) => '$a,$b',
+          combineRight: (a, b) => a + b,
+        ),
+        Left<String, int>('a,b'),
+      );
+
+      expect(
+        Left<String, int>('a').combine(
+          Right<String, int>(2),
+          combineLeft: (a, b) => '$a,$b',
+          combineRight: (a, b) => a + b,
+        ),
+        Left<String, int>('a'),
+      );
+
+      expect(
+        Right<String, int>(2).combine(
+          Left<String, int>('a'),
+          combineLeft: (a, b) => '$a,$b',
+          combineRight: (a, b) => a + b,
+        ),
+        Left<String, int>('a'),
+      );
+    });
+
+    test('combine only invokes relevant combiner', () {
+      var leftCalls = 0;
+      var rightCalls = 0;
+
+      final result = Left<String, int>('a').combine(
+        Right<String, int>(2),
+        combineLeft: (a, b) {
+          leftCalls += 1;
+          return '$a,$b';
+        },
+        combineRight: (a, b) {
+          rightCalls += 1;
+          return a + b;
+        },
+      );
+
+      expect(result, Left<String, int>('a'));
+      expect(leftCalls, 0);
+      expect(rightCalls, 0);
+    });
+
     test('isRightAnd', () {
       expect(rightOf1.isRightAnd((value) => value > 0), isTrue);
       expect(rightOf1.isRightAnd((value) => value > 1), isFalse);
