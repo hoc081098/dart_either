@@ -141,7 +141,7 @@ final left = Either<String, int>.left('none'); // Either.Left(none)
 // Map the right value to a [String]
 final mapRight = right.map((a) => 'String: $a'); // Either.Right(String: 10)
 
-// Map the left value to a [int]
+// Map the left value to an [int]
 final mapLeft = right.mapLeft((a) => a.length); // Either.Right(10)
 
 // Return [Left] if the function throws an error, otherwise return [Right]
