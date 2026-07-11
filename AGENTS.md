@@ -17,18 +17,27 @@ lib/
   src/
     dart_either.dart            # Core Either sealed class (Left, Right), constructors, instance methods, static methods, EitherEffect (monad comprehension), ControlError
     extensions.dart             # Extension methods: toEitherStream, toEitherFuture, thenFlatMapEither, thenMapEither, .left(), .right()
-    either_extensions.dart      # Extension methods: toFuture, getOrThrow (require L extends Object)
+    either_extensions.dart      # Extension methods: toFuture, getOrThrow, flatten, merge
     binding.dart                # Monad comprehension extensions: ensure, ensureNotNull, bindFuture, bind on Either, bind on Future<Either>
+    internal.dart               # Shared internal helpers
     utils/
       semaphore.dart            # Internal Semaphore utility (used by parSequenceN / parTraverseN)
 test/
   dart_either_test.dart         # Main test file (comprehensive unit tests)
+  deprecated_aliases_test.dart  # Compatibility tests for deprecated API aliases
   semaphore_test.dart           # Tests for Semaphore utility
 example/
   lib/
     dart_either_readme.dart     # README examples
     dart_either_styles.dart     # Usage style examples
     http_example/               # HTTP usage examples with Either
+docs/
+  README.md                     # Documentation index and source-of-truth order
+  api-naming-alignment.md       # API naming decisions and migration status
+  arrow-either-reference.md     # Upstream Arrow references and attribution boundary
+.agents/skills/
+  api-rename-flow/SKILL.md      # Required workflow for non-breaking API renames
+.claude/skills                  # Symlink to ../.agents/skills
 ```
 
 ## Key Concepts
@@ -46,11 +55,11 @@ example/
 - **Annotations**: 
   - Use `@useResult` on methods/getters that return values **that must be used**:
     - ✅ Methods returning `Either<...>` or `Stream<Either<...>>` (transformation results must be used).
-    - ✅ Methods returning `bool` (boolean results must be used for logic: `isLeft`, `isRight`, `exists`, `all`).
+    - ✅ Methods returning `bool` (boolean results must be used for logic: `isLeft`, `isRight`, `isRightAnd`, `all`).
     - ✅ `ensureNotNull<R>()` (returns non-nullable `R` that needs assignment for type-checking).
   - Do **NOT** use `@useResult` on:
     - ❌ Methods returning `Future<Either<...>>` (Future just needs `await`, no need to warn about assignment).
-    - ❌ Fire-and-forget side-effect helpers that intentionally support ignored results (e.g., `tapLeft`, `tap`).
+    - ❌ Fire-and-forget side-effect helpers that intentionally support ignored results (e.g., `onLeft`, `onRight`).
     - ❌ Methods returning generic `C` that can be `void` (`fold`, `when` - often used for side effects).
   - Use `@monadComprehensions` on bind-related methods.
   - Use `@experimental` for unstable APIs.
@@ -95,7 +104,13 @@ dart pub publish --dry-run
 - Tests are in the `test/` directory using `package:test`.
 - Run with `dart test`.
 - All public APIs should have corresponding tests.
+- Keep deprecated alias coverage in `test/deprecated_aliases_test.dart` so one file-level lint ignore covers compatibility calls.
 - Test naming pattern: `group('MethodName', () { test('description', () { ... }); });`
+
+## Repository Skills
+
+- For every public API rename, follow `.agents/skills/api-rename-flow/SKILL.md`.
+- `.agents/skills` is canonical. `.claude/skills` points to it for Claude-compatible discovery.
 
 ## Guidelines for AI Agents
 
@@ -104,11 +119,11 @@ dart pub publish --dry-run
 3. **Use `@useResult` correctly** — on methods returning values that **must be used**:
    - ✅ **DO** use on:
      - `Either<...>` and `Stream<Either<...>>` returns (e.g., `map`, `flatMap`, `swap`, `left()`, `right()`, `toEitherStream`)
-     - `bool` returns (e.g., `isLeft`, `isRight`, `exists`, `all`) — boolean results must be used for logic
+     - `bool` returns (e.g., `isLeft`, `isRight`, `isRightAnd`, `all`) — boolean results must be used for logic
      - `ensureNotNull<R>()` — returns non-nullable `R`, needs assignment for type-checking: `final ok = e.ensureNotNull(nullable);`
    - ❌ **DON'T** use on:
      - `Future<Either<...>>` returns (e.g., `toEitherFuture`, `futureBinding`) — just `await` is enough
-     - Fire-and-forget side-effect helpers that intentionally support ignored results (e.g., `tapLeft`, `tap`)
+     - Fire-and-forget side-effect helpers that intentionally support ignored results (e.g., `onLeft`, `onRight`)
      - Generic `C` that can be `void` (e.g., `fold<C>`, `when<C>`) — often used for side effects
 4. **Use Dart 3 patterns** — prefer `switch` expressions and sealed class pattern matching over `is` type checks.
 5. **Keep the library lightweight** — avoid adding unnecessary dependencies.
@@ -117,4 +132,4 @@ dart pub publish --dry-run
 8. **Never catch `ControlError`** in library or user code (except in `Either.binding` / `Either.futureBinding` internals).
 9. **Extension naming convention**: `<Purpose><Type>Extension` (e.g., `ToEitherStreamExtension`, `BindEitherExtension`).
 10. **Test structure**: Mirror the source structure. Group tests by class/method name.
-
+11. **API renames**: Follow `.agents/skills/api-rename-flow/SKILL.md` and keep deprecated aliases non-breaking.

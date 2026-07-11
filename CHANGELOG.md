@@ -25,6 +25,7 @@
 - Updated docs and examples:
   - `README.md` API tables and operation snippets.
   - `example/lib/dart_either_readme.dart`.
+  - API decisions and upstream references under `docs/`.
 
 - Expanded tests for:
   - New API names and deprecated alias compatibility.

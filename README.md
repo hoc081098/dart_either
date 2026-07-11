@@ -575,9 +575,9 @@ Either<AsyncError, BuiltList<User>> usersEither = await Either.futureBinding(
 
 ## References
 
-- [Functional Error Handling — Arrow-kt](https://arrow-kt.io/docs/patterns/error_handling/)
-- [Monad — Arrow-kt](https://arrow-kt.io/docs/patterns/monads/)
-- [Monad Comprehensions — Arrow-kt](https://arrow-kt.io/docs/patterns/monad_comprehensions/)
+- [Working with typed errors - Arrow](https://arrow-kt.io/learn/typed-errors/working-with-typed-errors/)
+- [Either and Ior - Arrow](https://arrow-kt.io/learn/typed-errors/wrappers/either-and-ior/)
+- [From Either to Raise - Arrow](https://arrow-kt.io/learn/typed-errors/from-either-to-raise/)
 
 ---
 
