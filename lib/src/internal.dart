@@ -1,5 +1,5 @@
 import 'package:meta/meta.dart';
 
-@internal
 /// Returns [t] unchanged.
+@internal
 T identity<T>(T t) => t;
