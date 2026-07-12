@@ -6,7 +6,7 @@ root [README](../README.md). This directory is repository-only and excluded
 from the published package through `.pubignore`.
 
 - [API naming alignment](api-naming-alignment.md): implemented migrations,
-  compatibility decisions, and deferred naming proposals.
+  compatibility decisions, the major-version roadmap, and deferred proposals.
 - [Arrow Either reference](arrow-either-reference.md): upstream links and the
   boundary between Arrow inspiration and the Dart implementation.
 - [API rename workflow](../.agents/skills/api-rename-flow/SKILL.md): the required

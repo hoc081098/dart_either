@@ -17,10 +17,37 @@ assigned to a published version yet.
 | `exists` | `isRightAnd` | Return `true` only for a `Right` that satisfies the predicate | `exists` remains as a deprecated alias |
 | `getOrElse(() => R)` | `getOrDefault(R)` or `getOrHandle((L) => R)` | Use `getOrDefault` for an eager value and `getOrHandle` for a lazy, left-aware fallback | `getOrElse` remains deprecated and preserves its historical lazy behavior |
 
-`getOrHandle` deliberately keeps its current name. Its callback receives the
-`Left` value and runs lazily, while the deprecated `getOrElse` callback takes
-no argument. Treating either method as a direct alias of eager
+`getOrHandle` deliberately keeps its current name during `2.x`. Its callback
+receives the `Left` value and runs lazily, while the deprecated `getOrElse`
+callback takes no argument. Treating either method as a direct alias of eager
 `getOrDefault` would change observable behavior.
+
+## Planned major-version cleanup
+
+`getOrHandle` is a compatibility bridge rather than the preferred final name.
+Once a major release can remove the legacy `getOrElse(() => R)` signature, the
+target API is:
+
+```dart
+R getOrDefault(R defaultValue);                   // Eager fallback value.
+R getOrElse(R Function(L value) defaultValue);    // Lazy, left-aware fallback.
+```
+
+This final shape aligns the lazy fallback with Arrow's `getOrElse` while
+keeping eager evaluation explicit through `getOrDefault`.
+
+Use this migration sequence:
+
+1. Keep `getOrElse(() => R)` deprecated throughout `2.x` and use
+   `getOrHandle((L) => R)` as the non-breaking, left-aware API.
+2. In the next planned major release, remove the legacy zero-argument
+   `getOrElse` signature.
+3. Introduce `getOrElse((L) => R)` as the canonical lazy fallback.
+4. Keep `getOrHandle((L) => R)` as a deprecated alias to the new `getOrElse`
+   for a migration window; remove it only in a later planned major release.
+
+Do not reuse `getOrElse` with the new callback signature in a minor release;
+the identical method name would hide a source-breaking signature change.
 
 ## Added operations
 
