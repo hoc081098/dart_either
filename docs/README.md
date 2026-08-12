@@ -9,6 +9,8 @@ from the published package through `.pubignore`.
   compatibility decisions, the major-version roadmap, and deferred proposals.
 - [Arrow Either reference](arrow-either-reference.md): upstream links and the
   boundary between Arrow inspiration and the Dart implementation.
+- [Either variance safety](either-variance-safety.md): signature variance,
+  instance-method runtime checks, extension design, and widened-type tests.
 - [API rename workflow](../.agents/skills/api-rename-flow/SKILL.md): the required
   process for non-breaking public API renames.
 

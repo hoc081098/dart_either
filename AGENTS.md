@@ -35,6 +35,7 @@ docs/
   README.md                     # Documentation index and source-of-truth order
   api-naming-alignment.md       # API naming decisions and migration status
   arrow-either-reference.md     # Upstream Arrow references and attribution boundary
+  either-variance-safety.md     # Variance rules for safe Either public APIs
 .agents/skills/
   api-rename-flow/SKILL.md      # Required workflow for non-breaking API renames
 .claude/skills                  # Symlink to ../.agents/skills
@@ -68,6 +69,12 @@ docs/
 - **Linter**: Uses `package:lints/recommended.yaml` with additional rules — see `analysis_options.yaml`.
 - **Style rules**: `prefer_final_locals`, `prefer_single_quotes`, `always_declare_return_types`, `unawaited_futures`.
 - **Strong mode**: `implicit-casts: false`, `implicit-dynamic: false`.
+- **Variance safety**: Dart treats `Either<L, R>` as covariant in both type
+  arguments. Before adding or changing an instance member, audit every `L` and
+  `R` occurrence through nested function and generic types. If either appears
+  in a negative or invariant position, use a generic extension or top-level
+  function with direct pattern matching, or delegate only to a proven
+  covariance-safe primitive. Follow `docs/either-variance-safety.md`.
 
 ## Dependencies
 
@@ -104,6 +111,9 @@ dart pub publish --dry-run
 - Tests are in the `test/` directory using `package:test`.
 - Run with `dart test`.
 - All public APIs should have corresponding tests.
+- APIs affected by variance must include regression tests using
+  `Left<L, Never>` and `Right<Never, R>` widened to `Either<L, R>`, plus subtype
+  widening such as `int` to `num`. Do not use casts to make these tests pass.
 - Keep deprecated alias coverage in `test/deprecated_aliases_test.dart` so one file-level lint ignore covers compatibility calls.
 - Test naming pattern: `group('MethodName', () { test('description', () { ... }); });`
 
@@ -133,3 +143,7 @@ dart pub publish --dry-run
 9. **Extension naming convention**: `<Purpose><Type>Extension` (e.g., `ToEitherStreamExtension`, `BindEitherExtension`).
 10. **Test structure**: Mirror the source structure. Group tests by class/method name.
 11. **API renames**: Follow `.agents/skills/api-rename-flow/SKILL.md` and keep deprecated aliases non-breaking.
+12. **Variance safety**: Follow `docs/either-variance-safety.md`. Do not place
+    `L` or `R` in a negative/invariant instance-method position; use a generic
+    extension or top-level function and avoid delegating back to an unsafe
+    virtual method.
