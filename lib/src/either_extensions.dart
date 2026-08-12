@@ -21,6 +21,73 @@ extension GetOrThrowEitherExtension<L extends Object, R> on Either<L, R> {
   R getOrThrow() => getOrHandle((value) => throw value);
 }
 
+/// Provide [getOrDefault] on [Either] without crossing a covariant instance
+/// method boundary.
+extension GetOrDefaultEitherExtension<L, R> on Either<L, R> {
+  /// Returns the value from this [Right] or [defaultValue] if this is a [Left].
+  ///
+  /// [defaultValue] is eager, so it is evaluated before the call.
+  /// For lazy fallback computation, use [Either.getOrHandle].
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).getOrDefault(17); // Result: 12
+  /// Left<int, int>(12).getOrDefault(17);  // Result: 17
+  /// ```
+  R getOrDefault(R defaultValue) => switch (this) {
+        Left() => defaultValue,
+        Right(:final value) => value,
+      };
+}
+
+/// Provide [combine] on [Either] without crossing a covariant instance method
+/// boundary.
+extension CombineEitherExtension<L, R> on Either<L, R> {
+  /// Combines this [Either] with [other].
+  ///
+  /// If both values are [Right], combines their right values using [combineRight].
+  /// If both values are [Left], combines their left values using [combineLeft].
+  /// Otherwise, returns the sole [Left] value.
+  ///
+  /// ### Example
+  /// ```dart
+  /// final rr = Right<String, int>(1).combine(
+  ///   Right<String, int>(2),
+  ///   combineLeft: (a, b) => '$a,$b',
+  ///   combineRight: (a, b) => a + b,
+  /// ); // Right(3)
+  ///
+  /// final ll = Left<String, int>('a').combine(
+  ///   Left<String, int>('b'),
+  ///   combineLeft: (a, b) => '$a,$b',
+  ///   combineRight: (a, b) => a + b,
+  /// ); // Left('a,b')
+  ///
+  /// final lr = Left<String, int>('a').combine(
+  ///   Right<String, int>(2),
+  ///   combineLeft: (a, b) => '$a,$b',
+  ///   combineRight: (a, b) => a + b,
+  /// ); // Left('a')
+  /// ```
+  @useResult
+  Either<L, R> combine(
+    Either<L, R> other, {
+    required L Function(L left1, L left2) combineLeft,
+    required R Function(R right1, R right2) combineRight,
+  }) =>
+      switch (this) {
+        Left(value: final one) => switch (other) {
+            Left(value: final two) => Either<L, R>.left(combineLeft(one, two)),
+            Right() => this,
+          },
+        Right(value: final one) => switch (other) {
+            Left() => other,
+            Right(value: final two) =>
+              Either<L, R>.right(combineRight(one, two)),
+          },
+      };
+}
+
 /// Provide [flatten] extension on nested [Either].
 extension FlattenEitherExtension<L, R> on Either<L, Either<L, R>> {
   /// Flattens a nested [Either].
@@ -32,7 +99,10 @@ extension FlattenEitherExtension<L, R> on Either<L, Either<L, R>> {
   /// Left<int, Either<int, int>>(12).flatten();         // Result: Left(12)
   /// ```
   @useResult
-  Either<L, R> flatten() => flatMap(identity);
+  Either<L, R> flatten() => switch (this) {
+        Left(:final value) => Either<L, R>.left(value),
+        Right(:final value) => value,
+      };
 }
 
 /// Provide [merge] extension when both sides have the same type.

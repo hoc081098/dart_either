@@ -17,10 +17,15 @@
     - Use `getOrHandle((left) => <value>)` for lazy fallback.
 
 - Added new operations:
-  - `Either.combine`
+  - `combine` via `CombineEitherExtension`
   - `Either.leftOrNull`
-  - `Either.flatten`
-  - `Either.merge`
+  - `flatten` via `FlattenEitherExtension`
+  - `merge` via `MergeEitherExtension`
+
+- Preserved covariance safety for the new operations:
+  - Implemented `getOrDefault` and `combine` as generic extensions.
+  - Implemented `flatten` with direct sealed-class pattern matching instead of
+    delegating to an unsafe virtual method boundary.
 
 - Updated docs and examples:
   - `README.md` API tables and operation snippets.
@@ -31,6 +36,8 @@
   - New API names and deprecated alias compatibility.
   - Eager (`getOrDefault`) vs lazy (`getOrHandle` / `getOrElse`) fallback behavior.
   - New operations: `combine`, `leftOrNull`, `flatten`, `merge`.
+  - Covariantly widened `Left`, `Right`, right-value subtype, and nested
+    `Either` values.
 
 ## 2.1.0 - Mar 07, 2026
 

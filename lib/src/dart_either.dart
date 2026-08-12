@@ -7,6 +7,7 @@ import 'binding.dart';
 import 'extensions.dart';
 import 'internal.dart';
 import 'utils/semaphore.dart';
+import 'either_extensions.dart';
 
 /// Map [error] and [stackTrace] to a [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
@@ -739,49 +740,6 @@ sealed class Either<L, R> {
         ifRight: (r) => Either.right(rightOperation(r)),
       );
 
-  /// Combines this [Either] with [other].
-  ///
-  /// If both values are [Right], combines their right values using [combineRight].
-  /// If both values are [Left], combines their left values using [combineLeft].
-  /// Otherwise, returns the sole [Left] value.
-  ///
-  /// ### Example
-  /// ```dart
-  /// final rr = Right<String, int>(1).combine(
-  ///   Right<String, int>(2),
-  ///   combineLeft: (a, b) => '$a,$b',
-  ///   combineRight: (a, b) => a + b,
-  /// ); // Right(3)
-  ///
-  /// final ll = Left<String, int>('a').combine(
-  ///   Left<String, int>('b'),
-  ///   combineLeft: (a, b) => '$a,$b',
-  ///   combineRight: (a, b) => a + b,
-  /// ); // Left('a,b')
-  ///
-  /// final lr = Left<String, int>('a').combine(
-  ///   Right<String, int>(2),
-  ///   combineLeft: (a, b) => '$a,$b',
-  ///   combineRight: (a, b) => a + b,
-  /// ); // Left('a')
-  /// ```
-  @useResult
-  Either<L, R> combine(
-    Either<L, R> other, {
-    required L Function(L left1, L left2) combineLeft,
-    required R Function(R right1, R right2) combineRight,
-  }) =>
-      switch (this) {
-        Left(value: final one) => switch (other) {
-            Left(value: final two) => Either.left(combineLeft(one, two)),
-            Right() => this,
-          },
-        Right(value: final one) => switch (other) {
-            Left() => other,
-            Right(value: final two) => Either.right(combineRight(one, two)),
-          },
-      };
-
   /// Returns `false` if [Left] or returns the result of the application of
   /// the given [predicate] to the [Right] value.
   ///
@@ -827,28 +785,13 @@ sealed class Either<L, R> {
         ifRight: predicate,
       );
 
-  /// Returns the value from this [Right] or [defaultValue] if this is a [Left].
-  ///
-  /// [defaultValue] is eager, so it is evaluated before the call.
-  /// For lazy fallback computation, use [getOrHandle].
-  ///
-  /// ### Example
-  /// ```dart
-  /// Right<int, int>(12).getOrDefault(17); // Result: 12
-  /// Left<int, int>(12).getOrDefault(17);  // Result: 17
-  /// ```
-  R getOrDefault(R defaultValue) => _foldInternal(
-        ifLeft: (_) => defaultValue,
-        ifRight: identity,
-      );
-
   /// Deprecated lazy fallback helper.
   ///
   /// This preserves the historical lazy behavior (`defaultValue` is evaluated only
-  /// when this is [Left]), so it is **not** equivalent to [getOrDefault], which is eager.
+  /// when this is [Left]), so it is **not** equivalent to `getOrDefault`, which is eager.
   ///
   /// Prefer:
-  /// - [getOrDefault] for eager fallback values.
+  /// - [GetOrDefaultEitherExtension.getOrDefault] for eager fallback values.
   /// - [getOrHandle] for lazy fallback computation.
   ///
   /// ### Example

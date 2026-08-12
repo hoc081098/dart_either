@@ -417,10 +417,10 @@ Either<String, int> right = 2.right<String>();
 | [`mapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/mapLeft.html)                          | Transforms the `Left` value                   |
 | [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/flatMap.html)                          | Chains computations                           |
 | [`bimap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)                              | Transforms both sides                         |
-| [`combine`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/combine.html)                          | Combines two `Either` values                  |
+| [`combine`](https://pub.dev/documentation/dart_either/latest/dart_either/CombineEitherExtension/combine.html)         | Combines two `Either` values                  |
 | [`isRightAnd`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRightAnd.html)                    | Tests the `Right` value with a predicate      |
 | [`all`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)                                  | Returns `true` for `Left` or if `Right` matches the predicate |
-| [`getOrDefault`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrDefault.html)                | Extracts `Right` or falls back to an eager default value |
+| [`getOrDefault`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrDefaultEitherExtension/getOrDefault.html) | Extracts `Right` or falls back to an eager default value |
 | [`getOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrNull.html)                      | Extracts `Right` or returns `null`            |
 | [`leftOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/leftOrNull.html)                    | Extracts `Left` or returns `null`             |
 | [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrHandle.html)                  | Extracts `Right` or maps `Left` to a value    |

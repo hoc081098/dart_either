@@ -1025,6 +1025,68 @@ void main() {
       expect(called, 1);
     });
 
+    group('covariance safety', () {
+      test('getOrDefault supports widened variants', () {
+        const Either<String, int> widenedLeft = Left<String, Never>('error');
+        const Either<String, num> widenedRight = Right<Never, int>(1);
+
+        expect(widenedLeft.getOrDefault(2), 2);
+        expect(widenedRight.getOrDefault(2.5), 1);
+      });
+
+      test('combine supports widened receivers and operands', () {
+        const Either<String, num> widenedLeft = Left<String, Never>('error');
+        const Either<String, num> widenedIntRight = Right<Never, int>(1);
+        const Either<String, num> widenedDoubleRight =
+            Right<Never, double>(2.5);
+
+        String combineLeft(String a, String b) => '$a,$b';
+        num combineRight(num a, num b) => a + b;
+
+        expect(
+          widenedIntRight.combine(
+            widenedLeft,
+            combineLeft: combineLeft,
+            combineRight: combineRight,
+          ),
+          widenedLeft,
+        );
+        expect(
+          widenedLeft.combine(
+            widenedIntRight,
+            combineLeft: combineLeft,
+            combineRight: combineRight,
+          ),
+          widenedLeft,
+        );
+        expect(
+          widenedIntRight.combine(
+            widenedDoubleRight,
+            combineLeft: combineLeft,
+            combineRight: combineRight,
+          ),
+          Right<String, num>(3.5),
+        );
+      });
+
+      test('flatten supports widened nested variants', () {
+        const Either<String, Either<String, int>> widenedNestedRight =
+            Right<Never, Either<Never, int>>(
+          Right<Never, int>(1),
+        );
+        const Either<String, Either<String, int>> widenedNestedLeft =
+            Right<Never, Either<String, Never>>(
+          Left<String, Never>('inner'),
+        );
+        const Either<String, Either<String, int>> widenedOuterLeft =
+            Left<String, Never>('outer');
+
+        expect(widenedNestedRight.flatten(), Right<String, int>(1));
+        expect(widenedNestedLeft.flatten(), Left<String, int>('inner'));
+        expect(widenedOuterLeft.flatten(), Left<String, int>('outer'));
+      });
+    });
+
     test('getOrNull', () {
       expect(rightOf1.getOrNull(), 1);
       expect(leftOf1.getOrNull(), isNull);

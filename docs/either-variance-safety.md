@@ -219,18 +219,23 @@ extension FlattenEitherExtension<L, R> on Either<L, Either<L, R>> {
 }
 ```
 
-## Current review targets
+## Current PR audit
 
-The branch review that introduced this document found three pending targets:
+The branch review that introduced this document found and fixed three targets:
 
-- `getOrDefault` consumes `R` at an instance-method boundary.
-- `combine` consumes another `Either<L, R>` at an instance-method boundary.
-- `flatten` is an extension, but delegates to `flatMap` and re-enters an unsafe
-  virtual boundary.
+- `getOrDefault` now uses `GetOrDefaultEitherExtension`, so its `R` input does
+  not cross an instance-method boundary.
+- `combine` now uses `CombineEitherExtension`, so the other `Either<L, R>` and
+  combiner results are checked against the call site's static type arguments.
+- `flatten` remains an extension but now uses direct sealed-class pattern
+  matching instead of delegating to `flatMap`.
 
-This documentation change intentionally does not fix them. The same audit must
-also be applied to pre-existing APIs before they are reused as implementation
-primitives or changed in a future release.
+The other APIs added in this PR were audited as covariance-safe instance
+members or extensions: `onLeft`, `onRight`, `getOrNull`, `leftOrNull`,
+`isRightAnd`, and `merge`.
+
+The same audit must still be applied separately to pre-existing APIs before
+they are reused as implementation primitives or changed in a future release.
 
 ## Required regression tests
 

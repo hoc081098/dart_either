@@ -22,6 +22,11 @@ receives the `Left` value and runs lazily, while the deprecated `getOrElse`
 callback takes no argument. Treating either method as a direct alias of eager
 `getOrDefault` would change observable behavior.
 
+`getOrDefault` is declared by `GetOrDefaultEitherExtension` rather than as an
+instance member. This preserves the same call syntax while avoiding a runtime
+type check against a covariantly widened receiver. See
+[Either variance safety](either-variance-safety.md).
+
 ## Planned major-version cleanup
 
 `getOrHandle` is a compatibility bridge rather than the preferred final name.
@@ -53,7 +58,7 @@ the identical method name would hide a source-breaking signature change.
 
 | API | Location | Semantics |
 |---|---|---|
-| `combine` | `Either` | Combine two `Right` values or two `Left` values; otherwise return the sole `Left` |
+| `combine` | `CombineEitherExtension` | Combine two `Right` values or two `Left` values; otherwise return the sole `Left` |
 | `leftOrNull` | `Either` | Return the `Left` value or `null` |
 | `flatten` | `FlattenEitherExtension` | Flatten `Either<L, Either<L, R>>` to `Either<L, R>` |
 | `merge` | `MergeEitherExtension` | Extract the value from `Either<T, T>` |
