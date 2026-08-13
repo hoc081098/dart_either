@@ -45,6 +45,6 @@
 library;
 
 export 'src/binding.dart';
-export 'src/dart_either.dart';
+export 'src/dart_either.dart' hide monadComprehensions;
 export 'src/either_extensions.dart';
 export 'src/extensions.dart';

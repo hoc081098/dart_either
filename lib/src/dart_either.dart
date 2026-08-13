@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
+import 'package:meta/meta_meta.dart';
 
 import 'binding.dart';
 import 'extensions.dart';
+import 'internal.dart';
 import 'utils/semaphore.dart';
+import 'either_extensions.dart';
 
 /// Map [error] and [stackTrace] to a [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
@@ -20,8 +23,6 @@ extension on Object {
     return this;
   }
 }
-
-T _identity<T>(T t) => t;
 
 T Function(Object?) _const<T>(T t) => (_) => t;
 
@@ -74,6 +75,7 @@ T Function(Object?) _const<T>(T t) => (_) => t;
 sealed class Either<L, R> {
   const Either._();
 
+  @covarianceSafe
   @pragma('vm:always-consider-inlining')
   @pragma('vm:prefer-inline')
   @pragma('dart2js:tryInline')
@@ -575,6 +577,7 @@ sealed class Either<L, R> {
   ///   ifRight: (value) => print('operation succeeded with $value'),
   /// );
   /// ```
+  @covarianceSafe
   C fold<C>({
     required C Function(L value) ifLeft,
     required C Function(R value) ifRight,
@@ -611,35 +614,57 @@ sealed class Either<L, R> {
         ifRight: (r) => Either.left(r),
       );
 
-  /// The given function is applied as a fire and forget effect if this is a [Left].
-  /// When applied the result is ignored and the original [Either] value is returned.
+  /// Performs the given [action] on the encapsulated [L] if this is a [Left].
+  /// Returns the original [Either] unchanged.
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).tapLeft((_) => println('flower')); // Result: Right(12)
-  /// Left<int, int>(12).tapLeft((_) => println('flower'));  // Result: prints 'flower' and returns: Left(12)
+  /// Right<int, int>(12).onLeft((_) => print('flower')); // Result: Right(12)
+  /// Left<int, int>(12).onLeft((_) => print('flower'));  // Result: prints 'flower' and returns: Left(12)
   /// ```
-  Either<L, R> tapLeft(void Function(L value) f) {
+  @covarianceSafe
+  Either<L, R> onLeft(void Function(L value) action) {
     if (this case Left(value: final value)) {
-      f(value);
+      action(value);
     }
     return this;
   }
 
-  /// The given function is applied as a fire and forget effect if this is a [Right].
-  /// When applied the result is ignored and the original [Either] value is returned.
+  /// Alias of [onLeft].
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).tap((_) => println('flower')); // Result: prints 'flower' and returns: Right(12)
-  /// Left<int, int>(12).tap((_) => println('flower'));  // Result: Left(12)
+  /// Right<int, int>(12).tapLeft((_) => print('flower')); // Result: Right(12)
+  /// Left<int, int>(12).tapLeft((_) => print('flower'));  // Result: prints 'flower' and returns: Left(12)
   /// ```
-  Either<L, R> tap(void Function(R value) f) {
+  @Deprecated('Use onLeft instead.')
+  Either<L, R> tapLeft(void Function(L value) action) => onLeft(action);
+
+  /// Performs the given [action] on the encapsulated [R] value if this is a [Right].
+  /// Returns the original [Either] unchanged.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).onRight((_) => print('flower')); // Result: prints 'flower' and returns: Right(12)
+  /// Left<int, int>(12).onRight((_) => print('flower'));  // Result: Left(12)
+  /// ```
+  @covarianceSafe
+  Either<L, R> onRight(void Function(R value) action) {
     if (this case Right(value: final value)) {
-      f(value);
+      action(value);
     }
     return this;
   }
+
+  /// Alias of [onRight].
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).tap((_) => print('flower')); // Result: prints 'flower' and returns: Right(12)
+  /// Left<int, int>(12).tap((_) => print('flower'));  // Result: Left(12)
+  /// ```
+  @Deprecated('Use onRight instead.')
+  Either<L, R> tap(void Function(R value) action) => onRight(action);
 
   /// The given function is applied if this is a `Right`.
   ///
@@ -648,6 +673,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).map((_) => 'flower'); // Result: Right('flower')
   /// Left<int, int>(12).map((_) => 'flower');  // Result: Left(12)
   /// ```
+  @covarianceSafe
   @useResult
   Either<L, C> map<C>(C Function(R value) f) => _foldInternal(
         ifLeft: (l) => Either<L, C>.left(l),
@@ -725,17 +751,29 @@ sealed class Either<L, R> {
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).exists((v) => v > 10); // Result: true
-  /// Right<int, int>(7).exists((v) => v > 10);  // Result: false
+  /// Right<int, int>(12).isRightAnd((v) => v > 10); // Result: true
+  /// Right<int, int>(7).isRightAnd((v) => v > 10);  // Result: false
   ///
-  /// Left<int, int>(12).exists((v) => v > 10);  // Result: false
-  /// Left<int, int>(12).exists((v) => v < 10);  // Result: false
+  /// Left<int, int>(12).isRightAnd((v) => v > 10);  // Result: false
+  /// Left<int, int>(12).isRightAnd((v) => v < 10);  // Result: false
   /// ```
+  @covarianceSafe
   @useResult
-  bool exists(bool Function(R value) predicate) => _foldInternal(
+  bool isRightAnd(bool Function(R value) predicate) => _foldInternal(
         ifLeft: _const(false),
         ifRight: predicate,
       );
+
+  /// Alias of [isRightAnd].
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).exists((v) => v > 10); // Result: true
+  /// Left<int, int>(12).exists((v) => v > 10);  // Result: false
+  /// ```
+  @Deprecated('Use isRightAnd instead.')
+  @useResult
+  bool exists(bool Function(R value) predicate) => isRightAnd(predicate);
 
   /// Returns `true` if [Left] or returns the result of the application of
   /// the given predicate to the [Right] value.
@@ -754,29 +792,60 @@ sealed class Either<L, R> {
         ifRight: predicate,
       );
 
-  /// Returns the value from this [Right] or the given argument if this is a [Left].
+  /// Deprecated lazy fallback helper.
+  ///
+  /// This preserves the historical lazy behavior (`defaultValue` is evaluated only
+  /// when this is [Left]), so it is **not** equivalent to `getOrDefault`, which is eager.
+  ///
+  /// Prefer:
+  /// - [GetOrDefaultEitherExtension.getOrDefault] for eager fallback values.
+  /// - [getOrHandle] for lazy fallback computation.
   ///
   /// ### Example
   /// ```dart
   /// Right<int, int>(12).getOrElse(() => 17); // Result: 12
   /// Left<int, int>(12).getOrElse(() => 17);  // Result: 17
   /// ```
-  R getOrElse(R Function() defaultValue) => _foldInternal(
-        ifLeft: (_) => defaultValue(),
-        ifRight: _identity,
-      );
+  @Deprecated(
+    'Use getOrDefault(value) for eager fallback, or getOrHandle for lazy fallback.',
+  )
+  R getOrElse(R Function() defaultValue) => getOrHandle((_) => defaultValue());
 
   /// Returns the [Right]'s value if it exists, otherwise `null`.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).getOrNull(); // Result: 12
+  /// Left<int, int>(12).getOrNull();  // Result: null
+  /// ```
+  @covarianceSafe
+  R? getOrNull() => _foldInternal(
+        ifLeft: _const(null),
+        ifRight: identity,
+      );
+
+  /// Returns the [Left]'s value if it exists, otherwise `null`.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Right<int, int>(12).leftOrNull(); // Result: null
+  /// Left<int, int>(12).leftOrNull();  // Result: 12
+  /// ```
+  @covarianceSafe
+  L? leftOrNull() => _foldInternal(
+        ifLeft: identity,
+        ifRight: _const(null),
+      );
+
+  /// Alias of [getOrNull].
   ///
   /// ### Example
   /// ```dart
   /// Right<int, int>(12).orNull(); // Result: 12
   /// Left<int, int>(12).orNull();  // Result: null
   /// ```
-  R? orNull() => _foldInternal(
-        ifLeft: _const(null),
-        ifRight: _identity,
-      );
+  @Deprecated('Use getOrNull instead.')
+  R? orNull() => getOrNull();
 
   /// Returns the value from this [Right]
   /// or allows clients to transform the value of [Left] to the final result.
@@ -788,7 +857,7 @@ sealed class Either<L, R> {
   /// ```
   R getOrHandle(R Function(L value) defaultValue) => _foldInternal(
         ifLeft: defaultValue,
-        ifRight: _identity,
+        ifRight: identity,
       );
 
   /// Returns the [Right.value] matching the given [predicate],
@@ -944,14 +1013,18 @@ class Right<L, R> extends Either<L, R> {
 //
 // -----------------------------------------------------------------------------
 
+/// Package-internal marker for APIs that participate in monad comprehensions.
+///
 /// Monad comprehensions is the name for a programming idiom available
 /// in multiple languages like `JavaScript`, `F#`, `Scala`, or `Haskell`.
 /// The purpose of monad comprehensions is to compose sequential chains
 /// of actions in a style that feels natural for programmers of all backgrounds.
 /// They’re similar to `coroutines` or `async`/`await`, but extensible to existing and new types!
+@internal
 const monadComprehensions = _MonadComprehensions();
 
-class _MonadComprehensions {
+@Target({TargetKind.method, TargetKind.parameter})
+final class _MonadComprehensions {
   const _MonadComprehensions();
 }
 

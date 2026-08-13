@@ -1,3 +1,33 @@
+## Unreleased
+
+### Added
+
+- Added `onLeft` and `onRight` for running a side effect on one side while
+  returning the original `Either` unchanged.
+- Added `isRightAnd` for checking whether an `Either` is `Right` and its value
+  satisfies a predicate.
+- Added extraction and fallback operations:
+  - `getOrNull()` returns the `Right` value or `null`.
+  - `leftOrNull()` returns the `Left` value or `null`.
+  - `getOrDefault(value)` returns the `Right` value or an eagerly evaluated
+    fallback value.
+- Added composition operations:
+  - `combine` combines two `Right` values or two `Left` values with the
+    provided functions, and otherwise returns the sole `Left`.
+  - `flatten` converts `Either<L, Either<L, R>>` to `Either<L, R>`.
+  - `merge` extracts the value from `Either<T, T>`.
+
+### Deprecated
+
+- Existing names remain available as deprecated compatibility aliases:
+  - `tapLeft` in favor of `onLeft`.
+  - `tap` in favor of `onRight`.
+  - `exists` in favor of `isRightAnd`.
+  - `orNull` in favor of `getOrNull`.
+- Deprecated `getOrElse(() => value)`. Use `getOrDefault(value)` for an eager
+  fallback, or `getOrHandle((left) => value)` for a lazy, left-aware fallback.
+  `getOrElse` retains its existing lazy behavior during the deprecation period.
+
 ## 2.1.0 - Mar 07, 2026
 
 - Promoted `Either.parSequenceN` and `Either.parTraverseN` from experimental to stable.

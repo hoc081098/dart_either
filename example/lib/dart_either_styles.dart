@@ -1,7 +1,9 @@
 import 'package:dart_either/dart_either.dart';
 import 'package:rxdart_ext/rxdart_ext.dart';
 
-//--------------------------------------API--------------------------------------
+// ---------------------------------------------------------------------------
+// 1) Domain model + fake APIs
+// ---------------------------------------------------------------------------
 
 class User {
   final String uuid;
@@ -36,7 +38,9 @@ Future<List<Post>> getPostsByUser(User user) async {
 
 Future<void> doSomethingWithPosts(User user, List<Post> posts) => delay(100);
 
-//----------------------------------IMPERATIVE----------------------------------
+// ---------------------------------------------------------------------------
+// 2) Imperative baseline (exceptions + nullable)
+// ---------------------------------------------------------------------------
 
 Future<void> imperativeCode() async {
   try {
@@ -57,7 +61,9 @@ Future<void> imperativeCode() async {
   }
 }
 
-//----------------------------------EITHER API----------------------------------
+// ---------------------------------------------------------------------------
+// 3) Either wrappers
+// ---------------------------------------------------------------------------
 
 Future<Either<String, User?>> findUserByIdEither(String id) =>
     Either.catchFutureError(
@@ -80,7 +86,9 @@ Future<Either<String, void>> doSomethingWithPostsEither(
       () => doSomethingWithPosts(user, posts),
     );
 
-//--------------------------------EITHER FLATMAP--------------------------------
+// ---------------------------------------------------------------------------
+// 4) Composition style A: flatMap chain
+// ---------------------------------------------------------------------------
 
 Future<Either<String, void>> eitherFlatMapCode() =>
     findUserByIdEither('user_id').thenFlatMapEither((user) {
@@ -91,7 +99,9 @@ Future<Either<String, void>> eitherFlatMapCode() =>
           (posts) => doSomethingWithPostsEither(user, posts));
     });
 
-//--------------------------------EITHER BINDING--------------------------------
+// ---------------------------------------------------------------------------
+// 5) Composition style B: futureBinding (monad comprehensions)
+// ---------------------------------------------------------------------------
 
 Future<Either<String, void>> eitherBindingCode() =>
     Either.futureBinding((e) async {
@@ -100,6 +110,10 @@ Future<Either<String, void>> eitherBindingCode() =>
       final posts = await getPostsByUserEither(user).bind(e);
       await doSomethingWithPostsEither(user, posts).bind(e);
     });
+
+// ---------------------------------------------------------------------------
+// 6) Demo
+// ---------------------------------------------------------------------------
 
 void main() async {
   await imperativeCode();

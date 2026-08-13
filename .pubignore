@@ -1,0 +1,24 @@
+# Generated and local-only files.
+.dart_tool/
+.packages
+build/
+pubspec.lock
+!example/pubspec.lock
+doc/api/
+.idea/
+.vscode/
+out/
+*.iws
+*.dart.js
+*.info.json
+*.js
+*.js_
+*.js.deps
+*.js.map
+
+# Repository-only documentation and agent configuration.
+/AGENTS.md
+.agents/
+.claude/
+.github/
+docs/

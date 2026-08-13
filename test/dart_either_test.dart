@@ -796,33 +796,33 @@ void main() {
       expect(leftOf1.swap(), rightOf1);
     });
 
-    test('tapLeft', () {
+    test('onLeft', () {
       Object? value;
       expect(
-        rightOf1.tapLeft((v) => value = v),
+        rightOf1.onLeft((v) => value = v),
         rightOf1,
       );
       expect(value, isNull);
 
       value = null;
       expect(
-        leftOf1.tapLeft((v) => value = v),
+        leftOf1.onLeft((v) => value = v),
         leftOf1,
       );
       expect(value, 1);
     });
 
-    test('tap', () {
+    test('onRight', () {
       Object? value;
       expect(
-        rightOf1.tap((v) => value = v),
+        rightOf1.onRight((v) => value = v),
         rightOf1,
       );
       expect(value, 1);
 
       value = null;
       expect(
-        leftOf1.tap((v) => value = v),
+        leftOf1.onRight((v) => value = v),
         leftOf1,
       );
       expect(value, isNull);
@@ -896,16 +896,97 @@ void main() {
       );
     });
 
-    test('exists', () {
-      expect(rightOf1.exists((value) => value > 0), isTrue);
-      expect(rightOf1.exists((value) => value > 1), isFalse);
+    test('combine', () {
+      expect(
+        Right<String, int>(1).combine(
+          Right<String, int>(2),
+          combineLeft: (a, b) => '$a,$b',
+          combineRight: (a, b) => a + b,
+        ),
+        Right<String, int>(3),
+      );
 
       expect(
-        leftOf1.exists((value) => value > 0),
+        Left<String, int>('a').combine(
+          Left<String, int>('b'),
+          combineLeft: (a, b) => '$a,$b',
+          combineRight: (a, b) => a + b,
+        ),
+        Left<String, int>('a,b'),
+      );
+
+      expect(
+        Left<String, int>('a').combine(
+          Right<String, int>(2),
+          combineLeft: (a, b) => '$a,$b',
+          combineRight: (a, b) => a + b,
+        ),
+        Left<String, int>('a'),
+      );
+
+      expect(
+        Right<String, int>(2).combine(
+          Left<String, int>('a'),
+          combineLeft: (a, b) => '$a,$b',
+          combineRight: (a, b) => a + b,
+        ),
+        Left<String, int>('a'),
+      );
+    });
+
+    test('combine only invokes relevant combiner', () {
+      var leftCalls = 0;
+      var rightCalls = 0;
+
+      final result = Left<String, int>('a').combine(
+        Right<String, int>(2),
+        combineLeft: (a, b) {
+          leftCalls += 1;
+          return '$a,$b';
+        },
+        combineRight: (a, b) {
+          rightCalls += 1;
+          return a + b;
+        },
+      );
+
+      expect(result, Left<String, int>('a'));
+      expect(leftCalls, 0);
+      expect(rightCalls, 0);
+    });
+
+    test('flatten', () {
+      expect(
+        const Right<int, Either<int, int>>(Right<int, int>(2)).flatten(),
+        const Right<int, int>(2),
+      );
+
+      expect(
+        const Right<int, Either<int, int>>(Left<int, int>(2)).flatten(),
+        const Left<int, int>(2),
+      );
+
+      expect(
+        const Left<int, Either<int, int>>(1).flatten(),
+        const Left<int, int>(1),
+      );
+    });
+
+    test('merge', () {
+      expect(const Right<int, int>(2).merge(), 2);
+      expect(const Left<int, int>(1).merge(), 1);
+    });
+
+    test('isRightAnd', () {
+      expect(rightOf1.isRightAnd((value) => value > 0), isTrue);
+      expect(rightOf1.isRightAnd((value) => value > 1), isFalse);
+
+      expect(
+        leftOf1.isRightAnd((value) => value > 0),
         isFalse,
       );
       expect(
-        leftOf1.exists((value) => value > 1),
+        leftOf1.isRightAnd((value) => value > 1),
         isFalse,
       );
     });
@@ -924,19 +1005,162 @@ void main() {
       );
     });
 
-    test('getOrElse', () {
-      expect(rightOf1.getOrElse(() => 2), 1);
-      expect(leftOf1.getOrElse(() => 2), 2);
+    test('getOrDefault', () {
+      expect(rightOf1.getOrDefault(2), 1);
+      expect(leftOf1.getOrDefault(2), 2);
     });
 
-    test('orNull', () {
-      expect(rightOf1.orNull(), 1);
-      expect(leftOf1.orNull(), isNull);
+    test('getOrDefault is eager', () {
+      var called = 0;
+      int makeDefault() {
+        called += 1;
+        return 2;
+      }
+
+      expect(rightOf1.getOrDefault(makeDefault()), 1);
+      expect(called, 1);
+
+      called = 0;
+      expect(leftOf1.getOrDefault(makeDefault()), 2);
+      expect(called, 1);
+    });
+
+    group('covariance safety', () {
+      test('getOrDefault supports widened variants', () {
+        const Either<String, int> widenedLeft = Left<String, Never>('error');
+        const Either<String, num> widenedRight = Right<Never, int>(1);
+
+        expect(widenedLeft.getOrDefault(2), 2);
+        expect(widenedRight.getOrDefault(2.5), 1);
+      });
+
+      test('combine supports widened receivers and operands', () {
+        const Either<String, num> widenedLeft = Left<String, Never>('error');
+        const Either<String, num> widenedIntRight = Right<Never, int>(1);
+        const Either<String, num> widenedDoubleRight =
+            Right<Never, double>(2.5);
+        const Either<num, num> widenedIntLeft = Left<int, Never>(1);
+        const Either<num, num> widenedDoubleLeft = Left<double, Never>(2.5);
+
+        String combineLeft(String a, String b) => '$a,$b';
+        num combineRight(num a, num b) => a + b;
+
+        var widenedLeftCalls = 0;
+        var widenedRightCalls = 0;
+        num combineWidenedLeft(num a, num b) {
+          widenedLeftCalls += 1;
+          return a + b;
+        }
+
+        num combineWidenedRight(num a, num b) {
+          widenedRightCalls += 1;
+          return a + b;
+        }
+
+        expect(
+          widenedIntRight.combine(
+            widenedLeft,
+            combineLeft: combineLeft,
+            combineRight: combineRight,
+          ),
+          widenedLeft,
+        );
+        expect(
+          widenedLeft.combine(
+            widenedIntRight,
+            combineLeft: combineLeft,
+            combineRight: combineRight,
+          ),
+          widenedLeft,
+        );
+        expect(
+          widenedIntRight.combine(
+            widenedDoubleRight,
+            combineLeft: combineLeft,
+            combineRight: combineRight,
+          ),
+          Right<String, num>(3.5),
+        );
+
+        widenedLeftCalls = 0;
+        widenedRightCalls = 0;
+        expect(
+          widenedIntLeft.combine(
+            widenedDoubleLeft,
+            combineLeft: combineWidenedLeft,
+            combineRight: combineWidenedRight,
+          ),
+          Left<num, num>(3.5),
+        );
+        expect(widenedLeftCalls, 1);
+        expect(widenedRightCalls, 0);
+
+        widenedLeftCalls = 0;
+        widenedRightCalls = 0;
+        expect(
+          widenedDoubleLeft.combine(
+            widenedIntLeft,
+            combineLeft: combineWidenedLeft,
+            combineRight: combineWidenedRight,
+          ),
+          Left<num, num>(3.5),
+        );
+        expect(widenedLeftCalls, 1);
+        expect(widenedRightCalls, 0);
+      });
+
+      test('flatten supports widened nested variants', () {
+        const Either<String, Either<String, int>> widenedNestedRight =
+            Right<Never, Either<Never, int>>(
+          Right<Never, int>(1),
+        );
+        const Either<String, Either<String, int>> widenedNestedLeft =
+            Right<Never, Either<String, Never>>(
+          Left<String, Never>('inner'),
+        );
+        const Either<String, Either<String, int>> widenedOuterLeft =
+            Left<String, Never>('outer');
+
+        expect(widenedNestedRight.flatten(), Right<String, int>(1));
+        expect(widenedNestedLeft.flatten(), Left<String, int>('inner'));
+        expect(widenedOuterLeft.flatten(), Left<String, int>('outer'));
+      });
+
+      test('merge supports widened variants', () {
+        const Either<num, num> widenedLeft = Left<int, Never>(1);
+        const Either<num, num> widenedRight = Right<Never, int>(2);
+
+        expect(widenedLeft.merge(), 1);
+        expect(widenedRight.merge(), 2);
+      });
+    });
+
+    test('getOrNull', () {
+      expect(rightOf1.getOrNull(), 1);
+      expect(leftOf1.getOrNull(), isNull);
+    });
+
+    test('leftOrNull', () {
+      expect(rightOf1.leftOrNull(), isNull);
+      expect(leftOf1.leftOrNull(), 1);
     });
 
     test('getOrHandle', () {
       expect(rightOf1.getOrHandle((l) => l + 1), 1);
       expect(leftOf1.getOrHandle((l) => l + 1), 2);
+
+      var called = 0;
+      rightOf1.getOrHandle((_) {
+        called += 1;
+        return 2;
+      });
+      expect(called, 0);
+
+      leftOf1.getOrHandle((_) {
+        called += 1;
+        return 2;
+      });
+      expect(called, 1);
     });
 
     test('findOrNull', () {

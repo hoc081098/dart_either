@@ -1,7 +1,9 @@
 import 'package:built_collection/built_collection.dart';
 import 'package:dart_either/dart_either.dart';
 
-//-------------------------------------MODEL-------------------------------------
+// ---------------------------------------------------------------------------
+// 1) Domain model
+// ---------------------------------------------------------------------------
 
 typedef UserAndPosts = ({User user, BuiltList<Post> posts});
 
@@ -67,10 +69,16 @@ class Post {
   String toString() => 'Post{id: $id, userId: $userId, title: $title}';
 }
 
-//-------------------------------------MAPPER-------------------------------------
+// ---------------------------------------------------------------------------
+// 2) Error mapper
+// ---------------------------------------------------------------------------
 
 AppError Function(Object, StackTrace) toAppError(String message) =>
     (e, s) => AppError(e, s, message);
+
+// ---------------------------------------------------------------------------
+// 3) Decoders
+// ---------------------------------------------------------------------------
 
 Either<AppError, BuiltList<User>> toUsers(dynamic list) =>
     Either.traverse<AppError, User, dynamic>(
@@ -83,6 +91,10 @@ Either<AppError, BuiltList<Post>> toPosts(dynamic list) =>
       list as List,
       Post.fromJsonAsEither,
     );
+
+// ---------------------------------------------------------------------------
+// 4) Result rendering
+// ---------------------------------------------------------------------------
 
 void handleResult(Either<AppError, BuiltList<UserAndPosts>> result) =>
     result.fold(
