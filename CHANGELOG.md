@@ -1,45 +1,32 @@
 ## Unreleased
 
-- API naming alignment (non-breaking) toward Arrow/Kotlin naming:
-  - Added new APIs:
-    - `onLeft` (from `tapLeft`)
-    - `onRight` (from `tap`)
-    - `getOrNull` (from `orNull`)
-    - `getOrDefault` (eager fallback value)
-    - `isRightAnd` (from `exists`)
-  - Kept old APIs as deprecated aliases for compatibility:
-    - `tapLeft -> onLeft`
-    - `tap -> onRight`
-    - `orNull -> getOrNull`
-    - `exists -> isRightAnd`
-  - Kept `getOrElse` as deprecated lazy fallback helper:
-    - Use `getOrDefault(<value>)` for eager fallback.
-    - Use `getOrHandle((left) => <value>)` for lazy fallback.
+### Added
 
-- Added new operations:
-  - `combine` via `CombineEitherExtension`
-  - `Either.leftOrNull`
-  - `flatten` via `FlattenEitherExtension`
-  - `merge` via `MergeEitherExtension`
+- Added `onLeft` and `onRight` for running a side effect on one side while
+  returning the original `Either` unchanged.
+- Added `isRightAnd` for checking whether an `Either` is `Right` and its value
+  satisfies a predicate.
+- Added extraction and fallback operations:
+  - `getOrNull()` returns the `Right` value or `null`.
+  - `leftOrNull()` returns the `Left` value or `null`.
+  - `getOrDefault(value)` returns the `Right` value or an eagerly evaluated
+    fallback value.
+- Added composition operations:
+  - `combine` combines two `Right` values or two `Left` values with the
+    provided functions, and otherwise returns the sole `Left`.
+  - `flatten` converts `Either<L, Either<L, R>>` to `Either<L, R>`.
+  - `merge` extracts the value from `Either<T, T>`.
 
-- Preserved covariance safety for the new operations:
-  - Implemented `getOrDefault` and `combine` as generic extensions.
-  - Implemented `flatten` with direct sealed-class pattern matching instead of
-    delegating to an unsafe virtual method boundary.
-  - Marked audited operations with the internal `@covarianceSafe`
-    annotation and added widened regression coverage for `merge`.
+### Deprecated
 
-- Updated docs and examples:
-  - `README.md` API tables and operation snippets.
-  - `example/lib/dart_either_readme.dart`.
-  - API decisions and upstream references under `docs/`.
-
-- Expanded tests for:
-  - New API names and deprecated alias compatibility.
-  - Eager (`getOrDefault`) vs lazy (`getOrHandle` / `getOrElse`) fallback behavior.
-  - New operations: `combine`, `leftOrNull`, `flatten`, `merge`.
-  - Covariantly widened `Left`, `Right`, right-value subtype, and nested
-    `Either` values.
+- Existing names remain available as deprecated compatibility aliases:
+  - `tapLeft` in favor of `onLeft`.
+  - `tap` in favor of `onRight`.
+  - `exists` in favor of `isRightAnd`.
+  - `orNull` in favor of `getOrNull`.
+- Deprecated `getOrElse(() => value)`. Use `getOrDefault(value)` for an eager
+  fallback, or `getOrHandle((left) => value)` for a lazy, left-aware fallback.
+  `getOrElse` retains its existing lazy behavior during the deprecation period.
 
 ## 2.1.0 - Mar 07, 2026
 
