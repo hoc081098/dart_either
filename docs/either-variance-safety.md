@@ -234,8 +234,31 @@ The other APIs added in this PR were audited as covariance-safe instance
 members or extensions: `onLeft`, `onRight`, `getOrNull`, `leftOrNull`,
 `isRightAnd`, and `merge`.
 
-The same audit must still be applied separately to pre-existing APIs before
-they are reused as implementation primitives or changed in a future release.
+The audited implementation primitive and canonical operations carry the
+internal `@covarianceSafe` marker:
+
+- Proven from their signatures and audited implementations: `_foldInternal`,
+  `fold`, `map`, `onLeft`, `onRight`, `getOrNull`, `leftOrNull`, and
+  `isRightAnd`.
+- Covered by widened covariance regression tests: `getOrDefault`, `combine`,
+  `flatten`, and `merge`.
+
+The marker records a completed audit; it does not make an operation safe and
+is not enforced by the Dart type system. Apply it only when either:
+
+1. Every `L` and `R` occurrence is positive and the implementation uses direct
+   pattern matching or only already-proven covariance-safe primitives.
+2. The signature contains negative or invariant occurrences, so the operation
+   is implemented as a generic extension or top-level function using direct
+   pattern matching or a proven-safe primitive, with widened regression
+   coverage for the relevant paths.
+
+Deprecated naming aliases introduced in this PR intentionally remain unmarked.
+Their compatibility tests verify delegation to the marked canonical operation.
+
+This marker set is intentionally not exhaustive. Other pre-existing APIs must
+still be audited separately before they are reused as implementation primitives
+or changed in a future release.
 
 ## Required regression tests
 
@@ -279,4 +302,6 @@ Tests must cover:
 - Prefer a generic extension or top-level function for risky signatures.
 - Use direct `switch` pattern matching or a proven covariance-safe primitive.
 - Add widened `Never` and subtype regression tests.
+- Apply `@covarianceSafe` only after recording one of the accepted forms of
+  evidence above; never treat the marker itself as evidence.
 - Verify with `dart analyze` and `dart test`.

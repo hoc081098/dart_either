@@ -7,19 +7,24 @@ description: Safely introduce replacement names for public dart_either APIs with
 
 1. Inspect the current declaration and compare the branch with `master`.
 2. Add the canonical API with complete Dart docs and an accurate example.
-3. Keep the previous API as an `@Deprecated` alias when replacing an existing
+3. Audit every `L` and `R` occurrence and the implementation using
+   `docs/either-variance-safety.md`. Use a generic extension or top-level
+   function when an instance-member position is unsafe, add widened regression
+   tests where required, and apply `@covarianceSafe` only after the audit
+   evidence is in place.
+4. Keep the previous API as an `@Deprecated` alias when replacing an existing
    name. Preserve its behavior, including eager or lazy evaluation and callback
    arguments.
-4. Test the canonical API in the main suite. Test deprecated aliases in
+5. Test the canonical API in the main suite. Test deprecated aliases in
    `test/deprecated_aliases_test.dart`, using its single file-level lint ignore.
-5. Update all public documentation in the same change:
+6. Update all public documentation in the same change:
    - `CHANGELOG.md`
    - API tables and code snippets in `README.md`
    - `docs/api-naming-alignment.md`
    - Contributor instructions such as `AGENTS.md` when they mention the API
-6. Migrate normal usage across `lib/`, `example/`, and `test/`. Leave old names
+7. Migrate normal usage across `lib/`, `example/`, and `test/`. Leave old names
    only in deprecated declarations, compatibility tests, and migration notes.
-7. Search for stale names and verify the complete change:
+8. Search for stale names and verify the complete change:
 
 ```bash
 dart analyze

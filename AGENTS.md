@@ -19,7 +19,7 @@ lib/
     extensions.dart             # Extension methods: toEitherStream, toEitherFuture, thenFlatMapEither, thenMapEither, .left(), .right()
     either_extensions.dart      # Extension methods: toFuture, getOrThrow, getOrDefault, combine, flatten, merge
     binding.dart                # Monad comprehension extensions: ensure, ensureNotNull, bindFuture, bind on Either, bind on Future<Either>
-    internal.dart               # Shared internal helpers
+    internal.dart               # Shared internal helpers and @covarianceSafe marker
     utils/
       semaphore.dart            # Internal Semaphore utility (used by parSequenceN / parTraverseN)
 test/
@@ -74,7 +74,9 @@ docs/
   `R` occurrence through nested function and generic types. If either appears
   in a negative or invariant position, use a generic extension or top-level
   function with direct pattern matching, or delegate only to a proven
-  covariance-safe primitive. Follow `docs/either-variance-safety.md`.
+  covariance-safe primitive. Apply the internal `@covarianceSafe` marker
+  only after documenting a type-and-implementation proof or adding widened
+  covariance regression tests. Follow `docs/either-variance-safety.md`.
 
 ## Dependencies
 
@@ -146,4 +148,6 @@ dart pub publish --dry-run
 12. **Variance safety**: Follow `docs/either-variance-safety.md`. Do not place
     `L` or `R` in a negative/invariant instance-method position; use a generic
     extension or top-level function and avoid delegating back to an unsafe
-    virtual method.
+    virtual method. Mark an operation with `@covarianceSafe` only after its
+    proof or widened regression coverage is in place; the annotation is not
+    evidence by itself.

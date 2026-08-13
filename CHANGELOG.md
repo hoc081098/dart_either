@@ -26,6 +26,8 @@
   - Implemented `getOrDefault` and `combine` as generic extensions.
   - Implemented `flatten` with direct sealed-class pattern matching instead of
     delegating to an unsafe virtual method boundary.
+  - Marked audited operations with the internal `@covarianceSafe`
+    annotation and added widened regression coverage for `merge`.
 
 - Updated docs and examples:
   - `README.md` API tables and operation snippets.
