@@ -1085,6 +1085,14 @@ void main() {
         expect(widenedNestedLeft.flatten(), Left<String, int>('inner'));
         expect(widenedOuterLeft.flatten(), Left<String, int>('outer'));
       });
+
+      test('merge supports widened variants', () {
+        const Either<num, num> widenedLeft = Left<int, Never>(1);
+        const Either<num, num> widenedRight = Right<Never, int>(2);
+
+        expect(widenedLeft.merge(), 1);
+        expect(widenedRight.merge(), 2);
+      });
     });
 
     test('getOrNull', () {

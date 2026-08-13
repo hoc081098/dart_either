@@ -34,6 +34,7 @@ extension GetOrDefaultEitherExtension<L, R> on Either<L, R> {
   /// Right<int, int>(12).getOrDefault(17); // Result: 12
   /// Left<int, int>(12).getOrDefault(17);  // Result: 17
   /// ```
+  @covarianceSafe
   R getOrDefault(R defaultValue) => switch (this) {
         Left() => defaultValue,
         Right(:final value) => value,
@@ -69,6 +70,7 @@ extension CombineEitherExtension<L, R> on Either<L, R> {
   ///   combineRight: (a, b) => a + b,
   /// ); // Left('a')
   /// ```
+  @covarianceSafe
   @useResult
   Either<L, R> combine(
     Either<L, R> other, {
@@ -98,6 +100,7 @@ extension FlattenEitherExtension<L, R> on Either<L, Either<L, R>> {
   /// Right<int, Either<int, int>>(Left(12)).flatten();  // Result: Left(12)
   /// Left<int, Either<int, int>>(12).flatten();         // Result: Left(12)
   /// ```
+  @covarianceSafe
   @useResult
   Either<L, R> flatten() => switch (this) {
         Left(:final value) => Either<L, R>.left(value),
@@ -114,5 +117,6 @@ extension MergeEitherExtension<T> on Either<T, T> {
   /// Right<int, int>(12).merge(); // Result: 12
   /// Left<int, int>(12).merge();  // Result: 12
   /// ```
+  @covarianceSafe
   T merge() => fold(ifLeft: identity, ifRight: identity);
 }

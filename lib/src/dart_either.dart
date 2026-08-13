@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
+import 'package:meta/meta_meta.dart';
 
 import 'binding.dart';
 import 'extensions.dart';
@@ -74,6 +75,7 @@ T Function(Object?) _const<T>(T t) => (_) => t;
 sealed class Either<L, R> {
   const Either._();
 
+  @covarianceSafe
   @pragma('vm:always-consider-inlining')
   @pragma('vm:prefer-inline')
   @pragma('dart2js:tryInline')
@@ -575,6 +577,7 @@ sealed class Either<L, R> {
   ///   ifRight: (value) => print('operation succeeded with $value'),
   /// );
   /// ```
+  @covarianceSafe
   C fold<C>({
     required C Function(L value) ifLeft,
     required C Function(R value) ifRight,
@@ -619,6 +622,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).onLeft((_) => print('flower')); // Result: Right(12)
   /// Left<int, int>(12).onLeft((_) => print('flower'));  // Result: prints 'flower' and returns: Left(12)
   /// ```
+  @covarianceSafe
   Either<L, R> onLeft(void Function(L value) action) {
     if (this case Left(value: final value)) {
       action(value);
@@ -644,6 +648,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).onRight((_) => print('flower')); // Result: prints 'flower' and returns: Right(12)
   /// Left<int, int>(12).onRight((_) => print('flower'));  // Result: Left(12)
   /// ```
+  @covarianceSafe
   Either<L, R> onRight(void Function(R value) action) {
     if (this case Right(value: final value)) {
       action(value);
@@ -668,6 +673,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).map((_) => 'flower'); // Result: Right('flower')
   /// Left<int, int>(12).map((_) => 'flower');  // Result: Left(12)
   /// ```
+  @covarianceSafe
   @useResult
   Either<L, C> map<C>(C Function(R value) f) => _foldInternal(
         ifLeft: (l) => Either<L, C>.left(l),
@@ -751,6 +757,7 @@ sealed class Either<L, R> {
   /// Left<int, int>(12).isRightAnd((v) => v > 10);  // Result: false
   /// Left<int, int>(12).isRightAnd((v) => v < 10);  // Result: false
   /// ```
+  @covarianceSafe
   @useResult
   bool isRightAnd(bool Function(R value) predicate) => _foldInternal(
         ifLeft: _const(false),
@@ -811,6 +818,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).getOrNull(); // Result: 12
   /// Left<int, int>(12).getOrNull();  // Result: null
   /// ```
+  @covarianceSafe
   R? getOrNull() => _foldInternal(
         ifLeft: _const(null),
         ifRight: identity,
@@ -823,6 +831,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).leftOrNull(); // Result: null
   /// Left<int, int>(12).leftOrNull();  // Result: 12
   /// ```
+  @covarianceSafe
   L? leftOrNull() => _foldInternal(
         ifLeft: identity,
         ifRight: _const(null),
@@ -1011,7 +1020,8 @@ class Right<L, R> extends Either<L, R> {
 /// They’re similar to `coroutines` or `async`/`await`, but extensible to existing and new types!
 const monadComprehensions = _MonadComprehensions();
 
-class _MonadComprehensions {
+@Target({TargetKind.method, TargetKind.parameter})
+final class _MonadComprehensions {
   const _MonadComprehensions();
 }
 
