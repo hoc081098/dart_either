@@ -43,23 +43,31 @@ jobs:
         if: ${{ matrix.sdk == 'stable' }}
         run: dart format . --set-exit-if-changed
 
-      - name: Active coverage
+      - name: Run all tests
+        if: ${{ matrix.sdk != 'stable' }}
+        run: dart test --chain-stack-traces
+
+      - name: Run all tests and collect coverage
+        if: ${{ matrix.sdk == 'stable' }}
+        run: dart test --coverage=./coverage --chain-stack-traces
+
+      - name: Activate coverage
+        if: ${{ matrix.sdk == 'stable' }}
         run: dart pub global activate coverage
 
-      - name: Run tests
-        run: dart pub run test test/dart_either_test.dart --chain-stack-traces
-
-      - name: Start Observatory
-        run: dart --disable-service-auth-codes --enable-vm-service=8111 --pause-isolates-on-exit --enable-asserts test/dart_either_test.dart &
-
-      - name: Collect coverage
-        run: nohup dart pub global run coverage:collect_coverage --port=8111 --out=coverage.json --wait-paused --resume-isolates
-
       - name: Format coverage
-        run: dart pub global run coverage:format_coverage --lcov --in=coverage.json --out=lcov.info --report-on=lib
+        if: ${{ matrix.sdk == 'stable' }}
+        run: >-
+          dart pub global run coverage:format_coverage
+          --report-on=lib
+          --lcov
+          --in=./coverage
+          --out=./coverage/lcov.info
 
       - uses: codecov/codecov-action@v4.5.0
+        if: ${{ matrix.sdk == 'stable' }}
         with:
+          files: ./coverage/lcov.info
           fail_ci_if_error: true # optional (default = false)
           token: ${{ secrets.CODECOV_TOKEN }} # required
           verbose: true # optional (default = false)
