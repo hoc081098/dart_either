@@ -17,6 +17,7 @@ out/
 *.js.map
 
 # Repository-only documentation and agent configuration.
+/AGENTS.md
 .agents/
 .claude/
 .github/

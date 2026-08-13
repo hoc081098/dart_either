@@ -1039,9 +1039,23 @@ void main() {
         const Either<String, num> widenedIntRight = Right<Never, int>(1);
         const Either<String, num> widenedDoubleRight =
             Right<Never, double>(2.5);
+        const Either<num, num> widenedIntLeft = Left<int, Never>(1);
+        const Either<num, num> widenedDoubleLeft = Left<double, Never>(2.5);
 
         String combineLeft(String a, String b) => '$a,$b';
         num combineRight(num a, num b) => a + b;
+
+        var widenedLeftCalls = 0;
+        var widenedRightCalls = 0;
+        num combineWidenedLeft(num a, num b) {
+          widenedLeftCalls += 1;
+          return a + b;
+        }
+
+        num combineWidenedRight(num a, num b) {
+          widenedRightCalls += 1;
+          return a + b;
+        }
 
         expect(
           widenedIntRight.combine(
@@ -1067,6 +1081,32 @@ void main() {
           ),
           Right<String, num>(3.5),
         );
+
+        widenedLeftCalls = 0;
+        widenedRightCalls = 0;
+        expect(
+          widenedIntLeft.combine(
+            widenedDoubleLeft,
+            combineLeft: combineWidenedLeft,
+            combineRight: combineWidenedRight,
+          ),
+          Left<num, num>(3.5),
+        );
+        expect(widenedLeftCalls, 1);
+        expect(widenedRightCalls, 0);
+
+        widenedLeftCalls = 0;
+        widenedRightCalls = 0;
+        expect(
+          widenedDoubleLeft.combine(
+            widenedIntLeft,
+            combineLeft: combineWidenedLeft,
+            combineRight: combineWidenedRight,
+          ),
+          Left<num, num>(3.5),
+        );
+        expect(widenedLeftCalls, 1);
+        expect(widenedRightCalls, 0);
       });
 
       test('flatten supports widened nested variants', () {

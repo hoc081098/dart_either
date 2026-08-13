@@ -1013,11 +1013,14 @@ class Right<L, R> extends Either<L, R> {
 //
 // -----------------------------------------------------------------------------
 
+/// Package-internal marker for APIs that participate in monad comprehensions.
+///
 /// Monad comprehensions is the name for a programming idiom available
 /// in multiple languages like `JavaScript`, `F#`, `Scala`, or `Haskell`.
 /// The purpose of monad comprehensions is to compose sequential chains
 /// of actions in a style that feels natural for programmers of all backgrounds.
 /// They’re similar to `coroutines` or `async`/`await`, but extensible to existing and new types!
+@internal
 const monadComprehensions = _MonadComprehensions();
 
 @Target({TargetKind.method, TargetKind.parameter})
