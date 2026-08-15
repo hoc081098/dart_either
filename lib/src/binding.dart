@@ -1,7 +1,19 @@
+import 'dart:math';
+
 import 'package:meta/meta.dart';
 
 import 'dart_either.dart';
 import 'extensions.dart';
+
+/// TODO
+extension BindEitherEffectExtension<L> on EitherEffect<L> {
+  /// Attempt to get right value of [either].
+  /// Or throws a [ControlError].
+  ///
+  /// See [Either.binding] and [Either.futureBinding].
+  @monadComprehensions
+  R bind<R>(Either<L, R> either) => this<R>(either);
+}
 
 /// Provide [ensure] extension on [EitherEffect].
 extension EnsureEitherEffectExtension<L> on EitherEffect<L> {
@@ -25,7 +37,7 @@ extension EnsureEitherEffectExtension<L> on EitherEffect<L> {
   /// ```
   @monadComprehensions
   void ensure(bool value, L Function() orLeft) =>
-      value ? null : bind(orLeft().left());
+      value ? null : this<void>(orLeft().left<void>());
 }
 
 /// Provide [ensureNotNull] extension on [EitherEffect].
@@ -55,7 +67,7 @@ extension EnsureNotNullEitherEffectExtension<L> on EitherEffect<L> {
   @useResult
   @monadComprehensions
   R ensureNotNull<R extends Object>(R? value, L Function() orLeft) =>
-      value ?? bind(orLeft().left());
+      value ?? this<R>(orLeft().left<R>());
 }
 
 /// Provide [bindFuture] extension on [EitherEffect].
@@ -67,7 +79,7 @@ extension BindFutureEitherEffectExtension<L> on EitherEffect<L> {
   /// See [Either.futureBinding].
   @monadComprehensions
   Future<R> bindFuture<R>(Future<Either<L, R>> eitherFuture) =>
-      eitherFuture.then(bind);
+      eitherFuture.then((e) => this<R>(e));
 }
 
 /// Provide [bind] extension on an [Either].
@@ -77,7 +89,7 @@ extension BindEitherExtension<L, R> on Either<L, R> {
   ///
   /// See [Either.binding] and [Either.futureBinding].
   @monadComprehensions
-  R bind(EitherEffect<L> effect) => effect.bind(this);
+  R bind(EitherEffect<L> effect) => effect<R>(this);
 }
 
 /// Provide [bind] extension on a [Future] of [Either].
@@ -87,5 +99,5 @@ extension BindEitherFutureExtension<L, R> on Future<Either<L, R>> {
   ///
   /// See [Either.futureBinding].
   @monadComprehensions
-  Future<R> bind(EitherEffect<L> effect) => effect.bindFuture(this);
+  Future<R> bind(EitherEffect<L> effect) => then((e) => effect<R>(e));
 }

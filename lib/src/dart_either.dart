@@ -5,15 +5,16 @@ import 'package:meta/meta.dart';
 import 'package:meta/meta_meta.dart';
 
 import 'binding.dart';
+import 'either_extensions.dart';
 import 'extensions.dart';
 import 'internal.dart';
 import 'utils/semaphore.dart';
-import 'either_extensions.dart';
 
 /// Map [error] and [stackTrace] to a [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 
 extension on Object {
+  @pragma('vm:always-consider-inlining')
   @pragma('vm:prefer-inline')
   @pragma('dart2js:tryInline')
   Object throwIfFatal() {
@@ -175,16 +176,22 @@ sealed class Either<L, R> {
   /// ```
   factory Either.binding(
       @monadComprehensions R Function(EitherEffect<L> effect) block) {
-    final eitherEffect = _EitherEffectImpl<L>(_Token());
+    final scope = _BindingScope<L>(_Token());
+    final eitherEffect = scope.openEitherEffect();
 
     try {
-      return Either.right(block(eitherEffect));
+      final value = block(eitherEffect);
+      scope.throwIfRaised();
+
+      return Either.right(value);
     } on ControlError<L> catch (e) {
-      if (identical(eitherEffect._token, e._token)) {
+      if (identical(scope._token, e._token)) {
         return Either.left(e._value);
       } else {
         rethrow;
       }
+    } finally {
+      scope.close();
     }
   }
 
@@ -294,14 +301,20 @@ sealed class Either<L, R> {
   /// ```
   static Future<Either<L, R>> futureBinding<L, R>(
       @monadComprehensions FutureOr<R> Function(EitherEffect<L> effect) block) {
-    final eitherEffect = _EitherEffectImpl<L>(_Token());
+    final scope = _BindingScope<L>(_Token());
+    final eitherEffect = scope.openEitherEffect();
 
     return Future.sync(() => block(eitherEffect))
-        .then((value) => Either<L, R>.right(value))
+        .then((value) {
+          scope.throwIfRaised();
+
+          return Either<L, R>.right(value);
+        })
         .onError<ControlError<L>>(
           (e, s) => Either.left(e._value),
-          test: (e) => identical(eitherEffect._token, e._token),
-        );
+          test: (e) => identical(scope._token, e._token),
+        )
+        .whenComplete(() => scope.close());
   }
 
   /// Evaluates the specified [block] and wrap the result in a [Right].
@@ -1023,22 +1036,14 @@ class Right<L, R> extends Either<L, R> {
 @internal
 const monadComprehensions = _MonadComprehensions();
 
-@Target({TargetKind.method, TargetKind.parameter})
+@Target({TargetKind.method, TargetKind.parameter, TargetKind.typedefType})
 final class _MonadComprehensions {
   const _MonadComprehensions();
 }
 
-/// Used for monad comprehensions.
-/// Cannot implement or extend this class.
-@sealed
-sealed class EitherEffect<L> {
-  EitherEffect._();
-
-  /// Attempt to get right value of [either].
-  /// Or throws a [ControlError].
-  @monadComprehensions
-  R bind<R>(Either<L, R> either);
-}
+/// TODO
+@monadComprehensions
+typedef EitherEffect<L> = R Function<R>(Either<L, R> either);
 
 /// Error thrown by [EitherEffect].
 /// Must not be caught.
@@ -1061,12 +1066,38 @@ class _Token {
   String toString() => 'Token(${hashCode.toRadixString(16)})';
 }
 
-class _EitherEffectImpl<L> extends EitherEffect<L> {
+enum _BindingPhase {
+  active,
+  raised,
+  closed,
+}
+
+final class _BindingScope<L> {
   final _Token _token;
+  var _phase = _BindingPhase.active;
 
-  _EitherEffectImpl(this._token) : super._();
+  _BindingScope(this._token);
 
-  @override
-  R bind<R>(Either<L, R> either) =>
-      either.getOrHandle((v) => throw ControlError._(v, _token));
+  void close() {
+    _phase = _BindingPhase.closed;
+  }
+
+  void throwIfRaised() {
+    if (_phase == _BindingPhase.raised) {
+      throw StateError('Binding short-circuit was intercepted.');
+    }
+  }
+
+  EitherEffect<L> openEitherEffect() {
+    return <R>(Either<L, R> either) {
+      if (_phase != _BindingPhase.active) {
+        throw StateError('EitherEffect was used outside its binding scope.');
+      }
+
+      return either.getOrHandle((v) {
+        _phase = _BindingPhase.raised;
+        throw ControlError<L>._(v, _token);
+      });
+    };
+  }
 }
