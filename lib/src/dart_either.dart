@@ -1043,7 +1043,9 @@ final class _MonadComprehensions {
 
 /// TODO
 @monadComprehensions
-typedef EitherEffect<L> = R Function<R>(Either<L, R> either);
+typedef EitherEffect<L> = ({
+  R Function<R>(Either<L, R> either) bind,
+});
 
 /// Error thrown by [EitherEffect].
 /// Must not be caught.
@@ -1089,15 +1091,17 @@ final class _BindingScope<L> {
   }
 
   EitherEffect<L> openEitherEffect() {
-    return <R>(Either<L, R> either) {
-      if (_phase != _BindingPhase.active) {
-        throw StateError('EitherEffect was used outside its binding scope.');
-      }
+    return (
+      bind: <R>(Either<L, R> either) {
+        if (_phase != _BindingPhase.active) {
+          throw StateError('EitherEffect was used outside its binding scope.');
+        }
 
-      return either.getOrHandle((v) {
-        _phase = _BindingPhase.raised;
-        throw ControlError<L>._(v, _token);
-      });
-    };
+        return either.getOrHandle((v) {
+          _phase = _BindingPhase.raised;
+          throw ControlError<L>._(v, _token);
+        });
+      }
+    );
   }
 }
