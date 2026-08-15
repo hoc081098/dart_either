@@ -125,13 +125,17 @@ sealed class Either<L, R> {
   /// `computation expressions` in `F#`, and `for comprehension` in `Scala`).
   /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
   ///
-  /// Calls the specified function [block] with [EitherEffect] as its parameter and returns its [Either].
+  /// Calls [block] with a scope-bound [EitherEffect] and returns its [Either].
   ///
-  /// When inside a [Either.binding] block, calling the [EitherEffect.bind] function will attempt to unwrap the [Either]
-  /// and locally return its [Right.value]. If the [Either] is a [Left],
-  /// the binding block will terminate with that bind and return that failed-to-bind [Left].
+  /// Inside [block], `effect.bind(either)` returns the [Right.value] of
+  /// `either`. Binding a [Left] immediately terminates this binding scope and
+  /// returns that [Left]. [BindEitherExtension.bind] provides the equivalent
+  /// `either.bind(effect)` syntax.
   ///
-  /// You can also use [BindEitherExtension.bind] instead of [EitherEffect.bind] for more convenience.
+  /// Each invocation owns a distinct scope. Nested binding scopes therefore
+  /// catch only their own short-circuit. The capability is valid only while
+  /// [block] is running; invoking a captured capability after [block] returns
+  /// throws a [StateError]. Ordinary exceptions propagate unchanged.
   ///
   /// ### Example
   /// ```dart
@@ -141,37 +145,41 @@ sealed class Either<L, R> {
   /// Either<ExampleError, int> provideY() { ... }
   /// Either<ExampleError, int> provideZ(int x, int y) { ... }
   ///
-  /// Either<ExampleError, int> result = Either<ExampleError, int>.binding((e) {
-  ///   int x = provideX().bind(e);       // or use `e.bind(provideX())`.
-  ///   int y = e.bind(provideY());       // or use `provideY().bind(e)`.
-  ///   int z = provideZ(x, y).bind(e);   // or use `e.bind(provideZ(x, y))`.
+  /// Either<ExampleError, int> result =
+  ///     Either<ExampleError, int>.binding((effect) {
+  ///   int x = provideX().bind(effect);
+  ///   int y = effect.bind(provideY());
+  ///   int z = provideZ(x, y).bind(effect);
   ///   return z;
   /// });
   /// ```
   ///
   /// ### NOTE
   /// - Do NOT catch [ControlError] in [block].
-  /// - Do NOT throw any errors inside [block].
+  /// - Do NOT store [EitherEffect] or invoke it after [block] returns.
+  /// - Errors thrown by [block] are not converted to [Left].
   /// - Use [Either.catchError], [Either.catchFutureError] or [Either.catchStreamError] to catch error,
-  ///   then use [EitherEffect.bind] to unwrap the [Either].
+  ///   then bind the resulting [Either].
   ///
   /// ```dart
   /// /// This function can throw an error.
   /// int canThrowAnError() { ... }
   ///
   /// // DON'T
-  /// Either<ExampleError, int> result = Either<ExampleError, int>.binding((e) {
+  /// Either<ExampleError, int> result =
+  ///     Either<ExampleError, int>.binding((effect) {
   ///   int value = canThrowAnError();
   /// });
   ///
   /// // DO
   /// ExampleError toExampleError(Object e, StackTrace st) { ... }
   ///
-  /// Either<ExampleError, int> result = Either<ExampleError, int>.binding((e) {
+  /// Either<ExampleError, int> result =
+  ///     Either<ExampleError, int>.binding((effect) {
   ///   int value = Either<ExampleError, int>.catchError(
   ///     toExampleError,
   ///     canThrowAnError
-  ///   ).bind(e);
+  ///   ).bind(effect);
   /// });
   /// ```
   factory Either.binding(
@@ -225,20 +233,21 @@ sealed class Either<L, R> {
   /// `computation expressions` in `F#`, and `for comprehension` in `Scala`).
   /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
   ///
-  /// Calls the specified function [block] with [EitherEffect] as its parameter and returns its [Either] wrapped in a [Future].
+  /// Calls [block] with a scope-bound [EitherEffect] and returns its [Either]
+  /// wrapped in a [Future].
   ///
-  /// When inside a [Either.futureBinding] block, calling the [EitherEffect.bind] function will attempt to unwrap the [Either]
-  /// and locally return its [Right.value]. If the [Either] is a [Left],
-  /// the binding block will terminate with that bind and return that failed-to-bind [Left].
+  /// Inside [block], `effect.bind(either)` returns the [Right.value] of
+  /// `either`. Binding a [Left] immediately terminates this binding scope and
+  /// completes the returned future with that [Left].
   ///
-  /// When inside a [Either.futureBinding] block, calling the [BindFutureEitherEffectExtension.bindFuture] function
-  /// will attempt to will attempt to unwrap the [Either] inside the [Future].
-  /// and locally return its [Right.value] wrapped in a [Future].
-  /// If the [Either] is a [Left], the binding block will terminate with that bind and return that failed-to-bind [Left].
-  /// If the [Future] completes with an error, it will not be handled.
+  /// [BindFutureEitherEffectExtension.bindFuture] and
+  /// [BindEitherFutureExtension.bind] unwrap an [Either] produced by a future.
+  /// An error from that future propagates unchanged.
   ///
-  /// You can also use [BindEitherExtension.bind] instead of [EitherEffect.bind],
-  /// [BindEitherFutureExtension.bind] instead of [BindFutureEitherEffectExtension.bindFuture] for more convenience.
+  /// Each invocation owns a distinct scope. Nested binding scopes therefore
+  /// catch only their own short-circuit. The capability remains valid through
+  /// the asynchronous work returned by [block], then closes when that work
+  /// settles. Invoking a captured capability afterward throws a [StateError].
   ///
   /// ### Example
   /// ```dart
@@ -248,20 +257,21 @@ sealed class Either<L, R> {
   /// Future<Either<ExampleError, int>> provideY() { ... }
   /// Future<Either<ExampleError, int>> provideZ(int x, int y) { ... }
   ///
-  /// Future<Either<ExampleError, int>> result = Either.futureBinding<ExampleError, int>((e) async {
-  ///   int x = provideX().bind(e);                   // or use `e.bind(provideX())`.
-  ///   int y = await e.bindFuture(provideY());       // or use `await provideY().bind(e)`.
-  ///   int z = await provideZ(x, y).bind(e);         // or use `await e.bindFuture(provideZ(x, y))`.
+  /// Future<Either<ExampleError, int>> result =
+  ///     Either.futureBinding<ExampleError, int>((effect) async {
+  ///   int x = provideX().bind(effect);
+  ///   int y = await effect.bindFuture(provideY());
+  ///   int z = await provideZ(x, y).bind(effect);
   ///   return z;
   /// });
   /// ```
   ///
   /// ### NOTE
   /// - Do NOT catch [ControlError] in [block].
-  /// - Do NOT throw any errors inside [block].
-  /// - When using [BindFutureEitherEffectExtension.bindFuture], if the [Future] completes with an error, it will not be handled.
+  /// - Do NOT store [EitherEffect] or invoke it after the returned future settles.
+  /// - Errors thrown by [block], or emitted by a bound future, are not converted to [Left].
   /// - Use [Either.catchError], [Either.catchFutureError] or [Either.catchStreamError] to catch error,
-  ///   then use [EitherEffect.bind] and [BindFutureEitherEffectExtension.bindFuture] to unwrap the [Either].
+  ///   then bind the resulting [Either].
   ///
   /// ```dart
   /// /// This function can throw an error.
@@ -270,7 +280,8 @@ sealed class Either<L, R> {
   /// Future<int> errorFuture = Future.error(Exception());
   ///
   /// // DON'T
-  /// Future<Either<ExampleError, int>> result = Either.futureBinding<ExampleError, int>((e) async {
+  /// Future<Either<ExampleError, int>> result =
+  ///     Either.futureBinding<ExampleError, int>((effect) async {
   ///   int value1 = canThrowAnError();                // DON'T
   ///   int value2 = await canReturnAnErrorFuture();   // DON'T
   ///   int value3 = await errorFuture;                // DON'T
@@ -280,21 +291,22 @@ sealed class Either<L, R> {
   /// // DO
   /// ExampleError toExampleError(Object e, StackTrace st) { ... }
   ///
-  /// Future<Either<ExampleError, int>> result = Either.futureBinding<ExampleError, int>((e) async {
+  /// Future<Either<ExampleError, int>> result =
+  ///     Either.futureBinding<ExampleError, int>((effect) async {
   ///   int value1 = Either<ExampleError, int>.catchError(
   ///     toExampleError,
   ///     canThrowAnError
-  ///   ).bind(e);
+  ///   ).bind(effect);
   ///
   ///   int value2 = await Either.catchFutureError<ExampleError, int>(
   ///     toExampleError,
   ///     canReturnAnErrorFuture
-  ///   ).bind(e);
+  ///   ).bind(effect);
   ///
   ///   int value3 = await Either.catchFutureError<ExampleError, int>(
   ///     toExampleError,
   ///     () => errorFuture
-  ///   ).bind(e);
+  ///   ).bind(effect);
   ///
   ///   return value1 + value2 + value3;
   /// });
@@ -1041,14 +1053,41 @@ final class _MonadComprehensions {
   const _MonadComprehensions();
 }
 
-/// TODO
+/// A scope-bound capability for binding [Either] values with the same [L].
+///
+/// The generic `bind` function returns an [Either]'s [Right.value]. Binding a
+/// [Left] short-circuits the surrounding [Either.binding] or
+/// [Either.futureBinding] scope with that left value.
+///
+/// Obtain a library-managed capability from the binding callback. A capability
+/// supplied by [Either.binding] or [Either.futureBinding] is valid only for
+/// that callback's lifetime, including asynchronous work returned by
+/// [Either.futureBinding]. Invoking it after its scope has completed throws a
+/// [StateError].
+///
+/// `EitherEffect` is contravariant in [L]: an effect accepting `num` errors can
+/// be used where one accepting only `int` errors is required, while the unsafe
+/// opposite assignment is rejected at compile time.
+///
+/// ### Example
+/// ```dart
+/// final result = Either<String, int>.binding((effect) {
+///   final value = effect.bind(Either<String, int>.right(1));
+///   return value + 1;
+/// }); // Right(2)
+/// ```
 @monadComprehensions
 typedef EitherEffect<L> = ({
   R Function<R>(Either<L, R> either) bind,
 });
 
-/// Error thrown by [EitherEffect].
-/// Must not be caught.
+/// Internal control-flow signal raised when [EitherEffect] binds a [Left].
+///
+/// [Either.binding] and [Either.futureBinding] catch only signals belonging to
+/// their own scope. User code must not catch this error. If a block swallows
+/// its scope's signal and then completes normally, the binding scope fails with
+/// a [StateError].
+///
 /// Cannot implement or extend this class.
 final class ControlError<T> extends Error {
   final _Token _token;
@@ -1097,10 +1136,13 @@ final class _BindingScope<L> {
           throw StateError('EitherEffect was used outside its binding scope.');
         }
 
-        return either.getOrHandle((v) {
-          _phase = _BindingPhase.raised;
-          throw ControlError<L>._(v, _token);
-        });
+        switch (either) {
+          case Left(value: final value):
+            _phase = _BindingPhase.raised;
+            throw ControlError<L>._(value, _token);
+          case Right(value: final value):
+            return value;
+        }
       }
     );
   }

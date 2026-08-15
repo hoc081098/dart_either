@@ -104,11 +104,11 @@ Future<Either<String, void>> eitherFlatMapCode() =>
 // ---------------------------------------------------------------------------
 
 Future<Either<String, void>> eitherBindingCode() =>
-    Either.futureBinding((e) async {
-      final nullableUser = await findUserByIdEither('user_id').bind(e);
-      final user = e.ensureNotNull(nullableUser, () => 'User is null');
-      final posts = await getPostsByUserEither(user).bind(e);
-      await doSomethingWithPostsEither(user, posts).bind(e);
+    Either.futureBinding((effect) async {
+      final nullableUser = await findUserByIdEither('user_id').bind(effect);
+      final user = effect.ensureNotNull(nullableUser, () => 'User is null');
+      final posts = await getPostsByUserEither(user).bind(effect);
+      await doSomethingWithPostsEither(user, posts).bind(effect);
     });
 
 // ---------------------------------------------------------------------------

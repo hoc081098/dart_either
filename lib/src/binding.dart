@@ -3,54 +3,52 @@ import 'package:meta/meta.dart';
 import 'dart_either.dart';
 import 'extensions.dart';
 
-/// Provide [ensure] extension on [EitherEffect].
+/// Provides [ensure] on a scope-bound [EitherEffect].
 extension EnsureEitherEffectExtension<L> on EitherEffect<L> {
-  /// Ensure check if the [value] is `true`,
-  /// and if it is it allows the `Either.binding(...)` to continue.
-  /// In case it is `false`, then it short-circuits the binding and returns
-  /// the provided value by [orLeft] inside a [Left].
+  /// Continues the binding scope when [value] is `true`.
+  ///
+  /// When [value] is `false`, evaluates [orLeft] and short-circuits the scope
+  /// with its result in a [Left].
   ///
   /// See [Either.binding] and [Either.futureBinding].
   ///
   /// ### Example
   /// ```dart
-  /// final res = Either<String, int>.binding((e) {
-  ///   e.ensure(true, () => '');
+  /// final result = Either<String, int>.binding((effect) {
+  ///   effect.ensure(true, () => 'unused');
   ///   print('ensure(true) passes');
-  ///   e.ensure(false, () => 'failed');
+  ///   effect.ensure(false, () => 'failed');
   ///   return 1;
   /// });
   /// // print: 'ensure(true) passes'
-  /// // res: Left('failed')
+  /// // result: Left('failed')
   /// ```
   @monadComprehensions
   void ensure(bool value, L Function() orLeft) =>
       value ? null : bind<Never>(orLeft().left<Never>());
 }
 
-/// Provide [ensureNotNull] extension on [EitherEffect].
+/// Provides [ensureNotNull] on a scope-bound [EitherEffect].
 extension EnsureNotNullEitherEffectExtension<L> on EitherEffect<L> {
-  /// Ensures that [value] is not null.
-  /// When the value is not null, then it will be returned as non null and the check value is now smart-checked to non-null.
-  /// Otherwise, if the [value] is null then the `Either.binding(...)` will short-circuit with [orLeft] inside of [Left].
+  /// Returns [value] as a non-nullable [R] when it is not `null`.
+  ///
+  /// When [value] is `null`, evaluates [orLeft] and short-circuits the binding
+  /// scope with its result in a [Left]. Assign the returned value; Dart does
+  /// not promote the original variable across this method call.
   ///
   /// See [Either.binding] and [Either.futureBinding].
   ///
   /// ### Example
   /// ```dart
-  /// final res = Either<String, int>.binding((e) {
-  ///   int? x = 1;
-  ///   e.ensureNotNull(x, () => 'passes');
-  ///   print(x);
-  ///
-  ///   x = null;
-  ///   e.ensureNotNull(x, () => 'failed');
-  ///   print(x);
-  ///
-  ///   return 1;
+  /// final result = Either<String, int>.binding((effect) {
+  ///   int? nullableValue = 1;
+  ///   final value = effect.ensureNotNull(
+  ///     nullableValue,
+  ///     () => 'missing',
+  ///   );
+  ///   return value + 1;
   /// });
-  /// // println: '1'
-  /// // res: Left('failed')
+  /// // result: Right(2)
   /// ```
   @useResult
   @monadComprehensions
@@ -58,34 +56,63 @@ extension EnsureNotNullEitherEffectExtension<L> on EitherEffect<L> {
       value ?? bind<R>(orLeft().left<R>());
 }
 
-/// Provide [bindFuture] extension on [EitherEffect].
+/// Provides [bindFuture] on a scope-bound [EitherEffect].
 extension BindFutureEitherEffectExtension<L> on EitherEffect<L> {
-  /// Attempt to get right value of [eitherFuture].
-  /// Or return a [Future] that completes with a [ControlError].
+  /// Returns the right value produced by [eitherFuture].
+  ///
+  /// A produced [Left] short-circuits the surrounding [Either.futureBinding]
+  /// scope. An error emitted by [eitherFuture] propagates unchanged.
   /// This is a shorthand for `eitherFuture.then(bind)`.
   ///
   /// See [Either.futureBinding].
+  ///
+  /// ### Example
+  /// ```dart
+  /// final result = await Either.futureBinding<String, int>((effect) async {
+  ///   return effect.bindFuture(
+  ///     Future.value(Either<String, int>.right(1)),
+  ///   );
+  /// }); // Right(1)
+  /// ```
   @monadComprehensions
   Future<R> bindFuture<R>(Future<Either<L, R>> eitherFuture) =>
       eitherFuture.then(bind);
 }
 
-/// Provide [bind] extension on an [Either].
+/// Provides binding syntax on an [Either].
 extension BindEitherExtension<L, R> on Either<L, R> {
-  /// Attempt to get right value of [this].
-  /// Or throws a [ControlError].
+  /// Returns this [Either]'s right value through [effect].
+  ///
+  /// A [Left] short-circuits the [Either.binding] or [Either.futureBinding]
+  /// scope that owns [effect].
   ///
   /// See [Either.binding] and [Either.futureBinding].
+  ///
+  /// ### Example
+  /// ```dart
+  /// final result = Either<String, int>.binding((effect) {
+  ///   return Either<String, int>.right(1).bind(effect);
+  /// }); // Right(1)
+  /// ```
   @monadComprehensions
   R bind(EitherEffect<L> effect) => effect.bind<R>(this);
 }
 
-/// Provide [bind] extension on a [Future] of [Either].
+/// Provides binding syntax on a [Future] of [Either].
 extension BindEitherFutureExtension<L, R> on Future<Either<L, R>> {
-  /// Attempt to get right value of [this].
-  /// Or return a [Future] that completes with a [ControlError].
+  /// Returns the right value produced by this future through [effect].
+  ///
+  /// A produced [Left] short-circuits the [Either.futureBinding] scope that
+  /// owns [effect]. An error emitted by this future propagates unchanged.
   ///
   /// See [Either.futureBinding].
+  ///
+  /// ### Example
+  /// ```dart
+  /// final result = await Either.futureBinding<String, int>((effect) async {
+  ///   return Future.value(Either<String, int>.right(1)).bind(effect);
+  /// }); // Right(1)
+  /// ```
   @monadComprehensions
   Future<R> bind(EitherEffect<L> effect) => then(effect.bind);
 }

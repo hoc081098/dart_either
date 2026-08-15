@@ -18,6 +18,7 @@ out/
 
 # Repository-only documentation and agent configuration.
 /AGENTS.md
+/CONTEXT.md
 .agents/
 .claude/
 .github/

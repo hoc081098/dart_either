@@ -17,6 +17,18 @@
   - `flatten` converts `Either<L, Either<L, R>>` to `Either<L, R>`.
   - `merge` extracts the value from `Either<T, T>`.
 
+### Changed
+
+- **Breaking:** `EitherEffect<L>` is now a scope-bound, contravariant binding
+  capability represented by a named record with a generic `bind` function.
+  This preserves `effect.bind(either)`, `either.bind(effect)`, and
+  `eitherFuture.bind(effect)` while making unsafe `EitherEffect` widening a
+  compile-time error.
+- Each `Either.binding` and `Either.futureBinding` invocation now owns an isolated token and
+  revokes its capability when the block settles. Captured capabilities throw a
+  `StateError` when invoked after their scope closes, and nested scopes catch
+  only their own short-circuit.
+
 ### Deprecated
 
 - Existing names remain available as deprecated compatibility aliases:

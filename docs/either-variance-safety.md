@@ -178,6 +178,47 @@ the other.
 "Unsafe" here means unsafe as a virtual instance-member boundary for a
 covariantly widened receiver. It does not mean the operation itself is invalid.
 
+## `EitherEffect` must be contravariant
+
+Binding consumes an `Either<L, R>`, so a nominal `EitherEffect<L>` class with
+an instance `bind` method is unsafe when Dart widens its covariant `L`. The
+binding capability instead uses a named record containing a generic function:
+
+```dart
+typedef EitherEffect<L> = ({
+  R Function<R>(Either<L, R> either) bind,
+});
+```
+
+The path to `L` has one sign flip:
+
+```text
+record field type:                 +
+bind function parameter:           -
+Either is covariant in L:          +
+                                    + x - x + = -
+```
+
+`EitherEffect` is therefore contravariant in `L`. An effect that accepts every
+`num` left value can safely be narrowed to one used only with `int`; the
+opposite assignment is rejected:
+
+```dart
+void demonstrate(
+  EitherEffect<num> numbers,
+  EitherEffect<int> onlyIntegers,
+) {
+  final EitherEffect<int> integers = numbers; // Safe.
+  final EitherEffect<num> unsafe = onlyIntegers; // Compile-time error.
+}
+```
+
+The named `bind` field also makes `effect.bind(...)` discoverable without
+moving the consuming operation back onto a covariant nominal receiver. The
+implementation matches `Left` and `Right` directly instead of passing the
+consumed `Either` through another virtual method boundary. See
+[ADR 0001](adr/0001-scope-bound-contravariant-either-effect.md).
+
 ## Project design rule
 
 Before adding or changing a public instance member on `Either<L, R>`, audit
@@ -229,6 +270,8 @@ The branch review that introduced this document found and fixed three targets:
   combiner results are checked against the call site's static type arguments.
 - `flatten` remains an extension but now uses direct sealed-class pattern
   matching instead of delegating to `flatMap`.
+- `EitherEffect` is a contravariant record capability, so unsafe widening is
+  rejected before a binding block can execute.
 
 The other APIs added in this PR were audited as covariance-safe instance
 members or extensions: `onLeft`, `onRight`, `getOrNull`, `leftOrNull`,
@@ -293,6 +336,8 @@ Tests must cover:
 - Nested widening for operations such as `flatten`.
 - Callback invocation counts, including callbacks that must not run.
 - Successful execution without `TypeError`; do not hide the issue with casts.
+- Safe contravariant narrowing of `EitherEffect`, plus a compile-fail fixture
+  that requires unsafe widening to report `INVALID_ASSIGNMENT`.
 
 ## Review checklist
 
