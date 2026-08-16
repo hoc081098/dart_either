@@ -3,6 +3,10 @@ import 'package:meta/meta.dart';
 import 'dart_either.dart';
 import 'extensions.dart';
 
+// -----------------------------------------------------------------------------
+// Extensions on EitherEffect
+// -----------------------------------------------------------------------------
+
 /// Provides [ensure] on a scope-bound [EitherEffect].
 extension EnsureEitherEffectExtension<L> on EitherEffect<L> {
   /// Continues the binding scope when [value] is `true`.
@@ -80,6 +84,10 @@ extension BindFutureEitherEffectExtension<L> on EitherEffect<L> {
       eitherFuture.then(bind);
 }
 
+// -----------------------------------------------------------------------------
+// Binding syntax extensions: receive an EitherEffect
+// -----------------------------------------------------------------------------
+
 /// Provides binding syntax on an [Either].
 extension BindEitherExtension<L, R> on Either<L, R> {
   /// Returns this [Either]'s right value through [effect].
@@ -116,4 +124,28 @@ extension BindEitherFutureExtension<L, R> on Future<Either<L, R>> {
   /// ```
   @monadComprehensions
   Future<R> bind(EitherEffect<L> effect) => then(effect.bind);
+}
+/// Provides binding syntax on a nullable value.
+extension BindNullableValueExtension<R extends Object> on R? {
+  /// Returns this value as non-nullable [R] through [effect].
+  ///
+  /// When this value is `null`, evaluates [orLeft] and short-circuits the
+  /// [Either.binding] or [Either.futureBinding] scope that owns [effect]
+  /// with the result in a [Left].
+  ///
+  /// See [Either.binding] and [Either.futureBinding].
+  ///
+  /// ### Example
+  /// ```dart
+  /// final result = Either<String, int>.binding((effect) {
+  ///   final int? nullableValue = 1;
+  ///   final int value = nullableValue.bind(effect, () => 'missing');
+  ///   return value + 1;
+  /// }); // Right(2)
+  /// ```
+  @monadComprehensions
+  R bind<L>(EitherEffect<L> effect, L Function() orLeft) {
+    final value = this;
+    return value ?? effect.bind<R>(orLeft().left<R>());
+  }
 }
