@@ -24,10 +24,11 @@
   This preserves `effect.bind(either)`, `either.bind(effect)`, and
   `eitherFuture.bind(effect)` while making unsafe `EitherEffect` widening a
   compile-time error.
-- Each `Either.binding` and `Either.futureBinding` invocation now owns an isolated token and
-  revokes its capability when the block settles. Captured capabilities throw a
-  `StateError` when invoked after their scope closes, and nested scopes catch
-  only their own short-circuit.
+- Capabilities issued by `Either.binding` and `Either.futureBinding` are
+  revoked when their binding scope completes. Invoking a captured capability
+  afterward throws a `StateError`.
+- Swallowing a binding scope's short-circuit signal and completing normally now
+  throws a `StateError` instead of producing a `Right`.
 
 ### Deprecated
 

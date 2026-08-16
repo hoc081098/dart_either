@@ -41,11 +41,8 @@ extension EnsureNotNullEitherEffectExtension<L> on EitherEffect<L> {
   /// ### Example
   /// ```dart
   /// final result = Either<String, int>.binding((effect) {
-  ///   int? nullableValue = 1;
-  ///   final value = effect.ensureNotNull(
-  ///     nullableValue,
-  ///     () => 'missing',
-  ///   );
+  ///   final int? nullableValue = 1;
+  ///   final value = effect.ensureNotNull(nullableValue, () => 'missing');
   ///   return value + 1;
   /// });
   /// // result: Right(2)
@@ -69,10 +66,14 @@ extension BindFutureEitherEffectExtension<L> on EitherEffect<L> {
   /// ### Example
   /// ```dart
   /// final result = await Either.futureBinding<String, int>((effect) async {
-  ///   return effect.bindFuture(
+  ///   final int userId = await effect.bindFuture(
   ///     Future.value(Either<String, int>.right(1)),
   ///   );
-  /// }); // Right(1)
+  ///   final int postCount = await effect.bindFuture(
+  ///     Future.value(Either<String, int>.right(userId + 2)),
+  ///   );
+  ///   return postCount;
+  /// }); // Right(3)
   /// ```
   @monadComprehensions
   Future<R> bindFuture<R>(Future<Either<L, R>> eitherFuture) =>

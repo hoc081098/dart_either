@@ -536,17 +536,18 @@ computations that short-circuit on the first `Left`.
 
 Their callback receives an `EitherEffect<L>`: a scope-bound binding capability.
 It can be used as `effect.bind(either)`, `either.bind(effect)`, or
-`eitherFuture.bind(effect)`. Each call to `Either.binding`/`Either.futureBinding` owns an
-isolated scope, ordinary exceptions propagate unchanged, and the capability
-must not be stored or invoked after that scope settles.
+`eitherFuture.bind(effect)`. Each `Either.binding` or `Either.futureBinding`
+invocation owns an isolated scope, ordinary exceptions propagate unchanged,
+and the capability must not be stored or invoked after that scope settles.
 
 ```dart
 // 1) Define a reusable async pipeline with Either.futureBinding
 Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
     Either.futureBinding<AsyncError, dynamic>((effect) async {
-      final uri =
-          Either.catchError(toAsyncError, () => Uri.parse(uriString))
-              .bind(effect);
+      final uri = Either.catchError(
+        toAsyncError,
+        () => Uri.parse(uriString),
+      ).bind(effect);
 
       final response = await Either.catchFutureError(
         toAsyncError,
@@ -575,9 +576,9 @@ Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
 // 2) Compose another flow by binding previous steps
 Either<AsyncError, BuiltList<User>> usersEither = await Either.futureBinding(
   (effect) async {
-    final dynamic json =
-        await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
-            .bind(effect);
+    final dynamic json = await httpGetAsEither(
+      'https://jsonplaceholder.typicode.com/users',
+    ).bind(effect);
     final BuiltList<User> users = toUsers(json as List).bind(effect);
     return users;
   },

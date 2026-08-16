@@ -145,11 +145,10 @@ sealed class Either<L, R> {
   /// Either<ExampleError, int> provideY() { ... }
   /// Either<ExampleError, int> provideZ(int x, int y) { ... }
   ///
-  /// Either<ExampleError, int> result =
-  ///     Either<ExampleError, int>.binding((effect) {
-  ///   int x = provideX().bind(effect);
-  ///   int y = effect.bind(provideY());
-  ///   int z = provideZ(x, y).bind(effect);
+  /// final result = Either<ExampleError, int>.binding((effect) {
+  ///   final int x = provideX().bind(effect);
+  ///   final int y = effect.bind(provideY());
+  ///   final int z = provideZ(x, y).bind(effect);
   ///   return z;
   /// });
   /// ```
@@ -166,20 +165,20 @@ sealed class Either<L, R> {
   /// int canThrowAnError() { ... }
   ///
   /// // DON'T
-  /// Either<ExampleError, int> result =
-  ///     Either<ExampleError, int>.binding((effect) {
-  ///   int value = canThrowAnError();
+  /// final badResult = Either<ExampleError, int>.binding((_) {
+  ///   final int value = canThrowAnError();
+  ///   return value;
   /// });
   ///
   /// // DO
   /// ExampleError toExampleError(Object e, StackTrace st) { ... }
   ///
-  /// Either<ExampleError, int> result =
-  ///     Either<ExampleError, int>.binding((effect) {
-  ///   int value = Either<ExampleError, int>.catchError(
+  /// final result = Either<ExampleError, int>.binding((effect) {
+  ///   final int value = Either<ExampleError, int>.catchError(
   ///     toExampleError,
-  ///     canThrowAnError
+  ///     canThrowAnError,
   ///   ).bind(effect);
+  ///   return value;
   /// });
   /// ```
   factory Either.binding(
@@ -257,11 +256,10 @@ sealed class Either<L, R> {
   /// Future<Either<ExampleError, int>> provideY() { ... }
   /// Future<Either<ExampleError, int>> provideZ(int x, int y) { ... }
   ///
-  /// Future<Either<ExampleError, int>> result =
-  ///     Either.futureBinding<ExampleError, int>((effect) async {
-  ///   int x = provideX().bind(effect);
-  ///   int y = await effect.bindFuture(provideY());
-  ///   int z = await provideZ(x, y).bind(effect);
+  /// final result = Either.futureBinding<ExampleError, int>((effect) async {
+  ///   final int x = provideX().bind(effect);
+  ///   final int y = await effect.bindFuture(provideY());
+  ///   final int z = await provideZ(x, y).bind(effect);
   ///   return z;
   /// });
   /// ```
@@ -280,32 +278,30 @@ sealed class Either<L, R> {
   /// Future<int> errorFuture = Future.error(Exception());
   ///
   /// // DON'T
-  /// Future<Either<ExampleError, int>> result =
-  ///     Either.futureBinding<ExampleError, int>((effect) async {
-  ///   int value1 = canThrowAnError();                // DON'T
-  ///   int value2 = await canReturnAnErrorFuture();   // DON'T
-  ///   int value3 = await errorFuture;                // DON'T
+  /// final badResult = Either.futureBinding<ExampleError, int>((_) async {
+  ///   final int value1 = canThrowAnError();                // DON'T
+  ///   final int value2 = await canReturnAnErrorFuture();   // DON'T
+  ///   final int value3 = await errorFuture;                // DON'T
   ///   return value1 + value2 + value3;
   /// });
   ///
   /// // DO
   /// ExampleError toExampleError(Object e, StackTrace st) { ... }
   ///
-  /// Future<Either<ExampleError, int>> result =
-  ///     Either.futureBinding<ExampleError, int>((effect) async {
-  ///   int value1 = Either<ExampleError, int>.catchError(
+  /// final result = Either.futureBinding<ExampleError, int>((effect) async {
+  ///   final int value1 = Either<ExampleError, int>.catchError(
   ///     toExampleError,
-  ///     canThrowAnError
+  ///     canThrowAnError,
   ///   ).bind(effect);
   ///
-  ///   int value2 = await Either.catchFutureError<ExampleError, int>(
+  ///   final int value2 = await Either.catchFutureError<ExampleError, int>(
   ///     toExampleError,
-  ///     canReturnAnErrorFuture
+  ///     canReturnAnErrorFuture,
   ///   ).bind(effect);
   ///
-  ///   int value3 = await Either.catchFutureError<ExampleError, int>(
+  ///   final int value3 = await Either.catchFutureError<ExampleError, int>(
   ///     toExampleError,
-  ///     () => errorFuture
+  ///     () => errorFuture,
   ///   ).bind(effect);
   ///
   ///   return value1 + value2 + value3;
