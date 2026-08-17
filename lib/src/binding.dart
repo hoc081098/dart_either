@@ -3,6 +3,10 @@ import 'package:meta/meta.dart';
 import 'dart_either.dart';
 import 'extensions.dart';
 
+// -----------------------------------------------------------------------------
+// Extensions on EitherEffect
+// -----------------------------------------------------------------------------
+
 /// Provides [ensure] on a scope-bound [EitherEffect].
 extension EnsureEitherEffectExtension<L> on EitherEffect<L> {
   /// Continues the binding scope when [value] is `true`.
@@ -79,6 +83,10 @@ extension BindFutureEitherEffectExtension<L> on EitherEffect<L> {
   Future<R> bindFuture<R>(Future<Either<L, R>> eitherFuture) =>
       eitherFuture.then(bind);
 }
+
+// -----------------------------------------------------------------------------
+// Binding syntax extensions: receive an EitherEffect
+// -----------------------------------------------------------------------------
 
 /// Provides binding syntax on an [Either].
 extension BindEitherExtension<L, R> on Either<L, R> {
