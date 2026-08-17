@@ -1074,8 +1074,13 @@ final class _MonadComprehensions {
 /// ```
 @monadComprehensions
 typedef EitherEffect<L> = ({
+  _EitherEffectBrand brand,
   R Function<R>(Either<L, R> either) bind,
 });
+
+final class _EitherEffectBrand {
+  const _EitherEffectBrand._();
+}
 
 /// Internal control-flow signal raised when [EitherEffect] binds a [Left].
 ///
@@ -1127,6 +1132,7 @@ final class _BindingScope<L> {
 
   EitherEffect<L> openEitherEffect() {
     return (
+      brand: const _EitherEffectBrand._(),
       bind: <R>(Either<L, R> either) {
         if (_phase != _BindingPhase.active) {
           throw StateError('EitherEffect was used outside its binding scope.');
