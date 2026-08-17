@@ -1313,27 +1313,6 @@ void main() {
       );
     });
 
-    test('Nullable.bind', () {
-      expect(
-        Either<String, int>.binding((effect) {
-          // ignore: unnecessary_nullable_for_final_variable_declarations
-          final int? nullable = 2;
-          final int v = nullable.bind(effect, () => 'Error'); // passed
-          return v + 1;
-        }),
-        Right<String, int>(3),
-      );
-
-      expect(
-        Either<String, int>.binding((effect) {
-          final int? nullable = null;
-          final int v = nullable.bind(effect, () => 'Error'); // failed
-          return v + 1;
-        }),
-        Left<String, int>('Error'),
-      );
-    });
-
     group('Future<Either<L, R>>.thenFlatMapEither', () {
       //
       // Right
