@@ -1049,8 +1049,8 @@ final class _MonadComprehensions {
 
 /// A scope-bound capability for binding [Either] values with the same [L].
 ///
-/// The generic `bind` function returns an [Either]'s [Right.value]. Binding a
-/// [Left] short-circuits the surrounding [Either.binding] or
+/// [BindEitherEffectExtension.bind] returns an [Either]'s [Right.value].
+/// Binding a [Left] short-circuits the surrounding [Either.binding] or
 /// [Either.futureBinding] scope with that left value.
 ///
 /// Obtain a library-managed capability from the binding callback. A capability
@@ -1059,11 +1059,10 @@ final class _MonadComprehensions {
 /// [Either.futureBinding]. Invoking it after its scope has completed throws a
 /// [StateError].
 ///
-/// The `brand` field is a construction marker backed by a library-private
-/// type. Treat it as an implementation detail: do not read or copy it, and do
-/// not construct `EitherEffect` records manually. Scope and revocation
-/// guarantees apply to the capability supplied directly by the binding
-/// callback.
+/// Construction and binding behavior are owned by this library. Code outside
+/// the library cannot instantiate, extend, implement, or replace the binding
+/// behavior of an `EitherEffect`. Assigning the capability to another variable
+/// aliases the same binding scope; it does not create an independent effect.
 ///
 /// `EitherEffect` is contravariant in [L]: an effect accepting `num` errors can
 /// be used where one accepting only `int` errors is required, while the unsafe
@@ -1111,15 +1110,18 @@ enum _BindingPhase {
   closed,
 }
 
-/// AcceptsLeft is marker type, covariant.
-/// `Never Function(L)` contravariant L.
-/// -> EitherEffect<L> contravariant L.
-/// final class + private ctor + library-private -> caller cannot instantiate or extend this class.
+/// Private binding scope with a covariant phantom [AcceptsLeft] marker.
+///
+/// `EitherEffect<L>` supplies `Never Function(L)` as the marker. Because a
+/// function is contravariant in its parameter, composing that marker with this
+/// class's covariant type parameter makes `EitherEffect` contravariant in `L`.
+///
+/// This class must remain final and library-private. Its constructor must
+/// remain named and private because a public typedef forwards an unnamed
+/// constructor from its aliased class.
 final class _BindingScope<AcceptsLeft extends Function> {
   final _Token _token;
   var _phase = _BindingPhase.active;
-
-  // NOTE: do not make _BindingScope's constructor public.
 
   _BindingScope._(this._token);
 
@@ -1149,9 +1151,22 @@ final class _BindingScope<AcceptsLeft extends Function> {
   }
 }
 
-/// TODO
+/// Provides binding syntax on a scope-bound [EitherEffect].
 extension BindEitherEffectExtension<L> on EitherEffect<L> {
-  /// TODO
+  /// Returns [either]'s [Right.value].
+  ///
+  /// A [Left] short-circuits the [Either.binding] or [Either.futureBinding]
+  /// scope that owns this effect.
+  ///
+  /// See [Either.binding] and [Either.futureBinding].
+  ///
+  /// ### Example
+  /// ```dart
+  /// final result = Either<String, int>.binding((effect) {
+  ///   final int value = effect.bind(Either<String, int>.right(1));
+  ///   return value + 1;
+  /// }); // Right(2)
+  /// ```
   @monadComprehensions
   R bind<R>(Either<L, R> either) => _bind<L, R>(either);
 }

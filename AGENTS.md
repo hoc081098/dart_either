@@ -76,7 +76,10 @@ docs/
   function with direct pattern matching, or delegate only to a proven
   covariance-safe primitive. Apply the internal `@covarianceSafe` marker
   only after documenting a type-and-implementation proof or adding widened
-  covariance regression tests. Follow `docs/either-variance-safety.md`.
+  covariance regression tests. Keep the `EitherEffect` carrier final and
+  library-private with a named private constructor; a public typedef forwards
+  an unnamed constructor from its aliased class. Follow
+  `docs/either-variance-safety.md`.
 
 ## Dependencies
 
@@ -116,6 +119,8 @@ dart pub publish --dry-run
 - APIs affected by variance must include regression tests using
   `Left<L, Never>` and `Right<Never, R>` widened to `Either<L, R>`, plus subtype
   widening such as `int` to `num`. Do not use casts to make these tests pass.
+- Changes to `EitherEffect` must retain a consumer compile-fail fixture proving
+  that `EitherEffect<L>()` exposes no constructor outside the library.
 - Keep deprecated alias coverage in `test/deprecated_aliases_test.dart` so one file-level lint ignore covers compatibility calls.
 - Test naming pattern: `group('MethodName', () { test('description', () { ... }); });`
 

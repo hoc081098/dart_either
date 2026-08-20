@@ -372,7 +372,7 @@ Future<Either<String, BuiltList<int>>> parallelTraverse = Either.parTraverseN(
 | [`Future.toEitherFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherFutureExtension/toEitherFuture.html)                | Converts a future, catching errors into `Left`       |
 | [`T.left`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/left.html)                                         | Wraps any value as `Left`                            |
 | [`T.right`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/right.html)                                       | Wraps any value as `Right`                           |
-| [`EitherEffect.bind`](https://pub.dev/documentation/dart_either/latest/dart_either/EitherEffect.html)                                              | Extracts `Right` or short-circuits its binding scope |
+| [`EitherEffect.bind`](https://pub.dev/documentation/dart_either/latest/dart_either/BindEitherEffectExtension/bind.html)                            | Extracts `Right` or short-circuits its binding scope |
 | [`Either.bind`](https://pub.dev/documentation/dart_either/latest/dart_either/BindEitherExtension/bind.html)                                        | Binds an `Either` through an `EitherEffect`          |
 | [`EitherEffect.bindFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/BindFutureEitherEffectExtension/bindFuture.html)          | Awaits and binds through an `EitherEffect`           |
 | [`Future<Either>.bind`](https://pub.dev/documentation/dart_either/latest/dart_either/BindEitherFutureExtension/bind.html)                          | Awaits and binds an `Either`                         |
@@ -534,13 +534,13 @@ Either<AsyncError, BuiltList<User>> usersEither = await httpGetAsEither(
 Use `Either.binding` (sync) or `Either.futureBinding` (async) for do-notation style sequential
 computations that short-circuit on the first `Left`.
 
-Their callback receives an `EitherEffect<L>`: a package-issued, branded,
+Their callback receives an `EitherEffect<L>`: a package-issued, opaque,
 scope-bound binding capability. Use it as `effect.bind(either)`,
-`either.bind(effect)`, or `eitherFuture.bind(effect)`. Its `brand` field is an
-implementation marker and must not be read or copied. Each `Either.binding` or
-`Either.futureBinding` invocation owns an isolated scope, ordinary exceptions
-propagate unchanged, and the capability must not be stored or invoked after
-that scope settles.
+`either.bind(effect)`, or `eitherFuture.bind(effect)`. Its construction and
+binding behavior are library-owned; assigning it to another variable only
+aliases the same scope. Each `Either.binding` or `Either.futureBinding`
+invocation owns an isolated scope, ordinary exceptions propagate unchanged,
+and the capability must not be stored or invoked after that scope settles.
 
 ```dart
 // 1) Define a reusable async pipeline with Either.futureBinding

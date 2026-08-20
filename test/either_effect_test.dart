@@ -56,21 +56,16 @@ void reproduce() {
       );
     });
 
-    test('rejects independent record construction during static analysis',
+    test('rejects construction through the public typedef outside the library',
         () async {
       final analysis = await _analyzeConsumerFixture(
-        fileName: 'independent_either_effect_construction.dart',
+        fileName: 'external_either_effect_construction.dart',
         source: '''
 import 'package:dart_either/dart_either.dart';
 
 void reproduce() {
-  final EitherEffect<String> effect = (
-    bind: <R>(Either<String, R> either) => switch (either) {
-      Left(value: final value) => throw StateError(value),
-      Right(value: final value) => value,
-    },
-  );
-  effect.bind(Either<String, int>.right(1));
+  final effect = EitherEffect<String>();
+  print(effect);
 }
 ''',
       );
@@ -78,7 +73,9 @@ void reproduce() {
       expect(analysis.exitCode, isNot(0), reason: analysis.output);
       expect(
         analysis.output,
-        contains('ERROR|COMPILE_TIME_ERROR|INVALID_ASSIGNMENT|'),
+        contains(
+          'ERROR|COMPILE_TIME_ERROR|NEW_WITH_UNDEFINED_CONSTRUCTOR_DEFAULT|',
+        ),
         reason: analysis.output,
       );
     });
