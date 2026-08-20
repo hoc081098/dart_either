@@ -14,7 +14,7 @@ from the published package through `.pubignore`.
 - [Either variance safety](either-variance-safety.md): signature variance,
   instance-method runtime checks, extension design, and widened-type tests.
 - [ADR 0001](adr/0001-scope-bound-contravariant-either-effect.md): why
-  `EitherEffect` is a scope-bound, contravariant record capability.
+  `EitherEffect` is a branded, scope-bound, contravariant record capability.
 - [API rename workflow](../.agents/skills/api-rename-flow/SKILL.md): the required
   process for non-breaking public API renames.
 

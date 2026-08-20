@@ -42,8 +42,8 @@ Many projects import entire FP libraries (dartz, fpdart, …) but only use `Eith
 | Documentation        | **Fully documented** — every method/function has doc comments and examples                                                    |
 | Test coverage        | **Fully tested**                                                                                                              |
 | Completeness         | **Most complete** `Either` implementation available for Dart/Flutter                                                          |
-| Monad comprehensions | ✅ Both `sync` and `async`                                                                                                    |
-| Async map / flatMap  | ✅ `thenMapEither`, `thenFlatMapEither`                                                                                       |
+| Monad comprehensions | ✅ Both `sync` and `async`                                                                                                     |
+| Async map / flatMap  | ✅ `thenMapEither`, `thenFlatMapEither`                                                                                        |
 | Bundle size          | Very **lightweight** and **simple** (compare to dartz)                                                                        |
 
 ---
@@ -67,11 +67,11 @@ dart pub get
 
 ## Documentation & Examples
 
-| Resource             | Link                                                               |
-|----------------------|--------------------------------------------------------------------|
-| 📖 API Documentation | https://pub.dev/documentation/dart_either/latest/dart_either/      |
-| 💡 Examples          | https://github.com/hoc081098/dart_either/tree/master/example/lib   |
-| 🐦 Flutter Example   | https://github.com/hoc081098/node-auth-flutter-BLoC-pattern-RxDart |
+| Resource             | Link                                                                                  |
+|----------------------|---------------------------------------------------------------------------------------|
+| 📖 API Documentation | https://pub.dev/documentation/dart_either/latest/dart_either/ |
+| 💡 Examples          | https://github.com/hoc081098/dart_either/tree/master/example/lib                      |
+| 🐦 Flutter Example   | https://github.com/hoc081098/node-auth-flutter-BLoC-pattern-RxDart                    |
 
 ---
 
@@ -410,36 +410,36 @@ Either<String, int> right = 2.right<String>();
 
 ### 2. Operations
 
-| Method                                                                                                                       | Description                                                   |
-|------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
-| [`isLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isLeft.html)                                  | Returns `true` if this is a `Left`                            |
-| [`isRight`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRight.html)                                | Returns `true` if this is a `Right`                           |
-| [`fold`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fold.html)                                      | Applies one of two functions based on variant                 |
-| [`foldLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/foldLeft.html)                              | Left fold with an initial value                               |
-| [`swap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/swap.html)                                      | Swaps `Left` and `Right`                                      |
-| [`onLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/onLeft.html)                                  | Side-effect on `Left`                                         |
-| [`onRight`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/onRight.html)                                | Side-effect on `Right`                                        |
-| [`map`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/map.html)                                        | Transforms the `Right` value                                  |
-| [`mapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/mapLeft.html)                                | Transforms the `Left` value                                   |
-| [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/flatMap.html)                                | Chains computations                                           |
-| [`bimap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)                                    | Transforms both sides                                         |
-| [`combine`](https://pub.dev/documentation/dart_either/latest/dart_either/CombineEitherExtension/combine.html)                | Combines two `Either` values                                  |
-| [`isRightAnd`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRightAnd.html)                          | Tests the `Right` value with a predicate                      |
-| [`all`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)                                        | Returns `true` for `Left` or if `Right` matches the predicate |
-| [`getOrDefault`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrDefaultEitherExtension/getOrDefault.html) | Extracts `Right` or falls back to an eager default value      |
-| [`getOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrNull.html)                            | Extracts `Right` or returns `null`                            |
-| [`leftOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/leftOrNull.html)                          | Extracts `Left` or returns `null`                             |
-| [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrHandle.html)                        | Extracts `Right` or maps `Left` to a value                    |
-| [`flatten`](https://pub.dev/documentation/dart_either/latest/dart_either/FlattenEitherExtension/flatten.html)                | Flattens nested `Either`                                      |
-| [`merge`](https://pub.dev/documentation/dart_either/latest/dart_either/MergeEitherExtension/merge.html)                      | Extracts value when both sides have same type                 |
-| [`findOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/findOrNull.html)                          | Finds `Right` matching a predicate                            |
-| [`when`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/when.html)                                      | Pattern-match returning the matched value                     |
-| [`handleErrorWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleErrorWith.html)                | Recovers from `Left` with a new `Either`                      |
-| [`handleError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleError.html)                        | Recovers from `Left` with a new `Right` value                 |
-| [`redeem`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeem.html)                                  | Maps both sides to the same type                              |
-| [`redeemWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeemWith.html)                          | Maps both sides to a new `Either`                             |
-| [`toFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/AsFutureEitherExtension/toFuture.html)             | Converts to a `Future`                                        |
-| [`getOrThrow`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrThrowEitherExtension/getOrThrow.html)       | Extracts `Right` or throws the `Left` value                   |
+| Method                                                                                                                 | Description                                   |
+|------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------|
+| [`isLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isLeft.html)                            | Returns `true` if this is a `Left`            |
+| [`isRight`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRight.html)                          | Returns `true` if this is a `Right`           |
+| [`fold`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fold.html)                                | Applies one of two functions based on variant |
+| [`foldLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/foldLeft.html)                        | Left fold with an initial value               |
+| [`swap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/swap.html)                                | Swaps `Left` and `Right`                      |
+| [`onLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/onLeft.html)                            | Side-effect on `Left`                         |
+| [`onRight`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/onRight.html)                          | Side-effect on `Right`                        |
+| [`map`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/map.html)                                  | Transforms the `Right` value                  |
+| [`mapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/mapLeft.html)                          | Transforms the `Left` value                   |
+| [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/flatMap.html)                          | Chains computations                           |
+| [`bimap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)                              | Transforms both sides                         |
+| [`combine`](https://pub.dev/documentation/dart_either/latest/dart_either/CombineEitherExtension/combine.html)         | Combines two `Either` values                  |
+| [`isRightAnd`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRightAnd.html)                    | Tests the `Right` value with a predicate      |
+| [`all`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)                                  | Returns `true` for `Left` or if `Right` matches the predicate |
+| [`getOrDefault`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrDefaultEitherExtension/getOrDefault.html) | Extracts `Right` or falls back to an eager default value |
+| [`getOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrNull.html)                      | Extracts `Right` or returns `null`            |
+| [`leftOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/leftOrNull.html)                    | Extracts `Left` or returns `null`             |
+| [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrHandle.html)                  | Extracts `Right` or maps `Left` to a value    |
+| [`flatten`](https://pub.dev/documentation/dart_either/latest/dart_either/FlattenEitherExtension/flatten.html)          | Flattens nested `Either`                      |
+| [`merge`](https://pub.dev/documentation/dart_either/latest/dart_either/MergeEitherExtension/merge.html)                | Extracts value when both sides have same type |
+| [`findOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/findOrNull.html)                    | Finds `Right` matching a predicate            |
+| [`when`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/when.html)                                | Pattern-match returning the matched value     |
+| [`handleErrorWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleErrorWith.html)          | Recovers from `Left` with a new `Either`      |
+| [`handleError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleError.html)                  | Recovers from `Left` with a new `Right` value |
+| [`redeem`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeem.html)                            | Maps both sides to the same type              |
+| [`redeemWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeemWith.html)                    | Maps both sides to a new `Either`             |
+| [`toFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/AsFutureEitherExtension/toFuture.html)       | Converts to a `Future`                        |
+| [`getOrThrow`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrThrowEitherExtension/getOrThrow.html) | Extracts `Right` or throws the `Left` value   |
 
 ```dart
 final ok = Either<String, int>.right(10);
@@ -534,11 +534,13 @@ Either<AsyncError, BuiltList<User>> usersEither = await httpGetAsEither(
 Use `Either.binding` (sync) or `Either.futureBinding` (async) for do-notation style sequential
 computations that short-circuit on the first `Left`.
 
-Their callback receives an `EitherEffect<L>`: a scope-bound binding capability.
-It can be used as `effect.bind(either)`, `either.bind(effect)`, or
-`eitherFuture.bind(effect)`. Each `Either.binding` or `Either.futureBinding`
-invocation owns an isolated scope, ordinary exceptions propagate unchanged,
-and the capability must not be stored or invoked after that scope settles.
+Their callback receives an `EitherEffect<L>`: a package-issued, branded,
+scope-bound binding capability. Use it as `effect.bind(either)`,
+`either.bind(effect)`, or `eitherFuture.bind(effect)`. Its `brand` field is an
+implementation marker and must not be read or copied. Each `Either.binding` or
+`Either.futureBinding` invocation owns an isolated scope, ordinary exceptions
+propagate unchanged, and the capability must not be stored or invoked after
+that scope settles.
 
 ```dart
 // 1) Define a reusable async pipeline with Either.futureBinding

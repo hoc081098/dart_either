@@ -34,18 +34,9 @@ void main() {
     });
 
     test('rejects unsafe widening during static analysis', () async {
-      final packageConfig = await Isolate.packageConfig;
-      expect(packageConfig, isNotNull, reason: 'Package config is required.');
-
-      final temporaryDirectory =
-          await Directory.systemTemp.createTemp('dart_either_variance_');
-      addTearDown(() => temporaryDirectory.delete(recursive: true));
-
-      final fixture = File(
-        '${temporaryDirectory.path}${Platform.pathSeparator}'
-        'unsafe_either_effect_widen.dart',
-      );
-      await fixture.writeAsString('''
+      final analysis = await _analyzeConsumerFixture(
+        fileName: 'unsafe_either_effect_widen.dart',
+        source: '''
 import 'package:dart_either/dart_either.dart';
 
 void reproduce() {
@@ -54,28 +45,41 @@ void reproduce() {
     return widened.bind(Either<num, String>.left(1.5));
   });
 }
-''');
-
-      final result = await Process.run(
-        Platform.resolvedExecutable,
-        <String>[
-          '--packages=${packageConfig!.toFilePath()}',
-          'analyze',
-          '--format=machine',
-          fixture.path,
-        ],
-        environment: <String, String>{
-          ...Platform.environment,
-          'CI': 'true',
-        },
+''',
       );
-      final analyzerOutput = '${result.stdout}\n${result.stderr}';
 
-      expect(result.exitCode, isNot(0), reason: analyzerOutput);
+      expect(analysis.exitCode, isNot(0), reason: analysis.output);
       expect(
-        analyzerOutput,
+        analysis.output,
         contains('ERROR|COMPILE_TIME_ERROR|INVALID_ASSIGNMENT|'),
-        reason: analyzerOutput,
+        reason: analysis.output,
+      );
+    });
+
+    test('rejects independent record construction during static analysis',
+        () async {
+      final analysis = await _analyzeConsumerFixture(
+        fileName: 'independent_either_effect_construction.dart',
+        source: '''
+import 'package:dart_either/dart_either.dart';
+
+void reproduce() {
+  final EitherEffect<String> effect = (
+    bind: <R>(Either<String, R> either) => switch (either) {
+      Left(value: final value) => throw StateError(value),
+      Right(value: final value) => value,
+    },
+  );
+  effect.bind(Either<String, int>.right(1));
+}
+''',
+      );
+
+      expect(analysis.exitCode, isNot(0), reason: analysis.output);
+      expect(
+        analysis.output,
+        contains('ERROR|COMPILE_TIME_ERROR|INVALID_ASSIGNMENT|'),
+        reason: analysis.output,
       );
     });
 
@@ -188,4 +192,40 @@ void reproduce() {
       );
     });
   });
+}
+
+Future<({int exitCode, String output})> _analyzeConsumerFixture({
+  required String fileName,
+  required String source,
+}) async {
+  final packageConfig = await Isolate.packageConfig;
+  expect(packageConfig, isNotNull, reason: 'Package config is required.');
+
+  final temporaryDirectory =
+      await Directory.systemTemp.createTemp('dart_either_analyzer_');
+  addTearDown(() => temporaryDirectory.delete(recursive: true));
+
+  final fixture = File(
+    '${temporaryDirectory.path}${Platform.pathSeparator}$fileName',
+  );
+  await fixture.writeAsString(source);
+
+  final result = await Process.run(
+    Platform.resolvedExecutable,
+    <String>[
+      '--packages=${packageConfig!.toFilePath()}',
+      'analyze',
+      '--format=machine',
+      fixture.path,
+    ],
+    environment: <String, String>{
+      ...Platform.environment,
+      'CI': 'true',
+    },
+  );
+
+  return (
+    exitCode: result.exitCode,
+    output: '${result.stdout}\n${result.stderr}',
+  );
 }

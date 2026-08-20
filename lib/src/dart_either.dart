@@ -1061,6 +1061,12 @@ final class _MonadComprehensions {
 /// [Either.futureBinding]. Invoking it after its scope has completed throws a
 /// [StateError].
 ///
+/// The `brand` field is a construction marker backed by a library-private
+/// type. Treat it as an implementation detail: do not read or copy it, and do
+/// not construct `EitherEffect` records manually. Scope and revocation
+/// guarantees apply to the capability supplied directly by the binding
+/// callback.
+///
 /// `EitherEffect` is contravariant in [L]: an effect accepting `num` errors can
 /// be used where one accepting only `int` errors is required, while the unsafe
 /// opposite assignment is rejected at compile time.
@@ -1068,7 +1074,7 @@ final class _MonadComprehensions {
 /// ### Example
 /// ```dart
 /// final result = Either<String, int>.binding((effect) {
-///   final value = effect.bind(Either<String, int>.right(1));
+///   final int value = effect.bind(Either<String, int>.right(1));
 ///   return value + 1;
 /// }); // Right(2)
 /// ```

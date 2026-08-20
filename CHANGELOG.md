@@ -20,10 +20,11 @@
 ### Changed
 
 - **Breaking:** `EitherEffect<L>` is now a scope-bound, contravariant binding
-  capability represented by a named record with a generic `bind` function.
-  This preserves `effect.bind(either)`, `either.bind(effect)`, and
-  `eitherFuture.bind(effect)` while making unsafe `EitherEffect` widening a
-  compile-time error.
+  capability represented by a branded named record with a generic `bind`
+  function. Its private-typed brand prevents independent construction, while
+  the generic function makes unsafe `EitherEffect` widening a compile-time
+  error. The `effect.bind(either)`, `either.bind(effect)`, and
+  `eitherFuture.bind(effect)` forms remain supported.
 - Capabilities issued by `Either.binding` and `Either.futureBinding` are
   revoked when their binding scope completes. Invoking a captured capability
   afterward throws a `StateError`.

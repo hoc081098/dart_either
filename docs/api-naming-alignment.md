@@ -27,6 +27,15 @@ instance member. This preserves the same call syntax while avoiding a runtime
 type check against a covariantly widened receiver. See
 [Either variance safety](either-variance-safety.md).
 
+## Major-release coordination
+
+The `EitherEffect<L>` redesign recorded in
+[ADR 0001](adr/0001-scope-bound-contravariant-either-effect.md) changes a public
+type and must ship in the next major release, not as a `2.x` update. While the
+work is listed under `Unreleased`, `pubspec.yaml` can retain the current
+published version; the release-preparation commit must assign the new major
+version before publishing.
+
 ## Planned major-version cleanup
 
 `getOrHandle` is a compatibility bridge rather than the preferred final name.

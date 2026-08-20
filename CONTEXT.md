@@ -15,8 +15,9 @@ The lifetime of one `Either.binding` or `Either.futureBinding` computation.
 _Avoid_: Global context, coroutine scope
 
 **Binding capability (`EitherEffect`)**:
-Authority supplied by a binding scope to obtain an `Either`'s right value or
-terminate that scope with a left value of the same type.
+Package-issued authority supplied by a binding scope to obtain an `Either`'s
+right value or terminate that scope with a left value of the same type. Its
+record brand is an implementation marker, not part of the domain operation.
 _Avoid_: Context object, effect object, effect system
 
 **Short-circuit**:

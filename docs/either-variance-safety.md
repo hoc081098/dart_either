@@ -186,9 +186,16 @@ binding capability instead uses a named record containing a generic function:
 
 ```dart
 typedef EitherEffect<L> = ({
+  _EitherEffectBrand brand,
   R Function<R>(Either<L, R> either) bind,
 });
 ```
+
+The private-typed `brand` field does not mention `L`, so it does not affect the
+variance calculation. It prevents a consumer that has not received a
+package-issued marker from independently constructing the structural record.
+The binding callback remains the source of scope isolation and revocation;
+the brand itself is not a runtime authenticity check.
 
 The path to `L` has one sign flip:
 
@@ -270,8 +277,9 @@ The branch review that introduced this document found and fixed three targets:
   combiner results are checked against the call site's static type arguments.
 - `flatten` remains an extension but now uses direct sealed-class pattern
   matching instead of delegating to `flatMap`.
-- `EitherEffect` is a contravariant record capability, so unsafe widening is
-  rejected before a binding block can execute.
+- `EitherEffect` is a branded, contravariant record capability, so unsafe
+  widening and independent construction are rejected before a binding block
+  can execute.
 
 The other APIs added in this PR were audited as covariance-safe instance
 members or extensions: `onLeft`, `onRight`, `getOrNull`, `leftOrNull`,
@@ -338,6 +346,9 @@ Tests must cover:
 - Successful execution without `TypeError`; do not hide the issue with casts.
 - Safe contravariant narrowing of `EitherEffect`, plus a compile-fail fixture
   that requires unsafe widening to report `INVALID_ASSIGNMENT`.
+- A consumer compile-fail fixture showing that a record with a compatible
+  generic `bind` function but no package-issued brand cannot be assigned to
+  `EitherEffect`.
 
 ## Review checklist
 
