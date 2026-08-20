@@ -183,22 +183,21 @@ sealed class Either<L, R> {
   /// ```
   factory Either.binding(
       @monadComprehensions R Function(EitherEffect<L> effect) block) {
-    final scope = _BindingScope<L>(_Token());
-    final eitherEffect = scope.openEitherEffect();
+    final EitherEffect<L> effect = _BindingScope<Never Function(L)>._(_Token());
 
     try {
-      final value = block(eitherEffect);
-      scope.throwIfRaised();
+      final value = block(effect);
+      effect._throwIfRaised();
 
       return Either.right(value);
     } on ControlError<L> catch (e) {
-      if (identical(scope._token, e._token)) {
+      if (identical(effect._token, e._token)) {
         return Either.left(e._value);
       } else {
         rethrow;
       }
     } finally {
-      scope.close();
+      effect._close();
     }
   }
 
@@ -309,20 +308,19 @@ sealed class Either<L, R> {
   /// ```
   static Future<Either<L, R>> futureBinding<L, R>(
       @monadComprehensions FutureOr<R> Function(EitherEffect<L> effect) block) {
-    final scope = _BindingScope<L>(_Token());
-    final eitherEffect = scope.openEitherEffect();
+    final EitherEffect<L> effect = _BindingScope<Never Function(L)>._(_Token());
 
-    return Future.sync(() => block(eitherEffect))
+    return Future.sync(() => block(effect))
         .then((value) {
-          scope.throwIfRaised();
+          effect._throwIfRaised();
 
           return Either<L, R>.right(value);
         })
         .onError<ControlError<L>>(
           (e, s) => Either.left(e._value),
-          test: (e) => identical(scope._token, e._token),
+          test: (e) => identical(effect._token, e._token),
         )
-        .whenComplete(() => scope.close());
+        .whenComplete(() => effect._close());
   }
 
   /// Evaluates the specified [block] and wrap the result in a [Right].
@@ -1079,14 +1077,7 @@ final class _MonadComprehensions {
 /// }); // Right(2)
 /// ```
 @monadComprehensions
-typedef EitherEffect<L> = ({
-  _EitherEffectBrand brand,
-  R Function<R>(Either<L, R> either) bind,
-});
-
-final class _EitherEffectBrand {
-  const _EitherEffectBrand._();
-}
+typedef EitherEffect<L> = _BindingScope<Never Function(L)>;
 
 /// Internal control-flow signal raised when [EitherEffect] binds a [Left].
 ///
@@ -1120,38 +1111,47 @@ enum _BindingPhase {
   closed,
 }
 
-final class _BindingScope<L> {
+/// AcceptsLeft is marker type, covariant.
+/// `Never Function(L)` contravariant L.
+/// -> EitherEffect<L> contravariant L.
+/// final class + private ctor + library-private -> caller cannot instantiate or extend this class.
+final class _BindingScope<AcceptsLeft extends Function> {
   final _Token _token;
   var _phase = _BindingPhase.active;
 
-  _BindingScope(this._token);
+  // NOTE: do not make _BindingScope's constructor public.
 
-  void close() {
+  _BindingScope._(this._token);
+
+  void _close() {
     _phase = _BindingPhase.closed;
   }
 
-  void throwIfRaised() {
+  void _throwIfRaised() {
     if (_phase == _BindingPhase.raised) {
       throw StateError('Binding short-circuit was intercepted.');
     }
   }
 
-  EitherEffect<L> openEitherEffect() {
-    return (
-      brand: const _EitherEffectBrand._(),
-      bind: <R>(Either<L, R> either) {
-        if (_phase != _BindingPhase.active) {
-          throw StateError('EitherEffect was used outside its binding scope.');
-        }
+  @monadComprehensions
+  R _bind<L, R>(Either<L, R> either) {
+    if (_phase != _BindingPhase.active) {
+      throw StateError('EitherEffect was used outside its binding scope.');
+    }
 
-        switch (either) {
-          case Left(value: final value):
-            _phase = _BindingPhase.raised;
-            throw ControlError<L>._(value, _token);
-          case Right(value: final value):
-            return value;
-        }
-      }
-    );
+    switch (either) {
+      case Left(value: final value):
+        _phase = _BindingPhase.raised;
+        throw ControlError<L>._(value, _token);
+      case Right(value: final value):
+        return value;
+    }
   }
+}
+
+/// TODO
+extension BindEitherEffectExtension<L> on EitherEffect<L> {
+  /// TODO
+  @monadComprehensions
+  R bind<R>(Either<L, R> either) => _bind<L, R>(either);
 }
