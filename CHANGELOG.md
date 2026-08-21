@@ -24,7 +24,9 @@
   widening and construction outside the library are compile-time errors, while
   supported binding syntax and behavior remain unchanged. The
   `effect.bind(either)`, `either.bind(effect)`, and `eitherFuture.bind(effect)`
-  forms remain supported.
+  forms remain supported. The source-compatibility exception is prefixed
+  imports and selective imports that omit `BindEitherEffectExtension`; keeping
+  `effect.bind(either)` requires importing that extension unprefixed.
 - Capabilities issued by `Either.binding` and `Either.futureBinding` are
   revoked when their binding scope completes. Invoking a captured capability
   afterward throws a `StateError`.

@@ -33,10 +33,13 @@ The internal `EitherEffect<L>` representation hardening recorded in
 [ADR 0001](adr/0001-scope-bound-contravariant-either-effect.md) targets a
 `2.x.y` release. Supported source usage and runtime behavior remain unchanged:
 callers receive the capability from `Either.binding` or `Either.futureBinding`
-and use the existing binding extensions within that scope. Constructing,
-implementing, destructuring, replacing the binding behavior of, or invoking a
-captured `EitherEffect` after its scope settles is outside the supported
-contract and does not require a compatibility migration.
+and use the existing binding extensions within that scope. The
+source-compatibility exception is prefixed imports and selective imports that
+omit `BindEitherEffectExtension`; keeping `effect.bind(either)` requires
+importing that extension unprefixed. Constructing, implementing, destructuring,
+replacing the binding behavior of, or invoking a captured `EitherEffect` after
+its scope settles is outside the supported contract and does not require a
+compatibility migration.
 
 ## Planned major-version cleanup
 

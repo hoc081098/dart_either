@@ -35,6 +35,10 @@ the same source shape and behavior: obtain an effect from `Either.binding` or
 `Either.futureBinding`, then use `effect.bind(either)`, `either.bind(effect)`,
 or `eitherFuture.bind(effect)` within the owning scope.
 
+The source-compatibility exception is prefixed imports and selective imports
+that omit `BindEitherEffectExtension`; keeping `effect.bind(either)` requires
+importing that extension unprefixed.
+
 Directly constructing, implementing, destructuring, or replacing the binding
 behavior of `EitherEffect` was never part of the supported contract. Capturing
 an effect and invoking it after its scope settles is also unsupported. Those
