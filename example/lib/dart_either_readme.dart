@@ -67,7 +67,19 @@ void main() {
   print(merged); // Prints 10
 
   // ---------------------------------------------------------------------------
-  // 3) Pattern matching
+  // 3) Binding: raise a Left directly
+  // ---------------------------------------------------------------------------
+
+  /// `raise` avoids constructing a [Left] solely to bind it when the left
+  /// value is already available.
+  final raised = Either<String, int>.binding((effect) {
+    final int? value = null;
+    return value ?? effect.raise('missing value');
+  });
+  print(raised); // Prints Either.Left(missing value)
+
+  // ---------------------------------------------------------------------------
+  // 4) Pattern matching
   // ---------------------------------------------------------------------------
 
   /// Pattern matching

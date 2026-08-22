@@ -34,6 +34,8 @@ This representation hardening targets a `2.x.y` release. Supported usage keeps
 the same source shape and behavior: obtain an effect from `Either.binding` or
 `Either.futureBinding`, then use `effect.bind(either)`, `either.bind(effect)`,
 `eitherFuture.bind(effect)`, or `effect.raise(value)` within the owning scope.
+`raise` is convenience syntax for short-circuiting with an available left value
+without constructing a `Left` solely to bind it.
 
 The source-compatibility exception is prefixed imports and selective imports
 that omit `BindEitherEffectExtension`; keeping `effect.bind(either)` requires

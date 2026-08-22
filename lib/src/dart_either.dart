@@ -130,7 +130,9 @@ sealed class Either<L, R> {
   /// Inside [block], `effect.bind(either)` returns the [Right.value] of
   /// `either`. Binding a [Left] immediately terminates this binding scope and
   /// returns that [Left]. [BindEitherExtension.bind] provides the equivalent
-  /// `either.bind(effect)` syntax.
+  /// `either.bind(effect)` syntax. When there is no [Right] value to extract,
+  /// [RaiseEitherEffectExtension.raise] short-circuits directly with a left
+  /// value without first constructing a [Left] solely to bind it.
   ///
   /// Each invocation owns a distinct scope. Nested binding scopes therefore
   /// catch only their own short-circuit. The capability is valid only while
@@ -236,7 +238,10 @@ sealed class Either<L, R> {
   ///
   /// Inside [block], `effect.bind(either)` returns the [Right.value] of
   /// `either`. Binding a [Left] immediately terminates this binding scope and
-  /// completes the returned future with that [Left].
+  /// completes the returned future with that [Left]. When there is no [Right]
+  /// value to extract, [RaiseEitherEffectExtension.raise] short-circuits
+  /// directly with a left value without first constructing a [Left] solely to
+  /// bind it.
   ///
   /// [BindFutureEitherEffectExtension.bindFuture] and
   /// [BindEitherFutureExtension.bind] unwrap an [Either] produced by a future.
@@ -1052,6 +1057,9 @@ final class _MonadComprehensions {
 /// [BindEitherEffectExtension.bind] returns an [Either]'s [Right.value].
 /// Binding a [Left] short-circuits the surrounding [Either.binding] or
 /// [Either.futureBinding] scope with that left value.
+/// [RaiseEitherEffectExtension.raise] is the convenience syntax for
+/// short-circuiting with a left value when there is no [Right] to extract, so
+/// callers do not need to construct a [Left] solely to bind it.
 ///
 /// Obtain a library-managed capability from the binding callback. A capability
 /// supplied by [Either.binding] or [Either.futureBinding] is valid only for
@@ -1078,7 +1086,8 @@ final class _MonadComprehensions {
 @monadComprehensions
 typedef EitherEffect<L> = _BindingScope<Never Function(L)>;
 
-/// Internal control-flow signal raised when [EitherEffect] binds a [Left].
+/// Internal control-flow signal raised when [EitherEffect] short-circuits by
+/// binding a [Left] or calling [RaiseEitherEffectExtension.raise].
 ///
 /// [Either.binding] and [Either.futureBinding] catch only signals belonging to
 /// their own scope. User code must not catch this error. If a block swallows
@@ -1186,21 +1195,26 @@ extension BindEitherEffectExtension<L> on EitherEffect<L> {
   R bind<R>(Either<L, R> either) => _bind<L, R>(either);
 }
 
-/// Provides raise syntax on a scope-bound [EitherEffect].
+/// Provides convenience raise syntax on a scope-bound [EitherEffect].
 extension RaiseEitherEffectExtension<L> on EitherEffect<L> {
-  /// Raises a [Left] short-circuiting the [Either.binding] or
-  /// [Either.futureBinding] scope that owns this effect.
+  /// Short-circuits the [Either.binding] or [Either.futureBinding] scope that
+  /// owns this effect with [value] as its [Left].
+  ///
+  /// This is convenience syntax for the case where the caller already has a
+  /// left value and would otherwise construct a [Left] solely to call
+  /// [BindEitherEffectExtension.bind]. For example, `effect.raise('error')`
+  /// has the same short-circuit result as
+  /// `effect.bind(Either<String, Never>.left('error'))` without creating the
+  /// intermediate [Left]. Its [Never] return type allows use in expressions.
   ///
   /// See [Either.binding] and [Either.futureBinding].
   ///
   /// ### Example
   /// ```dart
   /// final result = Either<String, int>.binding((effect) {
-  ///   if (someCondition) {
-  ///     effect.raise('error');
-  ///   }
-  ///   return 42;
-  /// }); // Left('error') if someCondition is true, otherwise Right(42)
+  ///   final int? value = null;
+  ///   return value ?? effect.raise('missing value');
+  /// }); // Left('missing value')
   /// ```
   @monadComprehensions
   Never raise(L value) => _raise(value);
