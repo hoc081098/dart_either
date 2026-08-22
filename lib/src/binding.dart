@@ -1,7 +1,6 @@
 import 'package:meta/meta.dart';
 
 import 'dart_either.dart';
-import 'extensions.dart';
 
 // -----------------------------------------------------------------------------
 // Extensions on EitherEffect
@@ -29,7 +28,7 @@ extension EnsureEitherEffectExtension<L> on EitherEffect<L> {
   /// ```
   @monadComprehensions
   void ensure(bool value, L Function() orLeft) =>
-      value ? null : bind<Never>(orLeft().left<Never>());
+      value ? null : raise(orLeft());
 }
 
 /// Provides [ensureNotNull] on a scope-bound [EitherEffect].
@@ -54,7 +53,7 @@ extension EnsureNotNullEitherEffectExtension<L> on EitherEffect<L> {
   @useResult
   @monadComprehensions
   R ensureNotNull<R extends Object>(R? value, L Function() orLeft) =>
-      value ?? bind<R>(orLeft().left<R>());
+      value ?? raise(orLeft());
 }
 
 /// Provides [bindFuture] on a scope-bound [EitherEffect].

@@ -378,6 +378,7 @@ Future<Either<String, BuiltList<int>>> parallelTraverse = Either.parTraverseN(
 | [`Future<Either>.bind`](https://pub.dev/documentation/dart_either/latest/dart_either/BindEitherFutureExtension/bind.html)                          | Awaits and binds an `Either`                         |
 | [`EitherEffect.ensure`](https://pub.dev/documentation/dart_either/latest/dart_either/EnsureEitherEffectExtension/ensure.html)                      | Short-circuits when a condition is false             |
 | [`EitherEffect.ensureNotNull`](https://pub.dev/documentation/dart_either/latest/dart_either/EnsureNotNullEitherEffectExtension/ensureNotNull.html) | Extracts a non-null value or short-circuits          |
+| [`EitherEffect.raise`](https://pub.dev/documentation/dart_either/latest/dart_either/RaiseEitherEffectExtension/raise.html)                         | Short-circuits without constructing a `Left` to bind |
 
 ```dart
 // 1) Stream.toEitherStream
@@ -536,11 +537,24 @@ computations that short-circuit on the first `Left`.
 
 Their callback receives an `EitherEffect<L>`: a package-issued, opaque,
 scope-bound binding capability. Use it as `effect.bind(either)`,
-`either.bind(effect)`, or `eitherFuture.bind(effect)`. Its construction and
-binding behavior are library-owned; assigning it to another variable only
-aliases the same scope. Each `Either.binding` or `Either.futureBinding`
-invocation owns an isolated scope, ordinary exceptions propagate unchanged,
-and the capability must not be stored or invoked after that scope settles.
+`either.bind(effect)`, `eitherFuture.bind(effect)`, or `effect.raise(value)`.
+Its construction and binding behavior are library-owned; assigning it to
+another variable only aliases the same scope. Each `Either.binding` or
+`Either.futureBinding` invocation owns an isolated scope, ordinary exceptions
+propagate unchanged, and the capability must not be stored or invoked after
+that scope settles.
+
+Use `effect.raise(value)` when you already have the left value and want to
+short-circuit directly. It is the convenience form of constructing a `Left`
+solely to bind it, while its `Never` return type also works naturally in
+expressions:
+
+```dart
+final result = Either<String, int>.binding((effect) {
+  final int? value = null;
+  return value ?? effect.raise('missing value');
+}); // Left('missing value')
+```
 
 ```dart
 // 1) Define a reusable async pipeline with Either.futureBinding

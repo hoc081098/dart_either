@@ -15,6 +15,15 @@ void main() {
       expect(result, Left<num, String>(1));
     });
 
+    test('raise supports safe contravariant narrowing', () {
+      final result = Either<num, String>.binding((effect) {
+        final EitherEffect<int> narrowed = effect;
+        return narrowed.raise(1);
+      });
+
+      expect(result, Left<num, String>(1));
+    });
+
     test('binds widened Either runtime subtypes without a type error', () {
       final Either<int, String> widenedLeft = const Left<int, Never>(1);
       final Either<String, num> widenedRight = const Right<Never, int>(2);

@@ -227,6 +227,10 @@ private generic operation that matches `Left` and `Right` directly. This keeps
 covariant public class. See
 [ADR 0001](adr/0001-scope-bound-contravariant-either-effect.md).
 
+`RaiseEitherEffectExtension.raise` follows the same extension-to-private-scope
+pattern. Its regression coverage calls `raise` through a safely narrowed
+`EitherEffect` so the new call boundary is checked independently of `bind`.
+
 ## Project design rule
 
 Before adding or changing a public instance member on `Either<L, R>`, audit
