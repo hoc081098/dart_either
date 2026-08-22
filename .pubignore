@@ -2,6 +2,7 @@
 .dart_tool/
 .packages
 build/
+coverage/
 pubspec.lock
 !example/pubspec.lock
 doc/api/
@@ -18,6 +19,7 @@ out/
 
 # Repository-only documentation and agent configuration.
 /AGENTS.md
+/CONTEXT.md
 .agents/
 .claude/
 .github/

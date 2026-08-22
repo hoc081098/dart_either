@@ -357,7 +357,7 @@ void main() {
             // 1 success bind (async) + 1 failure bind (sync) - with async modifier
             expect(
               Either.futureBinding<Object, int>((e) async {
-                final a = await Future.delayed(
+                final a = await Future<Either<Object, int>>.delayed(
                   const Duration(milliseconds: 100),
                   () => Either<Object, int>.right(1),
                 ).bind(e);
@@ -377,7 +377,7 @@ void main() {
             // 1 success bind (async) + 1 failure bind (async) - with async modifier
             expect(
               Either.futureBinding<Object, int>((e) async {
-                final a = await Future.delayed(
+                final a = await Future<Either<Object, int>>.delayed(
                   const Duration(milliseconds: 100),
                   () => Either<Object, int>.right(1),
                 ).bind(e);
@@ -627,7 +627,7 @@ void main() {
           final result = await Either.parSequenceN<String, int>(
             functions: delays.map(
               (delay) => () async {
-                await Future.delayed(Duration(milliseconds: delay));
+                await Future<void>.delayed(Duration(milliseconds: delay));
                 values.add(delay);
                 return Either<String, int>.right(delay);
               },
@@ -646,7 +646,7 @@ void main() {
           final result = await Either.parSequenceN<String, int>(
             functions: delays.map(
               (delay) => () async {
-                await Future.delayed(Duration(milliseconds: delay));
+                await Future<void>.delayed(Duration(milliseconds: delay));
                 values.add(delay);
                 return Either<String, int>.right(delay);
               },
@@ -666,7 +666,8 @@ void main() {
           final result = await Either.parSequenceN<String, int>(
             functions: items.map(
               (index) => () async {
-                await Future.delayed(Duration(milliseconds: (index + 1) * 50));
+                await Future<void>.delayed(
+                    Duration(milliseconds: (index + 1) * 50));
                 values.add(index);
                 return index < anchor
                     ? Either<String, int>.right(index)
@@ -688,7 +689,7 @@ void main() {
             functions: delays.map(
               (delay) => () async {
                 activeCount.add(1);
-                await Future.delayed(Duration(milliseconds: delay));
+                await Future<void>.delayed(Duration(milliseconds: delay));
                 activeCount.add(-1);
                 return Either<String, int>.right(delay);
               },
@@ -715,7 +716,7 @@ void main() {
           final result = await Either.parTraverseN<String, int, int>(
             values: ids,
             mapper: (id) => () async {
-              await Future.delayed(Duration(milliseconds: id * 50));
+              await Future<void>.delayed(Duration(milliseconds: id * 50));
               values.add(id);
               return Either<String, int>.right(id * factor);
             },
@@ -738,7 +739,7 @@ void main() {
           final result = await Either.parTraverseN<String, int, int>(
             values: ids,
             mapper: (id) => () async {
-              await Future.delayed(Duration(milliseconds: id * 50));
+              await Future<void>.delayed(Duration(milliseconds: id * 50));
               values.add(id);
               return id < anchor
                   ? Either<String, int>.right(id * factor)

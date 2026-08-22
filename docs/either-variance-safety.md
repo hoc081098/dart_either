@@ -178,6 +178,55 @@ the other.
 "Unsafe" here means unsafe as a virtual instance-member boundary for a
 covariantly widened receiver. It does not mean the operation itself is invalid.
 
+## `EitherEffect` must be contravariant
+
+Binding consumes an `Either<L, R>`, so a nominal `EitherEffect<L>` class with
+an instance `bind` method is unsafe when Dart widens its covariant `L`. The
+binding capability instead aliases a library-private final scope whose type
+argument is a phantom function type:
+
+```dart
+typedef EitherEffect<L> = _BindingScope<Never Function(L)>;
+```
+
+`_BindingScope<T>` is covariant in `T`, while a function is contravariant in
+its parameter. Composing those two positions makes the alias contravariant in
+`L`:
+
+```text
+alias target:                       +
+_BindingScope type argument:        +
+function parameter:                 -
+                                      + x + x - = -
+```
+
+An effect that accepts every `num` left value can therefore be narrowed to one
+used only with `int`; the opposite assignment is rejected:
+
+```dart
+void demonstrate(
+  EitherEffect<num> numbers,
+  EitherEffect<int> onlyIntegers,
+) {
+  final EitherEffect<int> integers = numbers; // Safe.
+  final EitherEffect<num> unsafe = onlyIntegers; // Compile-time error.
+}
+```
+
+The phantom type has no runtime function value. `_BindingScope` itself owns the
+scope token and lifecycle state, and its named private constructor prevents the
+public typedef from forwarding an unnamed constructor. Keeping the carrier
+final and library-private also prevents external implementations. Copying an
+issued effect only aliases the same scope, so it cannot replace binding
+behavior or escape revocation.
+
+`BindEitherEffectExtension.bind` is declared in the same Dart library as the
+private scope. It ties the call-site `L` to `Either<L, R>` and delegates to a
+private generic operation that matches `Left` and `Right` directly. This keeps
+`effect.bind(...)` discoverable without introducing a consuming method on a
+covariant public class. See
+[ADR 0001](adr/0001-scope-bound-contravariant-either-effect.md).
+
 ## Project design rule
 
 Before adding or changing a public instance member on `Either<L, R>`, audit
@@ -229,6 +278,9 @@ The branch review that introduced this document found and fixed three targets:
   combiner results are checked against the call site's static type arguments.
 - `flatten` remains an extension but now uses direct sealed-class pattern
   matching instead of delegating to `flatMap`.
+- `EitherEffect` uses a private final scope with a contravariant phantom marker,
+  so unsafe widening, external construction, and replacement binding behavior
+  are rejected before a binding block can execute.
 
 The other APIs added in this PR were audited as covariance-safe instance
 members or extensions: `onLeft`, `onRight`, `getOrNull`, `leftOrNull`,
@@ -293,6 +345,10 @@ Tests must cover:
 - Nested widening for operations such as `flatten`.
 - Callback invocation counts, including callbacks that must not run.
 - Successful execution without `TypeError`; do not hide the issue with casts.
+- Safe contravariant narrowing of `EitherEffect`, plus a compile-fail fixture
+  that requires unsafe widening to report `INVALID_ASSIGNMENT`.
+- A consumer compile-fail fixture showing that `EitherEffect<L>()` exposes no
+  unnamed constructor and reports `NEW_WITH_UNDEFINED_CONSTRUCTOR_DEFAULT`.
 
 ## Review checklist
 
@@ -302,6 +358,8 @@ Tests must cover:
 - Prefer a generic extension or top-level function for risky signatures.
 - Use direct `switch` pattern matching or a proven covariance-safe primitive.
 - Add widened `Never` and subtype regression tests.
+- Keep the `EitherEffect` carrier final and library-private, and keep its
+  constructor named and private so the public typedef cannot forward it.
 - Apply `@covarianceSafe` only after recording one of the accepted forms of
   evidence above; never treat the marker itself as evidence.
 - Verify with `dart analyze` and `dart test`.

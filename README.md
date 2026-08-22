@@ -228,9 +228,9 @@ final right = Either<Object, int>.right(1);
 // or: Right<Object, int>(1)
 
 // 2) Sync monad comprehension (short-circuits on first Left)
-Either<Object, String>.binding((e) {
-  final String s = left.bind(e);
-  final int i = right.bind(e);
+Either<Object, String>.binding((effect) {
+  final String s = left.bind(effect);
+  final int i = right.bind(effect);
   return '$s $i';
 });
 
@@ -294,19 +294,19 @@ Either.fromNullable<int>(1);    // Right(1)
 // 4) Either.futureBinding
 String url1 = 'url1';
 String url2 = 'url2';
-Either.futureBinding<String, http.Response>((e) async {
+Either.futureBinding<String, http.Response>((effect) async {
   final response = await Either.catchFutureError(
     (e, s) => 'Get $url1: $e',
     () async {
       final uri = Uri.parse(url1);
       return http.get(uri);
     },
-  ).bind(e);
+  ).bind(effect);
 
   final id = Either.catchError(
     (e, s) => 'Parse $url1 body: $e',
     () => jsonDecode(response.body)['id'] as String,
-  ).bind(e);
+  ).bind(effect);
 
   return await Either.catchFutureError(
     (e, s) => 'Get $url2: $e',
@@ -314,7 +314,7 @@ Either.futureBinding<String, http.Response>((e) async {
       final uri = Uri.parse('$url2?id=$id');
       return http.get(uri);
     },
-  ).bind(e);
+  ).bind(effect);
 });
 
 
@@ -364,14 +364,20 @@ Future<Either<String, BuiltList<int>>> parallelTraverse = Either.parTraverseN(
 );
 ```
 
-#### 1.3. Extension methods
+#### 1.3. Binding capability and extension methods
 
-| Extension                                                                                                                           | Description                                    |
-|-------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------|
-| [`Stream.toEitherStream`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherStreamExtension/toEitherStream.html) | Converts a stream, catching errors into `Left` |
-| [`Future.toEitherFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherFutureExtension/toEitherFuture.html) | Converts a future, catching errors into `Left` |
-| [`T.left`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/left.html)                          | Wraps any value as `Left`                      |
-| [`T.right`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/right.html)                        | Wraps any value as `Right`                     |
+| API                                                                                                                                                | Description                                          |
+|----------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------|
+| [`Stream.toEitherStream`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherStreamExtension/toEitherStream.html)                | Converts a stream, catching errors into `Left`       |
+| [`Future.toEitherFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherFutureExtension/toEitherFuture.html)                | Converts a future, catching errors into `Left`       |
+| [`T.left`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/left.html)                                         | Wraps any value as `Left`                            |
+| [`T.right`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/right.html)                                       | Wraps any value as `Right`                           |
+| [`EitherEffect.bind`](https://pub.dev/documentation/dart_either/latest/dart_either/BindEitherEffectExtension/bind.html)                            | Extracts `Right` or short-circuits its binding scope |
+| [`Either.bind`](https://pub.dev/documentation/dart_either/latest/dart_either/BindEitherExtension/bind.html)                                        | Binds an `Either` through an `EitherEffect`          |
+| [`EitherEffect.bindFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/BindFutureEitherEffectExtension/bindFuture.html)          | Awaits and binds through an `EitherEffect`           |
+| [`Future<Either>.bind`](https://pub.dev/documentation/dart_either/latest/dart_either/BindEitherFutureExtension/bind.html)                          | Awaits and binds an `Either`                         |
+| [`EitherEffect.ensure`](https://pub.dev/documentation/dart_either/latest/dart_either/EnsureEitherEffectExtension/ensure.html)                      | Short-circuits when a condition is false             |
+| [`EitherEffect.ensureNotNull`](https://pub.dev/documentation/dart_either/latest/dart_either/EnsureNotNullEitherEffectExtension/ensureNotNull.html) | Extracts a non-null value or short-circuits          |
 
 ```dart
 // 1) Stream.toEitherStream
@@ -528,19 +534,29 @@ Either<AsyncError, BuiltList<User>> usersEither = await httpGetAsEither(
 Use `Either.binding` (sync) or `Either.futureBinding` (async) for do-notation style sequential
 computations that short-circuit on the first `Left`.
 
+Their callback receives an `EitherEffect<L>`: a package-issued, opaque,
+scope-bound binding capability. Use it as `effect.bind(either)`,
+`either.bind(effect)`, or `eitherFuture.bind(effect)`. Its construction and
+binding behavior are library-owned; assigning it to another variable only
+aliases the same scope. Each `Either.binding` or `Either.futureBinding`
+invocation owns an isolated scope, ordinary exceptions propagate unchanged,
+and the capability must not be stored or invoked after that scope settles.
+
 ```dart
 // 1) Define a reusable async pipeline with Either.futureBinding
 Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
-    Either.futureBinding<AsyncError, dynamic>((e) async {
-      final uri =
-          Either.catchError(toAsyncError, () => Uri.parse(uriString)).bind(e);
+    Either.futureBinding<AsyncError, dynamic>((effect) async {
+      final uri = Either.catchError(
+        toAsyncError,
+        () => Uri.parse(uriString),
+      ).bind(effect);
 
       final response = await Either.catchFutureError(
         toAsyncError,
         () => http.get(uri),
-      ).bind(e);
+      ).bind(effect);
 
-      e.ensure(
+      effect.ensure(
         response.statusCode >= 200 && response.statusCode < 300,
         () => AsyncError(
           HttpException(
@@ -554,18 +570,18 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
       return Either<AsyncError, dynamic>.catchError(
         toAsyncError,
         () => jsonDecode(response.body),
-      ).bind(e);
+      ).bind(effect);
     });
 
 Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
 
 // 2) Compose another flow by binding previous steps
 Either<AsyncError, BuiltList<User>> usersEither = await Either.futureBinding(
-  (e) async {
-    final dynamic json =
-        await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
-            .bind(e);
-    final BuiltList<User> users = toUsers(json as List).bind(e);
+  (effect) async {
+    final dynamic json = await httpGetAsEither(
+      'https://jsonplaceholder.typicode.com/users',
+    ).bind(effect);
+    final BuiltList<User> users = toUsers(json as List).bind(effect);
     return users;
   },
 );

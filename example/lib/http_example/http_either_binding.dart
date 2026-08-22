@@ -15,12 +15,12 @@ import 'shared_model.dart';
 
 /// Get response from Uri as either using Monad Comprehension
 Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
-    Either.futureBinding((e) async {
+    Either.futureBinding((effect) async {
       // Create Uri
       final uri = Either.catchError(
         toAppError('Parse $uriString'),
         () => Uri.parse(uriString),
-      ).bind(e);
+      ).bind(effect);
 
       // Get response
       final response = await Either.catchFutureError(
@@ -29,13 +29,13 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
           await delay(500);
           return http.get(uri);
         },
-      ).bind(e);
+      ).bind(effect);
 
       final statusCode = response.statusCode;
       final body = response.body;
 
       // Check status code
-      e.ensure(
+      effect.ensure(
         statusCode >= 200 && statusCode < 300,
         () => AppError(
           HttpException(
@@ -51,7 +51,7 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
       return Either.catchError(
         toAppError('jsonDecode: $body'),
         () => jsonDecode(body),
-      ).bind(e);
+      ).bind(effect);
     });
 
 // ---------------------------------------------------------------------------
@@ -64,16 +64,16 @@ void main() async {
   ) =>
       Either.parTraverseN(
         values: users,
-        mapper: (User user) => () => Either.futureBinding((e) async {
+        mapper: (User user) => () => Either.futureBinding((effect) async {
               print('--> Get posts for $user...');
 
               // Get posts for user
               final list = await httpGetAsEither(
                       'https://jsonplaceholder.typicode.com/posts?userId=${user.id}')
-                  .bind(e);
+                  .bind(effect);
 
               // Convert to post models
-              final posts = toPosts(list).bind(e);
+              final posts = toPosts(list).bind(effect);
 
               // Return user and posts
               return (user: user, posts: posts);
@@ -82,17 +82,17 @@ void main() async {
       );
 
   final result = await Either.futureBinding<AppError, BuiltList<UserAndPosts>>(
-    (e) async {
+    (effect) async {
       // Get user list
       final list =
           await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
-              .bind(e);
+              .bind(effect);
 
       // Convert to user models
-      final users = toUsers(list).bind(e);
+      final users = toUsers(list).bind(effect);
 
       // Get posts for each user
-      return await getPosts(users).bind(e);
+      return await getPosts(users).bind(effect);
     },
   );
 
