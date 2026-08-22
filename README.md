@@ -532,8 +532,8 @@ Either<AsyncError, BuiltList<User>> usersEither = await httpGetAsEither(
 
 ### 4. Monad comprehensions
 
-Use `Either.binding` (sync) or `Either.futureBinding` (async) for do-notation style sequential
-computations that short-circuit on the first `Left`.
+Use `Either.binding` (sync) or `Either.futureBinding` (async) for do-notation
+style sequential computations that short-circuit on the first `Left`.
 
 Their callback receives an `EitherEffect<L>`: a package-issued, opaque,
 scope-bound binding capability. Use it as `effect.bind(either)`,
@@ -544,20 +544,79 @@ another variable only aliases the same scope. Each `Either.binding` or
 propagate unchanged, and the capability must not be stored or invoked after
 that scope settles.
 
-Use `effect.raise(value)` when you already have the left value and want to
-short-circuit directly. It is the convenience form of constructing a `Left`
-solely to bind it, while its `Never` return type also works naturally in
-expressions:
+#### Synchronous binding
+
+The following complete example combines the main `EitherEffect` operations:
+
+- `ensureNotNull` extracts a required nullable value.
+- `bind` unwraps a `Right` or propagates an existing `Left`.
+- `ensure` checks a condition and short-circuits when it is false.
+- `raise` short-circuits with an available left value without constructing a
+  `Left` solely to bind it.
 
 ```dart
-final result = Either<String, int>.binding((effect) {
-  final int? value = null;
-  return value ?? effect.raise('missing value');
-}); // Left('missing value')
+Either<String, int> parseQuantity(String input) {
+  final quantity = int.tryParse(input);
+  return quantity == null
+      ? Either.left('Quantity must be an integer')
+      : Either.right(quantity);
+}
+
+Either<String, int> calculateOrderTotal({
+  required String? quantityInput,
+  required int unitPrice,
+  required int availableStock,
+}) =>
+    Either.binding((effect) {
+      // 1) Require the nullable input.
+      final input = effect.ensureNotNull(
+        quantityInput,
+        () => 'Quantity is required',
+      );
+
+      // 2) Bind an Either, propagating its Left automatically.
+      final quantity = effect.bind(parseQuantity(input));
+
+      // 3) Enforce a value-level invariant.
+      effect.ensure(quantity > 0, () => 'Quantity must be positive');
+
+      // 4) Raise a domain error without constructing a Left to bind.
+      if (quantity > availableStock) {
+        effect.raise('Only $availableStock items are in stock');
+      }
+
+      // 5) A normal return becomes Right(total).
+      return quantity * unitPrice;
+    });
+
+final successfulOrder = calculateOrderTotal(
+  quantityInput: '3',
+  unitPrice: 20,
+  availableStock: 10,
+); // Right(60)
+
+final invalidQuantity = calculateOrderTotal(
+  quantityInput: 'three',
+  unitPrice: 20,
+  availableStock: 10,
+); // Left('Quantity must be an integer')
+
+final insufficientStock = calculateOrderTotal(
+  quantityInput: '12',
+  unitPrice: 20,
+  availableStock: 10,
+); // Left('Only 10 items are in stock')
 ```
 
+`raise` returns `Never`, so it also works naturally in expressions such as
+`nullable ?? effect.raise('missing')`.
+
+#### Asynchronous binding
+
+`Either.futureBinding` uses the same effect operations while allowing awaited
+`Future<Either<L, R>>` values to participate in the computation:
+
 ```dart
-// 1) Define a reusable async pipeline with Either.futureBinding
 Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
     Either.futureBinding<AsyncError, dynamic>((effect) async {
       final uri = Either.catchError(
@@ -589,7 +648,6 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
 
 Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
 
-// 2) Compose another flow by binding previous steps
 Either<AsyncError, BuiltList<User>> usersEither = await Either.futureBinding(
   (effect) async {
     final dynamic json = await httpGetAsEither(

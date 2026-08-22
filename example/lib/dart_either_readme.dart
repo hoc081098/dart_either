@@ -1,5 +1,39 @@
 import 'package:dart_either/dart_either.dart';
 
+Either<String, int> parseQuantity(String input) {
+  final quantity = int.tryParse(input);
+  return quantity == null
+      ? Either.left('Quantity must be an integer')
+      : Either.right(quantity);
+}
+
+Either<String, int> calculateOrderTotal({
+  required String? quantityInput,
+  required int unitPrice,
+  required int availableStock,
+}) =>
+    Either.binding((effect) {
+      // 1) Require the nullable input.
+      final input = effect.ensureNotNull(
+        quantityInput,
+        () => 'Quantity is required',
+      );
+
+      // 2) Bind an Either, propagating its Left automatically.
+      final quantity = effect.bind(parseQuantity(input));
+
+      // 3) Enforce a value-level invariant.
+      effect.ensure(quantity > 0, () => 'Quantity must be positive');
+
+      // 4) Raise a domain error without constructing a Left to bind.
+      if (quantity > availableStock) {
+        effect.raise('Only $availableStock items are in stock');
+      }
+
+      // 5) A normal return becomes Right(total).
+      return quantity * unitPrice;
+    });
+
 void main() {
   // ---------------------------------------------------------------------------
   // 1) Creation
@@ -67,16 +101,34 @@ void main() {
   print(merged); // Prints 10
 
   // ---------------------------------------------------------------------------
-  // 3) Binding: raise a Left directly
+  // 3) Binding: compose Either operations and raise domain errors
   // ---------------------------------------------------------------------------
 
-  /// `raise` avoids constructing a [Left] solely to bind it when the left
-  /// value is already available.
-  final raised = Either<String, int>.binding((effect) {
-    final int? value = null;
-    return value ?? effect.raise('missing value');
-  });
-  print(raised); // Prints Either.Left(missing value)
+  /// A successful binding unwraps [Right] values and returns the final result
+  /// as a [Right].
+  final successfulOrder = calculateOrderTotal(
+    quantityInput: '3',
+    unitPrice: 20,
+    availableStock: 10,
+  );
+  print(successfulOrder); // Prints Either.Right(60)
+
+  /// Binding a [Left] from [parseQuantity] short-circuits the computation.
+  final invalidQuantity = calculateOrderTotal(
+    quantityInput: 'three',
+    unitPrice: 20,
+    availableStock: 10,
+  );
+  print(invalidQuantity); // Prints Either.Left(Quantity must be an integer)
+
+  /// `raise` short-circuits with an existing domain error without constructing
+  /// a [Left] solely to bind it.
+  final insufficientStock = calculateOrderTotal(
+    quantityInput: '12',
+    unitPrice: 20,
+    availableStock: 10,
+  );
+  print(insufficientStock); // Prints Either.Left(Only 10 items are in stock)
 
   // ---------------------------------------------------------------------------
   // 4) Pattern matching

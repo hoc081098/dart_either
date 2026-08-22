@@ -92,7 +92,7 @@ extension AsyncMapFutureExtension<L, R> on Future<Either<L, R>> {
 
 /// Provide [left] and [right] extensions on any types.
 extension ToEitherObjectExtension<T> on T {
-  /// Return a [Left] that contains [this] value.
+  /// Returns a [Left] containing `this`.
   /// This is a shorthand for [Either.left].
   ///
   /// ### Example
@@ -103,7 +103,7 @@ extension ToEitherObjectExtension<T> on T {
   @useResult
   Either<T, R> left<R>() => Either<T, R>.left(this);
 
-  /// Return a [Right] that contains [this] value.
+  /// Returns a [Right] containing `this`.
   /// This is a shorthand for [Either.right].
   ///
   /// ### Example
