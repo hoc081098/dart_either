@@ -1135,11 +1135,18 @@ final class _BindingScope<AcceptsLeft extends Function> {
     }
   }
 
-  @monadComprehensions
-  R _bind<L, R>(Either<L, R> either) {
+  @pragma('vm:always-consider-inlining')
+  @pragma('vm:prefer-inline')
+  @pragma('dart2js:tryInline')
+  void _ensureActive() {
     if (_phase != _BindingPhase.active) {
       throw StateError('EitherEffect was used outside its binding scope.');
     }
+  }
+
+  @monadComprehensions
+  R _bind<L, R>(Either<L, R> either) {
+    _ensureActive();
 
     switch (either) {
       case Left(value: final value):
@@ -1148,6 +1155,14 @@ final class _BindingScope<AcceptsLeft extends Function> {
       case Right(value: final value):
         return value;
     }
+  }
+
+  @monadComprehensions
+  Never _raise<L>(L value) {
+    _ensureActive();
+
+    _phase = _BindingPhase.raised;
+    throw ControlError<L>._(value, _token);
   }
 }
 
@@ -1169,4 +1184,24 @@ extension BindEitherEffectExtension<L> on EitherEffect<L> {
   /// ```
   @monadComprehensions
   R bind<R>(Either<L, R> either) => _bind<L, R>(either);
+}
+
+/// Provides raise syntax on a scope-bound [EitherEffect].
+extension RaiseEitherEffectExtension<L> on EitherEffect<L> {
+  /// Raises a [Left] short-circuiting the [Either.binding] or
+  /// [Either.futureBinding] scope that owns this effect.
+  ///
+  /// See [Either.binding] and [Either.futureBinding].
+  ///
+  /// ### Example
+  /// ```dart
+  /// final result = Either<String, int>.binding((effect) {
+  ///   if (someCondition) {
+  ///     effect.raise('error');
+  ///   }
+  ///   return 42;
+  /// }); // Left('error') if someCondition is true, otherwise Right(42)
+  /// ```
+  @monadComprehensions
+  Never raise(L value) => _raise(value);
 }

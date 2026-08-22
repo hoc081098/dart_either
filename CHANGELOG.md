@@ -16,6 +16,11 @@
     provided functions, and otherwise returns the sole `Left`.
   - `flatten` converts `Either<L, Either<L, R>>` to `Either<L, R>`.
   - `merge` extracts the value from `Either<T, T>`.
+- Added `EitherEffect.raise(value)` — unconditionally short-circuits the
+  surrounding `Either.binding` or `Either.futureBinding` scope with a `Left`.
+  Its return type is `Never`, so it composes naturally as an expression (e.g.
+  `nullable ?? effect.raise('missing')`). `ensure` and `ensureNotNull` now
+  delegate their short-circuit path to `raise`.
 
 ### Changed
 

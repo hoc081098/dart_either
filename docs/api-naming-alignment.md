@@ -76,6 +76,7 @@ the identical method name would hide a source-breaking signature change.
 | `leftOrNull` | `Either` | Return the `Left` value or `null` |
 | `flatten` | `FlattenEitherExtension` | Flatten `Either<L, Either<L, R>>` to `Either<L, R>` |
 | `merge` | `MergeEitherExtension` | Extract the value from `Either<T, T>` |
+| `EitherEffect.raise` | `RaiseEitherEffectExtension` | Unconditionally short-circuit a binding scope with a `Left` value |
 
 ## Deferred proposals
 

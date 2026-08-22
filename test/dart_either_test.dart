@@ -145,16 +145,6 @@ void main() {
           );
         });
 
-        // test('block throws [ControlError].', () {
-        //   // block throws [ControlError].
-        //   expect(
-        //     () => Either<Object, String>.binding(
-        //       (e) => throw MyControlError<Object>(),
-        //     ),
-        //     throwsA(isA<NoSuchMethodError>()),
-        //   );
-        // });
-
         test('2 success bind', () {
           // 2 success bind
           expect(
@@ -1311,6 +1301,109 @@ void main() {
         }),
         Left<String, int>('Error'),
       );
+    });
+
+    group('EitherEffect.raise', () {
+      test('raise short-circuits binding with Left in Either.binding', () {
+        expect(
+          Either<String, int>.binding((effect) {
+            effect.raise('error');
+          }),
+          Left<String, int>('error'),
+        );
+      });
+
+      test('code after raise is unreachable in Either.binding', () {
+        var reached = false;
+        Either<String, int>.binding((effect) {
+          effect.raise('error');
+          reached = true; // ignore: dead_code
+          return 0;
+        });
+        expect(reached, isFalse);
+      });
+
+      test('raise short-circuits after successful binds in Either.binding', () {
+        expect(
+          Either<String, int>.binding((effect) {
+            final a = effect.bind(Either<String, int>.right(1));
+            final b = effect.bind(Either<String, int>.right(2));
+            effect.raise('stop');
+            return a + b; // ignore: dead_code
+          }),
+          Left<String, int>('stop'),
+        );
+      });
+
+      test('conditional raise returns Right when condition not met', () {
+        expect(
+          Either<String, int>.binding((effect) {
+            final value = effect.bind(Either<String, int>.right(42));
+            if (value < 0) effect.raise('negative');
+            return value;
+          }),
+          Right<String, int>(42),
+        );
+      });
+
+      test('conditional raise returns Left when condition met', () {
+        expect(
+          Either<String, int>.binding((effect) {
+            final value = effect.bind(Either<String, int>.right(-1));
+            if (value < 0) effect.raise('negative');
+            return value;
+          }),
+          Left<String, int>('negative'),
+        );
+      });
+
+      test(
+        'raise short-circuits binding with Left in Either.futureBinding',
+        () async {
+          await expectLater(
+            Either.futureBinding<String, int>((effect) async {
+              effect.raise('error');
+            }),
+            completion(Left<String, int>('error')),
+          );
+        },
+      );
+
+      test('code after raise is unreachable in Either.futureBinding', () async {
+        var reached = false;
+        await Either.futureBinding<String, int>((effect) async {
+          effect.raise('error');
+          reached = true; // ignore: dead_code
+          return 0;
+        });
+        expect(reached, isFalse);
+      });
+
+      test(
+        'raise short-circuits after async bind in Either.futureBinding',
+        () async {
+          await expectLater(
+            Either.futureBinding<String, int>((effect) async {
+              final a = await effect
+                  .bindFuture(Future.value(Either<String, int>.right(1)));
+              effect.raise('stop');
+              return a; // ignore: dead_code
+            }),
+            completion(Left<String, int>('stop')),
+          );
+        },
+      );
+
+      test('raise return type is Never — usable as expression', () {
+        // raise returns Never, so it can be used as the else branch of ?:
+        expect(
+          Either<String, int>.binding((effect) {
+            final int? nullable = null;
+            return nullable ?? effect.raise('missing');
+          }),
+          Left<String, int>('missing'),
+        );
+      });
     });
 
     group('Future<Either<L, R>>.thenFlatMapEither', () {
