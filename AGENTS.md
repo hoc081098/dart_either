@@ -129,6 +129,20 @@ dart pub publish --dry-run
 - For every public API rename, follow `.agents/skills/api-rename-flow/SKILL.md`.
 - `.agents/skills` is canonical. `.claude/skills` points to it for Claude-compatible discovery.
 
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked in GitHub Issues for `hoc081098/dart_either`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five canonical default triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This repo uses a single-context domain documentation layout. See `docs/agents/domain.md`.
+
 ## Guidelines for AI Agents
 
 1. **Do NOT break the public API** — this is a published pub.dev package. Any breaking change requires a major version bump.
