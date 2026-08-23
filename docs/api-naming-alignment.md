@@ -3,9 +3,9 @@
 This document tracks naming decisions that move `dart_either` closer to
 Arrow/Kotlin where that also produces an idiomatic Dart API.
 
-Statuses describe the current branch relative to `master`. Implemented items
-are still listed under `Unreleased` in `CHANGELOG.md`; they have not been
-assigned to a published version yet.
+Statuses describe the current repository state. Implemented items are listed
+under `Unreleased` in `CHANGELOG.md` and target the next major release,
+`3.0.0`; they have not been published yet.
 
 ## Implemented migrations
 
@@ -17,29 +17,51 @@ assigned to a published version yet.
 | `exists` | `isRightAnd` | Return `true` only for a `Right` that satisfies the predicate | `exists` remains as a deprecated alias |
 | `getOrElse(() => R)` | `getOrDefault(R)` or `getOrHandle((L) => R)` | Use `getOrDefault` for an eager value and `getOrHandle` for a lazy, left-aware fallback | `getOrElse` remains deprecated and preserves its historical lazy behavior |
 
-`getOrHandle` deliberately keeps its current name during `2.x`. Its callback
-receives the `Left` value and runs lazily, while the deprecated `getOrElse`
-callback takes no argument. Treating either method as a direct alias of eager
-`getOrDefault` would change observable behavior.
+`getOrHandle` deliberately keeps its current name during the present
+deprecation window. Its callback receives the `Left` value and runs lazily,
+while the deprecated `getOrElse` callback takes no argument. Treating either
+method as a direct alias of eager `getOrDefault` would change observable
+behavior.
 
-`getOrDefault` is declared by `GetOrDefaultEitherExtension` rather than as an
-instance member. This preserves the same call syntax while avoiding a runtime
-type check against a covariantly widened receiver. See
-[Either variance safety](either-variance-safety.md).
+`getOrDefault` and the callback-producing operations listed below are generic
+extensions rather than instance members. This preserves ordinary call syntax
+while avoiding runtime checks against a covariantly widened virtual receiver.
+See [Either variance safety](either-variance-safety.md).
 
-## `EitherEffect` 2.x compatibility boundary
+## Variance-safe location changes (no rename)
+
+These operations keep their public names but no longer live on `Either`:
+
+| API | Extension | Source file |
+|---|---|---|
+| `flatMap` | `FlatMapEitherExtension` | `lib/src/either_extensions/flat_map.dart` |
+| `getOrElse` | `GetOrElseEitherExtension` | `lib/src/either_extensions/get_or_else.dart` |
+| `getOrHandle` | `GetOrHandleEitherExtension` | `lib/src/either_extensions/get_or_handle.dart` |
+| `handleError` | `HandleErrorEitherExtension` | `lib/src/either_extensions/handle_error.dart` |
+| `handleErrorWith` | `HandleErrorWithEitherExtension` | `lib/src/either_extensions/handle_error_with.dart` |
+
+Each extension matches `Left` and `Right` directly and has widened covariance
+regression coverage. This is intentionally not an API rename. Normal calls
+through an unprefixed barrel import remain `either.flatMap(...)`,
+`either.getOrHandle(...)`, and so on.
+
+The location change is nevertheless source-breaking for prefixed imports,
+selective imports that omit the extension declaration, and calls through a
+`dynamic` receiver. It must ship under a release policy that permits that
+compatibility break.
+
+## `EitherEffect` compatibility boundary
 
 The internal `EitherEffect<L>` representation hardening recorded in
-[ADR 0001](adr/0001-scope-bound-contravariant-either-effect.md) targets a
-`2.x.y` release. Supported source usage and runtime behavior remain unchanged:
-callers receive the capability from `Either.binding` or `Either.futureBinding`
-and use the existing binding extensions within that scope. The
-source-compatibility exception is prefixed imports and selective imports that
-omit `BindEitherEffectExtension`; keeping `effect.bind(either)` requires
-importing that extension unprefixed. Constructing, implementing, destructuring,
-replacing the binding behavior of, or invoking a captured `EitherEffect` after
-its scope settles is outside the supported contract and does not require a
-compatibility migration.
+[ADR 0001](adr/0001-scope-bound-contravariant-either-effect.md) preserves
+supported source usage and runtime behavior: callers receive the capability
+from `Either.binding` or `Either.futureBinding` and use the existing binding
+extensions within that scope. The source-compatibility exception is prefixed
+imports and selective imports that omit `BindEitherEffectExtension`; keeping
+`effect.bind(either)` requires importing that extension unprefixed.
+Constructing, implementing, destructuring, replacing the binding behavior of,
+or invoking a captured `EitherEffect` after its scope settles is outside the
+supported contract and does not require a compatibility migration.
 
 ## Planned major-version cleanup
 
@@ -57,8 +79,8 @@ keeping eager evaluation explicit through `getOrDefault`.
 
 Use this migration sequence:
 
-1. Keep `getOrElse(() => R)` deprecated throughout `2.x` and use
-   `getOrHandle((L) => R)` as the non-breaking, left-aware API.
+1. Keep `getOrElse(() => R)` deprecated during the current migration window
+   and use `getOrHandle((L) => R)` as the current left-aware API.
 2. In the next planned major release, remove the legacy zero-argument
    `getOrElse` signature.
 3. Introduce `getOrElse((L) => R)` as the canonical lazy fallback.

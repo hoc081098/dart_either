@@ -17,7 +17,13 @@ lib/
   src/
     dart_either.dart            # Core Either sealed class (Left, Right), constructors, instance methods, static methods, EitherEffect (monad comprehension), ControlError
     extensions.dart             # Extension methods: toEitherStream, toEitherFuture, thenFlatMapEither, thenMapEither, .left(), .right()
-    either_extensions.dart      # Extension methods: toFuture, getOrThrow, getOrDefault, combine, flatten, merge
+    either_extensions.dart      # Existing Either extensions and exports for per-method variance-safe extensions
+    either_extensions/
+      flat_map.dart             # FlatMapEitherExtension.flatMap
+      get_or_else.dart          # Deprecated GetOrElseEitherExtension.getOrElse
+      get_or_handle.dart        # GetOrHandleEitherExtension.getOrHandle
+      handle_error.dart         # HandleErrorEitherExtension.handleError
+      handle_error_with.dart    # HandleErrorWithEitherExtension.handleErrorWith
     binding.dart                # Monad comprehension extensions: ensure, ensureNotNull, bindFuture, bind on Either, bind on Future<Either>
     internal.dart               # Shared internal helpers and @covarianceSafe marker
     utils/

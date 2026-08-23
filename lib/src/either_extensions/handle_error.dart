@@ -21,7 +21,7 @@ extension HandleErrorEitherExtension<L, R> on Either<L, R> {
   /// ```
   @covarianceSafe
   @useResult
-  Right<L, R> handleError(R Function(L value) f) => switch (this) {
+  Either<L, R> handleError(R Function(L value) f) => switch (this) {
         Left(:final value) => Right<L, R>(f(value)),
         Right(:final value) => Right<L, R>(value),
       };

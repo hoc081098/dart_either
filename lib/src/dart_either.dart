@@ -70,7 +70,8 @@ T Function(Object?) _const<T>(T t) => (_) => t;
 ///
 /// Because `Either` is right-biased, it is possible to define a `Monad` instance for it.
 /// Since we only ever want the computation to continue in the case of [Right] (as captured by the right-bias nature),
-/// we fix the left type parameter and leave the right one free. So, the map and flatMap methods are right-biased.
+/// we fix the left type parameter and leave the right one free. So, [map] and
+/// [FlatMapEitherExtension.flatMap] are right-biased.
 @immutable
 @sealed
 sealed class Either<L, R> {
@@ -120,7 +121,8 @@ sealed class Either<L, R> {
 
   /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).
   /// [Syntactic sugar do-notation](https://en.wikipedia.org/wiki/Monad_(functional_programming)#Syntactic_sugar_do-notation).
-  /// Although using [flatMap] openly often makes sense, many programmers prefer a syntax
+  /// Although using [FlatMapEitherExtension.flatMap] openly often makes sense,
+  /// many programmers prefer a syntax
   /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`,
   /// `computation expressions` in `F#`, and `for comprehension` in `Scala`).
   /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
@@ -228,7 +230,8 @@ sealed class Either<L, R> {
 
   /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).
   /// [Syntactic sugar do-notation](https://en.wikipedia.org/wiki/Monad_(functional_programming)#Syntactic_sugar_do-notation).
-  /// Although using [flatMap] openly often makes sense, many programmers prefer a syntax
+  /// Although using [FlatMapEitherExtension.flatMap] openly often makes sense,
+  /// many programmers prefer a syntax
   /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`,
   /// `computation expressions` in `F#`, and `for comprehension` in `Scala`).
   /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
@@ -548,7 +551,10 @@ sealed class Either<L, R> {
 
     Future<R> Function() run(Future<Either<L, R>> Function() f) {
       return () => Future.sync(f).then(
-            (e) => e.getOrHandle((l) => throw ControlError<L>._(l, token)),
+            (e) => switch (e) {
+              Left(:final value) => throw ControlError<L>._(value, token),
+              Right(:final value) => value,
+            },
           );
     }
 
@@ -717,27 +723,6 @@ sealed class Either<L, R> {
         ifRight: (r) => Either<C, R>.right(r),
       );
 
-  /// Binds the given function across [Right].
-  ///
-  /// If this is a [Right], returns the result of applying [f] to this [Right.value].
-  /// Otherwise, returns itself.
-  ///
-  /// Slightly different from [map] in that [f] is expected to
-  /// return an [Either] (which could be a [Left]).
-  ///
-  /// ### Example
-  /// ```dart
-  /// Right<String, int>(12).flatMap((v) => Right<String, String>('flower $v'));  // Result: Right('flower 12')
-  /// Right<String, int>(12).flatMap((v) => Left<String, String>('flower $v'));   // Result: Left('flower 12')
-  /// Left<String, int>('12').flatMap((v) => Right<String, String>('flower $v')); // Result: Left('12')
-  /// Left<String, int>('12').flatMap((v) => Left<String, String>('flower $v'));  // Result: Left('12')
-  /// ```
-  @useResult
-  Either<L, C> flatMap<C>(Either<L, C> Function(R value) f) => _foldInternal(
-        ifLeft: (l) => Either<L, C>.left(l),
-        ifRight: (r) => f(r),
-      );
-
   /// Map over Left and Right of this Either
   ///
   /// ### Example
@@ -816,25 +801,6 @@ sealed class Either<L, R> {
         ifRight: predicate,
       );
 
-  /// Deprecated lazy fallback helper.
-  ///
-  /// This preserves the historical lazy behavior (`defaultValue` is evaluated only
-  /// when this is [Left]), so it is **not** equivalent to `getOrDefault`, which is eager.
-  ///
-  /// Prefer:
-  /// - [GetOrDefaultEitherExtension.getOrDefault] for eager fallback values.
-  /// - [getOrHandle] for lazy fallback computation.
-  ///
-  /// ### Example
-  /// ```dart
-  /// Right<int, int>(12).getOrElse(() => 17); // Result: 12
-  /// Left<int, int>(12).getOrElse(() => 17);  // Result: 17
-  /// ```
-  @Deprecated(
-    'Use getOrDefault(value) for eager fallback, or getOrHandle for lazy fallback.',
-  )
-  R getOrElse(R Function() defaultValue) => getOrHandle((_) => defaultValue());
-
   /// Returns the [Right]'s value if it exists, otherwise `null`.
   ///
   /// ### Example
@@ -870,19 +836,6 @@ sealed class Either<L, R> {
   /// ```
   @Deprecated('Use getOrNull instead.')
   R? orNull() => getOrNull();
-
-  /// Returns the value from this [Right]
-  /// or allows clients to transform the value of [Left] to the final result.
-  ///
-  /// ### Example
-  /// ```dart
-  /// Right<int, int>(12).getOrHandle((v) => 17);   // Result: 12
-  /// Left<int, int>(12).getOrHandle((v) => v + 5); // Result: 17
-  /// ```
-  R getOrHandle(R Function(L value) defaultValue) => _foldInternal(
-        ifLeft: defaultValue,
-        ifRight: identity,
-      );
 
   /// Returns the [Right.value] matching the given [predicate],
   /// or `null` if this is a [Left] or [Right.value] does not match.
@@ -920,38 +873,10 @@ sealed class Either<L, R> {
     return switch (self) { Left() => ifLeft(self), Right() => ifRight(self) };
   }
 
-  /// Handle any error, potentially recovering from it, by mapping it to an [Either] value.
-  ///
-  /// Applies the given function [f] if this is a [Left], otherwise returns this if this is a [Right].
-  /// This is like [flatMap] for the exception.
-  ///
-  /// ### Example
-  /// ```dart
-  /// Right<int, int>(12).handleErrorWith((v) => (v + 1).right<String>());   // Right(12)
-  /// Right<int, int>(12).handleErrorWith((v) => (v + 1).toString().left()); // Right(12)
-  /// Left<int, int>(12).handleErrorWith((v) => (v + 1).right<String>());    // Right(13)
-  /// Left<int, int>(12).handleErrorWith((v) => (v + 1).toString().left());  // Left('13')
-  /// ```
-  @useResult
-  Either<C, R> handleErrorWith<C>(Either<C, R> Function(L value) f) =>
-      _foldInternal(
-        ifLeft: f,
-        ifRight: (v) => v.right<C>(),
-      );
-
-  /// Handle any error, potentially recovering from it, by mapping it to an [Either] value.
-  ///
-  /// Applies the given function [f] if this is a [Left] and return the result wrapped in a [Right],
-  /// otherwise returns this if this is a [Right].
-  @useResult
-  Either<L, R> handleError(R Function(L value) f) => _foldInternal(
-        ifLeft: (v) => f(v).right(),
-        ifRight: (v) => v.right(),
-      );
-
   /// Redeem an [Either] to an [Either] by resolving the error **or** mapping the value [R] to [C].
   ///
-  /// [redeem] is derived from [map] and [handleError].
+  /// [redeem] is derived from [map] and
+  /// [HandleErrorEitherExtension.handleError].
   /// This is functionally equivalent to `map(rightOperation).handleError(leftOperation)`.
   @useResult
   Either<L, C> redeem<C>({
@@ -966,7 +891,8 @@ sealed class Either<L, R> {
   /// Redeem an [Either] to an [Either] by resolving the error
   /// **or** mapping the value [R] to [C] **with** an [Either].
   ///
-  /// [redeemWith] is derived from [flatMap] and [handleErrorWith].
+  /// [redeemWith] is derived from [FlatMapEitherExtension.flatMap] and
+  /// [HandleErrorWithEitherExtension.handleErrorWith].
   /// This is functionally equivalent to `flatMap(rightOperation).handleErrorWith(leftOperation)`.
   @useResult
   Either<C, D> redeemWith<C, D>({

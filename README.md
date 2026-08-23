@@ -422,7 +422,7 @@ Either<String, int> right = 2.right<String>();
 | [`onRight`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/onRight.html)                          | Side-effect on `Right`                        |
 | [`map`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/map.html)                                  | Transforms the `Right` value                  |
 | [`mapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/mapLeft.html)                          | Transforms the `Left` value                   |
-| [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/flatMap.html)                          | Chains computations                           |
+| [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/FlatMapEitherExtension/flatMap.html)         | Chains computations                           |
 | [`bimap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)                              | Transforms both sides                         |
 | [`combine`](https://pub.dev/documentation/dart_either/latest/dart_either/CombineEitherExtension/combine.html)         | Combines two `Either` values                  |
 | [`isRightAnd`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRightAnd.html)                    | Tests the `Right` value with a predicate      |
@@ -430,17 +430,25 @@ Either<String, int> right = 2.right<String>();
 | [`getOrDefault`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrDefaultEitherExtension/getOrDefault.html) | Extracts `Right` or falls back to an eager default value |
 | [`getOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrNull.html)                      | Extracts `Right` or returns `null`            |
 | [`leftOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/leftOrNull.html)                    | Extracts `Left` or returns `null`             |
-| [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrHandle.html)                  | Extracts `Right` or maps `Left` to a value    |
+| [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrHandleEitherExtension/getOrHandle.html) | Extracts `Right` or maps `Left` to a value    |
 | [`flatten`](https://pub.dev/documentation/dart_either/latest/dart_either/FlattenEitherExtension/flatten.html)          | Flattens nested `Either`                      |
 | [`merge`](https://pub.dev/documentation/dart_either/latest/dart_either/MergeEitherExtension/merge.html)                | Extracts value when both sides have same type |
 | [`findOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/findOrNull.html)                    | Finds `Right` matching a predicate            |
 | [`when`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/when.html)                                | Pattern-match returning the matched value     |
-| [`handleErrorWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleErrorWith.html)          | Recovers from `Left` with a new `Either`      |
-| [`handleError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleError.html)                  | Recovers from `Left` with a new `Right` value |
+| [`handleErrorWith`](https://pub.dev/documentation/dart_either/latest/dart_either/HandleErrorWithEitherExtension/handleErrorWith.html) | Recovers from `Left` with a new `Either`      |
+| [`handleError`](https://pub.dev/documentation/dart_either/latest/dart_either/HandleErrorEitherExtension/handleError.html) | Recovers from `Left` with a new `Right` value |
 | [`redeem`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeem.html)                            | Maps both sides to the same type              |
 | [`redeemWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeemWith.html)                    | Maps both sides to a new `Either`             |
 | [`toFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/AsFutureEitherExtension/toFuture.html)       | Converts to a `Future`                        |
 | [`getOrThrow`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrThrowEitherExtension/getOrThrow.html) | Extracts `Right` or throws the `Left` value   |
+
+`flatMap`, `getOrElse`, `getOrHandle`, `handleError`, and `handleErrorWith` are
+generic extension methods exported by the package barrel. With the normal
+unprefixed import, their call syntax is unchanged. A prefixed import must use
+an explicit extension override, for example
+`de.FlatMapEitherExtension(either).flatMap(transform)`; a selective import must
+include the relevant extension name. Extension methods are resolved statically
+and therefore are not available on a `dynamic` receiver.
 
 ```dart
 final ok = Either<String, int>.right(10);

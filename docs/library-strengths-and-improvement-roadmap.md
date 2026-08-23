@@ -3,11 +3,12 @@
 This note distills an earlier discussion about the value proposition of
 `dart_either` and the improvements that could make it more robust. It is not a
 transcript or marketing copy. Every technical statement below was reconciled
-with repository `master` at commit `69ec7b1` on 2026-08-23.
+with the repository source and tests on 2026-08-24.
 
 The package currently declares version `2.1.0`; changes under `Unreleased` in
-the [changelog](../CHANGELOG.md) are present on `master` but must not be
-described as part of the published `2.1.0` API without checking the release.
+the [changelog](../CHANGELOG.md) target `3.0.0`. They are repository work beyond
+the published `2.1.0` API and must not be described as released without
+checking the release.
 
 ## Executive summary
 
@@ -30,14 +31,14 @@ final class. Captured capabilities are revoked, intercepted short-circuits are
 detected, `raise` is implemented, and the full test suite runs in CI.
 
 The main remaining technical debt is not a lack of more convenience methods.
-It is semantic precision:
+The variance audit described in the original roadmap is now complete. The
+remaining work is semantic precision:
 
-1. finish the variance audit for legacy instance methods;
-2. define and test what parallel "short-circuit" does to still-running and
+1. define and test what parallel "short-circuit" does to still-running and
    queued work;
-3. make nullable and exception conversion more domain-selective;
-4. decide whether `BuiltList` still fits the lightweight positioning; and
-5. strengthen law, lower-bound, documentation, and package validation.
+2. make nullable and exception conversion more domain-selective;
+3. decide whether `BuiltList` still fits the lightweight positioning; and
+4. strengthen law, lower-bound, documentation, and package validation.
 
 ## Why the library is useful
 
@@ -205,10 +206,13 @@ maintenance posture than merely accumulating convenience methods.
 
 ### Targeted type-system hardening
 
-`getOrDefault`, `combine`, `flatten`, and `merge` use generic extensions and
-direct pattern matching where an instance boundary would be unsafe. The
-`EitherEffect` design has compiler regression fixtures for contravariant
-narrowing, rejected widening, and rejected external construction.
+`getOrDefault`, `combine`, `flatten`, `merge`, `flatMap`, `getOrElse`,
+`getOrHandle`, `handleError`, and `handleErrorWith` use generic extensions and
+direct pattern matching where an instance boundary would be unsafe. The five
+legacy callback-producing methods retain their names and each lives in a
+dedicated source file. The `EitherEffect` design has compiler regression
+fixtures for contravariant narrowing, rejected widening, and rejected external
+construction.
 
 ### CI and regression coverage
 
@@ -224,12 +228,10 @@ copy. Renovate-only PR activity likewise says little about architecture.
 
 ## Remaining risks and improvement roadmap
 
-### Priority 0: finish the variance audit
+### Completed Priority 0: finish the variance audit
 
-[`docs/either-variance-safety.md`](either-variance-safety.md) explicitly says
-its rule does not imply every existing API is safe. The following current
-instance methods still place a covariant class type parameter in an unsafe
-callback-produced position:
+The audit identified five instance methods that placed a covariant class type
+parameter in an unsafe callback-produced position:
 
 ```dart
 flatMap
@@ -239,25 +241,26 @@ handleError
 handleErrorWith
 ```
 
-A consumer probe against current `master` reproduced `_TypeError` for
-`flatMap`, `getOrHandle`, `handleError`, and `handleErrorWith` when an
-analyzer-valid widened `Right<Never, int>` was viewed as
+A consumer probe against the old instance implementations reproduced
+`_TypeError` for `flatMap`, `getOrHandle`, `handleError`, and `handleErrorWith`
+when an analyzer-valid widened `Right<Never, int>` was viewed as
 `Either<String, num>`. The failure happens at the virtual method boundary,
 potentially before the branch or method body can protect the call.
 
-This is the highest-value correctness work remaining:
+The completed fix:
 
-1. Audit every public `Either<L, R>` instance signature, not only the methods
-   already suspected.
-2. Add widened `Left<L, Never>`, `Right<Never, R>`, and subtype-to-supertype
-   regression fixtures for each unsafe shape.
-3. In `2.x`, introduce safe canonical operations as generic extensions or
-   top-level functions using direct pattern matching; retain old methods as
-   deprecated compatibility paths where Dart name resolution permits it.
-4. Reserve removal or reclamation of conflicting canonical names for the next
-   major version.
-5. Do not "fix" only the method body: runtime argument checks may fail before
-   it executes.
+1. audited every public `Either<L, R>` instance signature;
+2. added widened `Left<L, Never>`, `Right<Never, R>`, and `int`-to-`num`
+   regression fixtures for all five unsafe shapes;
+3. removed the five virtual instance members and restored their original names
+   as generic extensions, one method per file; and
+4. implemented every moved operation with direct sealed-class pattern matching
+   rather than delegating through another virtual boundary.
+
+Normal unprefixed barrel-import calls keep the same syntax. The relocation is
+still a deliberate compatibility break for prefixed imports, selective imports
+that omit the extension name, and `dynamic` receivers. The changelog records
+that boundary explicitly.
 
 ### Priority 0: make parallel short-circuit semantics exact
 
@@ -397,7 +400,7 @@ technical correctness verdict or quote stale PR counts as evidence.
 | Scope isolation | Nested sync/async token tests | Stress interleavings if runtime changes |
 | Capability lifetime | Post-scope use throws `StateError` | More async race cases if APIs expand |
 | Swallowed short-circuit | Sync and async interception tests | Helper-specific `ControlError` filtering tests |
-| Legacy `Either` variance | Selected safe APIs have widened tests | Full audit and migrations for unsafe methods |
+| Legacy `Either` variance | Full instance-signature audit and widened tests for every relocated unsafe method | Repeat the audit whenever a public boundary changes |
 | Sequential traversal | Success, first `Left`, and large iterable tests | Explicit order laws |
 | Parallel traversal | Concurrency limit, result order, early `Left` | Running/queued work after early result |
 | Dependency bounds | Dart 3.0.0 SDK job | `dart pub downgrade` dependency job |
@@ -406,14 +409,17 @@ technical correctness verdict or quote stale PR counts as evidence.
 
 ## Recommended next slice
 
-Start with one variance-hardening slice, not another convenience API:
+The variance-hardening slice is complete. The next independent slice should
+make parallel short-circuit semantics exact:
 
-1. turn the four reproduced unsafe methods plus deprecated `getOrElse` into a
-   complete signature audit;
-2. capture analyzer-valid runtime failures as regression fixtures;
-3. propose additive safe names and a `2.x` deprecation path using the
-   repository's API-rename workflow; and
-4. keep the parallel-semantics clarification as the next independent slice.
+1. document that result completion may be early while underlying work is not
+   cancelled;
+2. add deterministic tests for running and queued tasks after the first
+   observed `Left`;
+3. decide whether queued work should be suppressed after the result settles;
+   and
+4. keep cancellation claims out of the API unless the implementation can
+   actually enforce them.
 
 This follows the maturity level the library has reached. The question is no
 longer whether `Left` and `Right` work. It is whether every public type boundary

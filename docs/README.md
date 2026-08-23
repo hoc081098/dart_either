@@ -13,6 +13,9 @@ from the published package through `.pubignore`.
   boundary between Arrow inspiration and the Dart implementation.
 - [Either variance safety](either-variance-safety.md): signature variance,
   instance-method runtime checks, extension design, and widened-type tests.
+- [`dart_either` strengths and improvement roadmap](library-strengths-and-improvement-roadmap.md):
+  evidence-backed positioning, completed variance work, and remaining
+  correctness priorities.
 - [ADR 0001](adr/0001-scope-bound-contravariant-either-effect.md): why
   `EitherEffect` is an opaque, scope-bound, contravariant capability backed by
   a private binding scope.

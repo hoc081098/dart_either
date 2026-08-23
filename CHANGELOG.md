@@ -1,5 +1,9 @@
 ## Unreleased
 
+This section targets the next major release, `3.0.0`, because it contains
+public breaking changes. The package version remains at the latest published
+release until final release preparation.
+
 ### Added
 
 - Added `onLeft` and `onRight` for running a side effect on one side while
@@ -28,6 +32,15 @@
 
 ### Changed
 
+- **Breaking:** moved `flatMap`, `getOrElse`, `getOrHandle`, `handleError`, and
+  `handleErrorWith` from virtual `Either<L, R>` instance members to same-name
+  generic extensions. Each operation now lives in its own source file and
+  pattern-matches directly on `Left` / `Right`, preventing runtime `TypeError`
+  failures for analyzer-valid covariantly widened values. Ordinary calls made
+  through an unprefixed `package:dart_either/dart_either.dart` import keep the
+  same syntax. Prefixed or selective imports must expose/invoke the relevant
+  extension explicitly, and these operations are no longer available through
+  a `dynamic` receiver.
 - Hardened `EitherEffect<L>` as an opaque, contravariant binding capability
   backed by a library-private final scope and a phantom function type. Unsafe
   widening and construction outside the library are compile-time errors, while

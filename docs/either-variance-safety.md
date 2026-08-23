@@ -4,8 +4,9 @@ This document defines the variance rules for public APIs on `Either<L, R>`.
 Use it when adding an operation, moving an operation between the class and an
 extension, or reviewing an implementation that delegates to another method.
 
-This is a design and testing rule. It does not imply that every existing API
-already satisfies the rule.
+This is a design and testing rule. The public `Either` surface was fully
+audited in the current change; the audit must be repeated whenever a public
+signature or implementation boundary changes.
 
 ## Why this matters in Dart
 
@@ -171,8 +172,10 @@ the other.
 | `bool isRightAnd(bool Function(R))` | `R: - x - = +` | Safe |
 | `R getOrDefault(R)` | `R: -` and `R: +` | Unsafe |
 | `R getOrElse(R Function())` | input `R: - x + = -` | Unsafe |
+| `R getOrHandle(R Function(L))` | `L: +`, callback-result `R: -` | Unsafe for `R` |
 | `combine(Either<L, R> other, ...)` | `L/R: - x + = -` in `other` | Unsafe |
 | `flatMap(Either<L, C> Function(R))` | `R: +`, callback-result `L: -` | Unsafe for `L` |
+| `handleError(R Function(L))` | `L: +`, callback-result `R: -` | Unsafe for `R` |
 | `handleErrorWith(Either<C, R> Function(L))` | `L: +`, callback-result `R: -` | Unsafe for `R` |
 
 "Unsafe" here means unsafe as a virtual instance-member boundary for a
@@ -272,9 +275,19 @@ extension FlattenEitherExtension<L, R> on Either<L, Either<L, R>> {
 }
 ```
 
-## Current PR audit
+## Completed public-surface audit
 
-The branch review that introduced this document found and fixed three targets:
+The complete audit found unsafe virtual boundaries and moved each affected
+operation to a generic extension with direct pattern matching:
+
+- `flatMap` -> `FlatMapEitherExtension` in `flat_map.dart`.
+- `getOrElse` -> `GetOrElseEitherExtension` in `get_or_else.dart`.
+- `getOrHandle` -> `GetOrHandleEitherExtension` in `get_or_handle.dart`.
+- `handleError` -> `HandleErrorEitherExtension` in `handle_error.dart`.
+- `handleErrorWith` -> `HandleErrorWithEitherExtension` in
+  `handle_error_with.dart`.
+
+Earlier audited targets remain safe:
 
 - `getOrDefault` now uses `GetOrDefaultEitherExtension`, so its `R` input does
   not cross an instance-method boundary.
@@ -286,18 +299,21 @@ The branch review that introduced this document found and fixed three targets:
   so unsafe widening, external construction, and replacement binding behavior
   are rejected before a binding block can execute.
 
-The other APIs added in this PR were audited as covariance-safe instance
-members or extensions: `onLeft`, `onRight`, `getOrNull`, `leftOrNull`,
-`isRightAnd`, and `merge`.
+All remaining public `Either<L, R>` instance signatures were audited as
+covariance-safe virtual boundaries. Relevant canonical members and extensions
+include `fold`, `map`, `mapLeft`, `bimap`, `onLeft`, `onRight`, `getOrNull`,
+`leftOrNull`, `isRightAnd`, `all`, `findOrNull`, `when`, `redeem`,
+`redeemWith`, and `merge`.
 
-The audited implementation primitive and canonical operations carry the
+The following audited implementation primitives and operations carry the
 internal `@covarianceSafe` marker:
 
 - Proven from their signatures and audited implementations: `_foldInternal`,
   `fold`, `map`, `onLeft`, `onRight`, `getOrNull`, `leftOrNull`, and
   `isRightAnd`.
 - Covered by widened covariance regression tests: `getOrDefault`, `combine`,
-  `flatten`, and `merge`.
+  `flatten`, `merge`, `flatMap`, `getOrElse`, `getOrHandle`, `handleError`, and
+  `handleErrorWith`.
 
 The marker records a completed audit; it does not make an operation safe and
 is not enforced by the Dart type system. Apply it only when either:
@@ -309,12 +325,13 @@ is not enforced by the Dart type system. Apply it only when either:
    pattern matching or a proven-safe primitive, with widened regression
    coverage for the relevant paths.
 
-Deprecated naming aliases introduced in this PR intentionally remain unmarked.
-Their compatibility tests verify delegation to the marked canonical operation.
+Deprecated naming aliases intentionally remain unmarked when they only
+delegate to a marked canonical operation. `getOrElse` is the exception: its
+legacy callback signature is itself variance-sensitive, so its extension
+matches directly, carries the marker, and has its own widened regression test.
 
-This marker set is intentionally not exhaustive. Other pre-existing APIs must
-still be audited separately before they are reused as implementation primitives
-or changed in a future release.
+The completed audit is evidence for the current source only. New or modified
+APIs must still be audited before they are used as implementation primitives.
 
 ## Required regression tests
 
