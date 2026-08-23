@@ -21,7 +21,7 @@ extension GetOrElseEitherExtension<L, R> on Either<L, R> {
   /// ```
   @Deprecated(
     'Use getOrDefault(value) for eager fallback, '
-        'or getOrHandle for lazy fallback.',
+    'or getOrHandle for lazy fallback.',
   )
   @covarianceSafe
   R getOrElse(R Function() defaultValue) => switch (this) {

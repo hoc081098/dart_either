@@ -1017,6 +1017,109 @@ void main() {
     });
 
     group('covariance safety', () {
+      test('flatMap supports widened variants', () {
+        const Either<String, num> widenedLeft = Left<String, Never>('error');
+        const Either<String, num> widenedRight = Right<Never, int>(1);
+        var calls = 0;
+
+        expect(
+          widenedRight.flatMap<double>((value) {
+            calls += 1;
+            return Left<String, double>('next:$value');
+          }),
+          Left<String, double>('next:1'),
+        );
+        expect(calls, 1);
+
+        calls = 0;
+        expect(
+          widenedLeft.flatMap<double>((value) {
+            calls += 1;
+            return Right<String, double>(value.toDouble());
+          }),
+          Left<String, double>('error'),
+        );
+        expect(calls, 0);
+      });
+
+      test('getOrHandle supports widened lazy fallback', () {
+        const Either<String, num> widenedLeft = Left<String, Never>('error');
+        const Either<String, num> widenedRight = Right<Never, int>(1);
+        var leftCalls = 0;
+
+        num extract(Either<String, num> either) {
+          leftCalls = 0;
+          return either.getOrHandle((value) {
+            leftCalls += 1;
+            return value.length.toDouble();
+          });
+        }
+
+        expect(extract(widenedRight), 1);
+        expect(leftCalls, 0);
+
+        expect(extract(widenedLeft), 5.0);
+        expect(leftCalls, 1);
+      });
+
+      test('handleError supports widened variants', () {
+        const Either<String, num> widenedLeft = Left<String, Never>('error');
+        const Either<String, num> widenedRight = Right<Never, int>(1);
+        var calls = 0;
+
+        expect(
+          widenedRight.handleError((value) {
+            calls += 1;
+            return value.length.toDouble();
+          }),
+          Right<String, num>(1),
+        );
+        expect(calls, 0);
+
+        expect(
+          widenedLeft.handleError((value) {
+            calls += 1;
+            return value.length.toDouble();
+          }),
+          Right<String, num>(5.0),
+        );
+        expect(calls, 1);
+      });
+
+      test('handleErrorWith supports widened variants', () {
+        const Either<String, num> widenedLeft =
+            Left<String, Never>('error-message');
+        const Either<String, num> widenedRight = Right<Never, int>(1);
+        var calls = 0;
+
+        expect(
+          widenedRight.handleErrorWith<Object>((value) {
+            calls += 1;
+            return Right<Object, num>(value.length.toDouble());
+          }),
+          Right<Object, num>(1),
+        );
+        expect(calls, 0);
+
+        calls = 0;
+        expect(
+          widenedLeft.handleErrorWith<Object>((value) {
+            calls += 1;
+            return Left<Object, num>(StateError(value));
+          }),
+          isA<Left<Object, num>>().having(
+            (either) => either.value,
+            'Left<Object, num>.value',
+            isA<StateError>().having(
+              (error) => error.message,
+              'StateError.message',
+              'error-message',
+            ),
+          ),
+        );
+        expect(calls, 1);
+      });
+
       test('getOrDefault supports widened variants', () {
         const Either<String, int> widenedLeft = Left<String, Never>('error');
         const Either<String, num> widenedRight = Right<Never, int>(1);

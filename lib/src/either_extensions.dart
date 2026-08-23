@@ -3,6 +3,12 @@ import 'package:meta/meta.dart';
 import 'dart_either.dart';
 import 'internal.dart';
 
+export 'either_extensions/flat_map.dart';
+export 'either_extensions/get_or_else.dart';
+export 'either_extensions/get_or_handle.dart';
+export 'either_extensions/handle_error.dart';
+export 'either_extensions/handle_error_with.dart';
+
 /// Provide [toFuture] extension on [Either].
 extension AsFutureEitherExtension<L extends Object, R> on Either<L, R> {
   /// Convert this [Either] to a [Future].
@@ -18,7 +24,10 @@ extension AsFutureEitherExtension<L extends Object, R> on Either<L, R> {
 extension GetOrThrowEitherExtension<L extends Object, R> on Either<L, R> {
   /// Returns the [Right.value] if this [Either] is [Right], otherwise throws the [Left.value].
   /// This is functionally equivalent to `getOrHandle((value) => throw value)`.
-  R getOrThrow() => getOrHandle((value) => throw value);
+  R getOrThrow() => switch (this) {
+        Left(:final value) => throw value,
+        Right(:final value) => value,
+      };
 }
 
 /// Provide [getOrDefault] on [Either] without crossing a covariant instance
@@ -27,7 +36,8 @@ extension GetOrDefaultEitherExtension<L, R> on Either<L, R> {
   /// Returns the value from this [Right] or [defaultValue] if this is a [Left].
   ///
   /// [defaultValue] is eager, so it is evaluated before the call.
-  /// For lazy fallback computation, use [Either.getOrHandle].
+  /// For lazy fallback computation, use
+  /// [GetOrHandleEitherExtension.getOrHandle].
   ///
   /// ### Example
   /// ```dart
