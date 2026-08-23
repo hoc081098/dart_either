@@ -61,6 +61,30 @@ void main() {
       expect(calls, 1);
     });
 
+    test('getOrElse supports widened variants', () {
+      const Either<String, num> widenedLeft = Left<String, Never>('error');
+      const Either<String, num> widenedRight = Right<Never, int>(1);
+      var calls = 0;
+
+      expect(
+        widenedRight.getOrElse(() {
+          calls += 1;
+          return 2.5;
+        }),
+        1,
+      );
+      expect(calls, 0);
+
+      expect(
+        widenedLeft.getOrElse(() {
+          calls += 1;
+          return 2.5;
+        }),
+        2.5,
+      );
+      expect(calls, 1);
+    });
+
     test('orNull delegates to getOrNull', () {
       expect(rightOf1.orNull(), 1);
       expect(leftOf1.orNull(), isNull);
