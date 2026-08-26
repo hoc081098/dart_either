@@ -64,7 +64,7 @@ jobs:
           --in=./coverage
           --out=./coverage/lcov.info
 
-      - uses: codecov/codecov-action@v4.5.0
+      - uses: codecov/codecov-action@v7.0.0
         if: ${{ matrix.sdk == 'stable' }}
         with:
           files: ./coverage/lcov.info
