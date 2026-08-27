@@ -3,13 +3,13 @@
 This document tracks naming decisions that move `dart_either` closer to
 Arrow/Kotlin where that also produces an idiomatic Dart API.
 
-Statuses describe the current branch relative to `master`. Implemented items
-are still listed under `Unreleased` in `CHANGELOG.md`; they have not been
-assigned to a published version yet.
+Statuses describe the current repository state. Implemented items are assigned
+to `2.2.0` in `CHANGELOG.md`; verify the registry before describing that
+version as published.
 
 ## Implemented migrations
 
-| Previous API | Canonical API | Semantics | Compatibility status |
+| Previous API | Current 2.x API | Semantics | Compatibility status |
 |---|---|---|---|
 | `tapLeft` | `onLeft` | Run an action only for `Left`, then return the original `Either` | `tapLeft` remains as a deprecated alias |
 | `tap` | `onRight` | Run an action only for `Right`, then return the original `Either` | `tap` remains as a deprecated alias |
@@ -43,9 +43,9 @@ compatibility migration.
 
 ## Planned major-version cleanup
 
-`getOrHandle` is a compatibility bridge rather than the preferred final name.
-Once a major release can remove the legacy `getOrElse(() => R)` signature, the
-target API is:
+`getOrHandle` and the legacy `getOrElse(() => R)` signature are both 2.x
+migration APIs. In `3.0.0`, `getOrHandle` is removed and `getOrElse` takes the
+`Left` value. The final fallback API is:
 
 ```dart
 R getOrDefault(R defaultValue);                   // Eager fallback value.
@@ -55,18 +55,24 @@ R getOrElse(R Function(L value) defaultValue);    // Lazy, left-aware fallback.
 This final shape aligns the lazy fallback with Arrow's `getOrElse` while
 keeping eager evaluation explicit through `getOrDefault`.
 
-Use this migration sequence:
+Only these two fallback operations remain in 3.x. Use this migration sequence:
 
 1. Keep `getOrElse(() => R)` deprecated throughout `2.x` and use
    `getOrHandle((L) => R)` as the non-breaking, left-aware API.
-2. In the next planned major release, remove the legacy zero-argument
-   `getOrElse` signature.
-3. Introduce `getOrElse((L) => R)` as the canonical lazy fallback.
-4. Keep `getOrHandle((L) => R)` as a deprecated alias to the new `getOrElse`
-   for a migration window; remove it only in a later planned major release.
+2. In `3.0.0`, remove both `getOrHandle((L) => R)` and the legacy
+   `getOrElse(() => R)` signature.
+3. Introduce `getOrElse((L) => R)` as the only lazy, left-aware fallback.
+
+| 2.x call | 3.x migration |
+|---|---|
+| `getOrDefault(value)` | Unchanged |
+| `getOrHandle((left) => fallback)` | `getOrElse((left) => fallback)` |
+| `getOrElse(() => fallback)` | `getOrElse((_) => fallback)` for lazy evaluation, or `getOrDefault(fallback)` for an eager value |
 
 Do not reuse `getOrElse` with the new callback signature in a minor release;
-the identical method name would hide a source-breaking signature change.
+the identical method name would hide a source-breaking signature change. Do
+not retain `getOrHandle` as a deprecated alias in 3.x; its removal is part of
+the same planned major migration.
 
 ## Added operations
 

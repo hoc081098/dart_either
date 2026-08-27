@@ -22,7 +22,7 @@ jobs:
         sdk: [ beta, stable, 3.0.0 ]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1.8.0
@@ -64,7 +64,7 @@ jobs:
           --in=./coverage
           --out=./coverage/lcov.info
 
-      - uses: codecov/codecov-action@v4.5.0
+      - uses: codecov/codecov-action@v7.0.0
         if: ${{ matrix.sdk == 'stable' }}
         with:
           files: ./coverage/lcov.info
