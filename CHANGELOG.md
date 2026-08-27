@@ -1,57 +1,78 @@
-## Unreleased
+## 2.2.0 - Aug 27, 2026
 
-### Added
+### `Either`
 
-- Added `onLeft` and `onRight` for running a side effect on one side while
-  returning the original `Either` unchanged.
-- Added `isRightAnd` for checking whether an `Either` is `Right` and its value
-  satisfies a predicate.
-- Added extraction and fallback operations:
-  - `getOrNull()` returns the `Right` value or `null`.
-  - `leftOrNull()` returns the `Left` value or `null`.
-  - `getOrDefault(value)` returns the `Right` value or an eagerly evaluated
-    fallback value.
-- Added composition operations:
-  - `combine` combines two `Right` values or two `Left` values with the
-    provided functions, and otherwise returns the sole `Left`.
-  - `flatten` converts `Either<L, Either<L, R>>` to `Either<L, R>`.
-  - `merge` extracts the value from `Either<T, T>`.
-- Added `EitherEffect.raise(value)` — unconditionally short-circuits the
-  surrounding `Either.binding` or `Either.futureBinding` scope with a `Left`.
-  It is convenience syntax for callers that already have the left value, so
-  they do not need to construct a `Left` solely to bind it. For example,
-  `effect.raise('missing')` replaces
-  `effect.bind(Either<String, Never>.left('missing'))`. Its return type is
-  `Never`, so it also composes naturally as an expression (e.g.
-  `nullable ?? effect.raise('missing')`). `ensure` and `ensureNotNull` now
-  delegate their short-circuit path to `raise`.
+- **Side-effect hooks**
+  - Added `onLeft` and `onRight`; each runs an action on one side and returns
+    the original `Either`.
+  - Deprecated aliases remain: `tapLeft` → `onLeft`, `tap` → `onRight`.
+- **Right-side predicate**
+  - Added `isRightAnd` to match a `Right` value with a predicate.
+  - `exists` remains as a deprecated alias.
+- **Nullable extraction**
+  - Added `getOrNull` for `Right` and `leftOrNull` for `Left`.
+  - `orNull` remains as a deprecated alias of `getOrNull`.
+- **Fallback values**
+  - Added eager `getOrDefault(value)`.
+  - Deprecated lazy `getOrElse(() => value)`; use `getOrDefault` for an eager
+    fallback or `getOrHandle((left) => value)` for a lazy, left-aware fallback.
+- **Composition**
+  - `combine`: combine matching sides; otherwise return the sole `Left`.
+  - `flatten`: convert `Either<L, Either<L, R>>` to `Either<L, R>`.
+  - `merge`: extract the value from `Either<T, T>`.
 
-### Changed
+### `EitherEffect`, `Either.binding`, and `Either.futureBinding`
 
-- Hardened `EitherEffect<L>` as an opaque, contravariant binding capability
-  backed by a library-private final scope and a phantom function type. Unsafe
-  widening and construction outside the library are compile-time errors, while
-  supported binding syntax and behavior remain unchanged. The
-  `effect.bind(either)`, `either.bind(effect)`, and `eitherFuture.bind(effect)`
-  forms remain supported. The source-compatibility exception is prefixed
-  imports and selective imports that omit `BindEitherEffectExtension`; keeping
-  `effect.bind(either)` requires importing that extension unprefixed.
-- Capabilities issued by `Either.binding` and `Either.futureBinding` are
-  revoked when their binding scope completes. Invoking a captured capability
-  afterward throws a `StateError`.
-- Swallowing a binding scope's short-circuit signal and completing normally now
-  throws a `StateError` instead of producing a `Right`.
+- **Direct short-circuit**
+  - Added `effect.raise(left)` to exit the owning scope with `Left(left)`.
+  - It avoids an intermediate `Left` and returns `Never`, so it works in
+    expressions such as `nullable ?? effect.raise('missing')`.
+  - `ensure` and `ensureNotNull` now delegate their short-circuit paths to
+    `raise`.
+- **Variance-safe capability**
+  - Reworked `EitherEffect<L>` from a covariant public class into an opaque,
+    contravariant, scope-bound capability.
+  - Unsafe widening that previously compiled is now rejected; safe narrowing
+    is supported.
+  - `bind` moved from an instance member to `BindEitherEffectExtension`.
+    Standard unprefixed imports keep `effect.bind(either)` unchanged. Prefixed
+    imports must use the extension override; selective imports must include the
+    extension.
+- **Scope lifetime**
+  - Capabilities are now revoked when their sync or async binding scope ends.
+  - Reusing a captured capability afterward throws `StateError`.
+  - Swallowing a scope's short-circuit signal and then completing normally now
+    throws `StateError` instead of producing `Right`.
 
-### Deprecated
+### Import migration for `EitherEffect.bind`
 
-- Existing names remain available as deprecated compatibility aliases:
-  - `tapLeft` in favor of `onLeft`.
-  - `tap` in favor of `onRight`.
-  - `exists` in favor of `isRightAnd`.
-  - `orNull` in favor of `getOrNull`.
-- Deprecated `getOrElse(() => value)`. Use `getOrDefault(value)` for an eager
-  fallback, or `getOrHandle((left) => value)` for a lazy, left-aware fallback.
-  `getOrElse` retains its existing lazy behavior during the deprecation period.
+The usual unprefixed package import keeps the existing call syntax. With a
+prefixed import, invoke the named extension explicitly:
+
+```dart
+import 'package:dart_either/dart_either.dart' as de;
+
+final result = de.Either<String, int>.binding((effect) {
+  return de.BindEitherEffectExtension(effect).bind(
+    de.Either<String, int>.right(1),
+  );
+});
+```
+
+For a selective unprefixed import, include `BindEitherEffectExtension` in the
+`show` list. The Dart SDK constraint remains `>=3.0.0 <4.0.0`.
+
+### Documentation and verification
+
+- Updated the README, runnable examples, API docs, variance guidance, and
+  binding-scope docs.
+- Added regression coverage for:
+  - new APIs and deprecated aliases;
+  - covariance widening and rejected external `EitherEffect` construction;
+  - nested sync/async scopes, capability revocation, and intercepted
+    short-circuits.
+- CI now runs the complete suite on every configured Dart SDK and collects
+  stable-SDK coverage.
 
 ## 2.1.0 - Mar 07, 2026
 

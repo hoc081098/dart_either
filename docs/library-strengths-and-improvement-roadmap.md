@@ -5,9 +5,9 @@ This note distills an earlier discussion about the value proposition of
 transcript or marketing copy. Every technical statement below was reconciled
 with repository `master` at commit `69ec7b1` on 2026-08-23.
 
-The package currently declares version `2.1.0`; changes under `Unreleased` in
-the [changelog](../CHANGELOG.md) are present on `master` but must not be
-described as part of the published `2.1.0` API without checking the release.
+The package currently declares version `2.2.0`; changes in that section of the
+[changelog](../CHANGELOG.md) are present in the repository but must not be
+described as published without checking the registry.
 
 ## Executive summary
 
