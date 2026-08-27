@@ -3,12 +3,12 @@
 This note distills an earlier discussion about the value proposition of
 `dart_either` and the improvements that could make it more robust. It is not a
 transcript or marketing copy. Every technical statement below was reconciled
-with the repository source and tests on 2026-08-24.
+with the current branch source and tests on 2026-08-27.
 
-The package currently declares version `2.1.0`; changes under `Unreleased` in
-the [changelog](../CHANGELOG.md) target `3.0.0`. They are repository work beyond
-the published `2.1.0` API and must not be described as released without
-checking the release.
+The package currently declares version `2.2.0`. The breaking variance-safe
+location changes under `Unreleased` in the
+[changelog](../CHANGELOG.md) target `3.0.0`. Repository state must not be
+described as published without checking the registry.
 
 ## Executive summary
 

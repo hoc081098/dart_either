@@ -34,7 +34,7 @@ test/
   semaphore_test.dart           # Tests for Semaphore utility
 example/
   lib/
-    dart_either_readme.dart     # README examples
+    dart_either_example.dart    # README examples
     dart_either_styles.dart     # Usage style examples
     http_example/               # HTTP usage examples with Either
 docs/
