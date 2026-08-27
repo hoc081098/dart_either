@@ -16,10 +16,10 @@ jobs:
       run:
         working-directory: ./example
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Dart
-        uses: dart-lang/setup-dart@v1.7.1
+        uses: dart-lang/setup-dart@v1.8.0
         with:
           sdk: stable
 
