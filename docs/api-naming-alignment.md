@@ -3,9 +3,9 @@
 This document tracks naming decisions that move `dart_either` closer to
 Arrow/Kotlin where that also produces an idiomatic Dart API.
 
-Statuses describe the current repository state. Implemented items are still
-listed under `Unreleased` in `CHANGELOG.md`; they have not been assigned to a
-published version yet.
+Statuses describe the current repository state. Implemented items are assigned
+to `2.2.0` in `CHANGELOG.md`; verify the registry before describing that
+version as published.
 
 ## Implemented migrations
 

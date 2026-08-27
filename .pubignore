@@ -9,6 +9,7 @@ doc/api/
 .idea/
 .vscode/
 out/
+*.iml
 *.iws
 *.dart.js
 *.info.json
@@ -16,6 +17,9 @@ out/
 *.js_
 *.js.deps
 *.js.map
+
+# Repository automation configuration.
+/renovate.json
 
 # Repository-only documentation and agent configuration.
 /AGENTS.md

@@ -1,4 +1,4 @@
-## Unreleased
+## 2.2.0 - Aug 27, 2026
 
 ### `Either`
 
@@ -43,6 +43,24 @@
   - Reusing a captured capability afterward throws `StateError`.
   - Swallowing a scope's short-circuit signal and then completing normally now
     throws `StateError` instead of producing `Right`.
+
+### Import migration for `EitherEffect.bind`
+
+The usual unprefixed package import keeps the existing call syntax. With a
+prefixed import, invoke the named extension explicitly:
+
+```dart
+import 'package:dart_either/dart_either.dart' as de;
+
+final result = de.Either<String, int>.binding((effect) {
+  return de.BindEitherEffectExtension(effect).bind(
+    de.Either<String, int>.right(1),
+  );
+});
+```
+
+For a selective unprefixed import, include `BindEitherEffectExtension` in the
+`show` list. The Dart SDK constraint remains `>=3.0.0 <4.0.0`.
 
 ### Documentation and verification
 
