@@ -25,6 +25,9 @@ extension on Object {
   }
 }
 
+@pragma('vm:always-consider-inlining')
+@pragma('vm:prefer-inline')
+@pragma('dart2js:tryInline')
 T Function(Object?) _const<T>(T t) => (_) => t;
 
 ///
@@ -786,6 +789,24 @@ sealed class Either<L, R> {
   bool isRightAnd(bool Function(R value) predicate) => _foldInternal(
         ifLeft: _const(false),
         ifRight: predicate,
+      );
+
+  /// Returns `false` if this is a [Right], or applies [predicate] to the
+  /// [Left] value and returns its result.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Left<int, int>(12).isLeftAnd((v) => v > 10);  // Result: true
+  /// Left<int, int>(7).isLeftAnd((v) => v > 10);   // Result: false
+  ///
+  /// Right<int, int>(12).isLeftAnd((v) => v > 10); // Result: false
+  /// Right<int, int>(12).isLeftAnd((v) => v < 10); // Result: false
+  /// ```
+  @covarianceSafe
+  @useResult
+  bool isLeftAnd(bool Function(L value) predicate) => _foldInternal(
+        ifLeft: predicate,
+        ifRight: _const(false),
       );
 
   /// Alias of [isRightAnd].

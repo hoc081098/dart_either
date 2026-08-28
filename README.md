@@ -426,6 +426,7 @@ Either<String, int> right = 2.right<String>();
 | [`bimap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)                              | Transforms both sides                         |
 | [`combine`](https://pub.dev/documentation/dart_either/latest/dart_either/CombineEitherExtension/combine.html)         | Combines two `Either` values                  |
 | [`isRightAnd`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isRightAnd.html)                    | Tests the `Right` value with a predicate      |
+| [`isLeftAnd`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/isLeftAnd.html)                      | Tests the `Left` value with a predicate       |
 | [`all`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/all.html)                                  | Returns `true` for `Left` or if `Right` matches the predicate |
 | [`getOrDefault`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrDefaultEitherExtension/getOrDefault.html) | Extracts `Right` or falls back to an eager default value |
 | [`getOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrNull.html)                      | Extracts `Right` or returns `null`            |
@@ -448,6 +449,7 @@ final err = Either<String, int>.left('boom');
 
 // Predicates
 ok.isRightAnd((v) => v > 0); // true
+err.isLeftAnd((v) => v == 'boom'); // true
 err.all((_) => false); // true
 
 // Side effects

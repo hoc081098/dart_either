@@ -4,9 +4,9 @@ This document tracks naming decisions that move `dart_either` closer to
 Arrow/Kotlin where that also produces an idiomatic and type-safe Dart API.
 Arrow is a reference, not a one-to-one compatibility contract.
 
-Statuses describe the current repository state. Implemented items are assigned
-to `2.2.0` in `CHANGELOG.md`; verify the registry before describing that
-version as published.
+Statuses describe the current repository state. Released migrations are
+assigned to `2.2.0` in `CHANGELOG.md`; new work remains under `Unreleased`
+until the next version is prepared.
 
 ## Upstream evidence and decision boundary
 
@@ -109,6 +109,7 @@ Dart decision.
 | `tap` | `onRight` | Implemented in 2.2.0 | PR #2830 directly renamed `tap` to `onRight`; current Arrow keeps `onRight` | Safe `Either` member; `tap` remains a deprecated member alias |
 | `orNull` | `getOrNull` | Implemented in 2.2.0 | PR #2830 directly renamed `orNull` to `getOrNull`; current Arrow keeps `getOrNull` | Safe `Either` member; `orNull` remains a deprecated member alias |
 | `exists` | `isRightAnd` | Implemented in 2.2.0 | PR #2830 removed `exists`; Arrow PR #2927 later added predicate overloads of `isRight` | Dart already exposes `isRight` as a getter and has no overloads, so `isRightAnd` is the Dart adaptation; `exists` remains deprecated |
+| No previous Dart API | `isLeftAnd` | Unreleased | Arrow PR #2927 added a predicate overload of `isLeft` | Dart already exposes `isLeft` as a getter and has no overloads, so `isLeftAnd` is the Dart adaptation; no deprecated alias is needed |
 | `getOrElse(R Function())` | `getOrDefault(R)` or `getOrHandle(R Function(L))` | Implemented 2.x migration | Current Arrow's `getOrElse` is lazy and receives the `Left` value; Arrow has no eager `getOrDefault` on `Either` | `getOrDefault` is a Dart-specific safe extension; `getOrHandle` remains the temporary left-aware member; legacy `getOrElse` remains deprecated with its original lazy, zero-argument behavior |
 | `getOrHandle(R Function(L))` | `getOrElse(R Function(L))` | Planned for 3.0.0 only | PR #2830 called `getOrHandle` a duplicate of `getOrElse`; current Arrow exposes only left-aware `getOrElse` | Remove both 2.x fallback members in 3.0.0 and introduce the final `getOrElse` as a generic extension |
 | `handleError(R Function(L))` | No direct rename | Reviewed; retain in 2.x | PR #2830 initially replaced it through `recover`, but [Arrow's later final deprecation](https://github.com/arrow-kt/arrow/commit/b6a00df2a234131f62c95812958bad406641b13f) was `getOrElse(f).right()` and current Arrow has no `handleError` | Arrow `recover` is a richer Raise-DSL operation, not a compatibility alias. Treat any deprecation/removal and variance hardening as separate work |
@@ -187,9 +188,9 @@ scoped operation as `EitherEffect.ensure`.
 
 Already-aligned names needing no migration include `fold`, `swap`, `map`,
 `mapLeft`, `flatMap`, `onLeft`, `onRight`, `getOrNull`, `leftOrNull`,
-`flatten`, `merge`, `combine`, `left`, and `right`. Dart-specific APIs such as
-binding, bounded parallel traversal, Future/Stream adapters, `toFuture`, and
-`getOrThrow` have no direct Arrow naming contract.
+`isLeftAnd`, `isRightAnd`, `flatten`, `merge`, `combine`, `left`, and `right`.
+Dart-specific APIs such as binding, bounded parallel traversal, Future/Stream
+adapters, `toFuture`, and `getOrThrow` have no direct Arrow naming contract.
 
 In particular, Arrow's `catchOrThrow` constructs an `Either` while selectively
 catching a throwable type; Dart's `getOrThrow` extracts an existing `Either`.
@@ -206,7 +207,7 @@ not missing rename targets.
 | `flatten` | `FlattenEitherExtension` | Implemented; flatten `Either<L, Either<L, R>>` to `Either<L, R>` |
 | `merge` | `MergeEitherExtension` | Implemented; extract the value from `Either<T, T>` |
 | `EitherEffect.raise` | `RaiseEitherEffectExtension` | Implemented; short-circuit directly with a left value |
-| `isLeftAnd` | Safe `Either` member | Deferred new API, not a rename; adapts Arrow's predicate overload of `isLeft` because Dart already uses an `isLeft` getter |
+| `isLeftAnd` | Safe `Either` member | Implemented but unreleased; adapts Arrow's predicate overload of `isLeft` because Dart already uses an `isLeft` getter |
 | Arrow-style `recover` | Generic extension plus scoped `Raise` capability | Deferred new API, not a rename; it must support returning a success value or raising a new left value and must not be introduced as a weaker alias of `handleError` or `handleErrorWith` |
 
 Deferred or rejected names must not appear in usage examples as available

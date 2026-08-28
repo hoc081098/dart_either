@@ -2,12 +2,12 @@
 
 This note distills an earlier discussion about the value proposition of
 `dart_either` and the improvements that could make it more robust. It is not a
-transcript or marketing copy. Every technical statement below was reconciled
-with repository `master` at commit `69ec7b1` on 2026-08-23.
+transcript or marketing copy. Every technical statement below was last
+reconciled with the repository state on 2026-08-29.
 
-The package currently declares version `2.2.0`; changes in that section of the
-[changelog](../CHANGELOG.md) are present in the repository but must not be
-described as published without checking the registry.
+The package currently declares version `2.2.0`, which has been released. Newer
+source changes remain under [Unreleased](../CHANGELOG.md) until the next
+version is prepared.
 
 ## Executive summary
 
@@ -59,7 +59,7 @@ of the public API and not merely an internal implementation detail.
 The current API covers the operations that make `Either` practical in an app:
 
 - construction and inspection with `left`, `right`, pattern matching,
-  `isLeft`, and `isRight`;
+  `isLeft`, `isRight`, `isLeftAnd`, and `isRightAnd`;
 - transformation and composition with `map`, `mapLeft`, `flatMap`, `bimap`,
   `fold`, `combine`, `flatten`, `merge`, and `swap`;
 - recovery and extraction with `getOrNull`, `leftOrNull`, `getOrDefault`,
