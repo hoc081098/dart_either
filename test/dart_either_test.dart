@@ -982,12 +982,24 @@ void main() {
       );
     });
 
-    test('isLeftAnd', () {
-      expect(leftOf1.isLeftAnd((value) => value > 0), isTrue);
-      expect(leftOf1.isLeftAnd((value) => value > 1), isFalse);
+    group('isLeftAnd', () {
+      test('returns the predicate result for Left', () {
+        expect(leftOf1.isLeftAnd((value) => value > 0), isTrue);
+        expect(leftOf1.isLeftAnd((value) => value > 1), isFalse);
+      });
 
-      expect(rightOf1.isLeftAnd((value) => true), isFalse);
-      expect(rightOf1.isLeftAnd((value) => true), isFalse);
+      test('returns false without invoking the predicate for Right', () {
+        var calls = 0;
+
+        expect(
+          rightOf1.isLeftAnd((_) {
+            calls += 1;
+            return true;
+          }),
+          isFalse,
+        );
+        expect(calls, 0);
+      });
     });
 
     test('all', () {
