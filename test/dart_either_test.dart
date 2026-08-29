@@ -982,6 +982,26 @@ void main() {
       );
     });
 
+    group('isLeftAnd', () {
+      test('returns the predicate result for Left', () {
+        expect(leftOf1.isLeftAnd((value) => value > 0), isTrue);
+        expect(leftOf1.isLeftAnd((value) => value > 1), isFalse);
+      });
+
+      test('returns false without invoking the predicate for Right', () {
+        var calls = 0;
+
+        expect(
+          rightOf1.isLeftAnd((_) {
+            calls += 1;
+            return true;
+          }),
+          isFalse,
+        );
+        expect(calls, 0);
+      });
+    });
+
     test('all', () {
       expect(rightOf1.all((value) => value > 0), isTrue);
       expect(rightOf1.all((value) => value > 1), isFalse);
@@ -1017,6 +1037,16 @@ void main() {
     });
 
     group('covariance safety', () {
+      test('side predicates support widened variants', () {
+        const Either<Object, int> widenedLeft = Left<String, Never>('error');
+        const Either<String, num> widenedRight = Right<Never, int>(1);
+
+        expect(widenedLeft.isLeftAnd((value) => value == 'error'), isTrue);
+        expect(widenedLeft.isRightAnd((value) => value > 0), isFalse);
+        expect(widenedRight.isRightAnd((value) => value > 0), isTrue);
+        expect(widenedRight.isLeftAnd((value) => value.isNotEmpty), isFalse);
+      });
+
       test('getOrDefault supports widened variants', () {
         const Either<String, int> widenedLeft = Left<String, Never>('error');
         const Either<String, num> widenedRight = Right<Never, int>(1);

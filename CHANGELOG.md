@@ -1,3 +1,10 @@
+## Unreleased
+
+### `Either`
+
+- **Left-side predicate**
+  - Added `isLeftAnd` to match a `Left` value with a predicate.
+
 ## 2.2.0 - Aug 27, 2026
 
 ### `Either`

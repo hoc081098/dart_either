@@ -108,7 +108,7 @@ either.map((num value) => value.toString());
 ```
 
 The same reasoning makes callback consumers such as `fold`, `onLeft`,
-`onRight`, and `isRightAnd` covariance-safe.
+`onRight`, `isLeftAnd`, and `isRightAnd` covariance-safe.
 
 ## Why callback producers are different
 
@@ -168,6 +168,7 @@ the other.
 | `C fold(C Function(L), C Function(R))` | `L/R: - x - = +` | Safe |
 | `C map(C Function(R))` | `R: - x - = +` | Safe |
 | `void onRight(void Function(R))` | `R: - x - = +` | Safe |
+| `bool isLeftAnd(bool Function(L))` | `L: - x - = +` | Safe |
 | `bool isRightAnd(bool Function(R))` | `R: - x - = +` | Safe |
 | `R getOrDefault(R)` | `R: -` and `R: +` | Unsafe |
 | `R getOrElse(R Function())` | input `R: - x + = -` | Unsafe |
@@ -288,14 +289,14 @@ The branch review that introduced this document found and fixed three targets:
 
 The other APIs added in this PR were audited as covariance-safe instance
 members or extensions: `onLeft`, `onRight`, `getOrNull`, `leftOrNull`,
-`isRightAnd`, and `merge`.
+`isLeftAnd`, `isRightAnd`, and `merge`.
 
 The audited implementation primitive and canonical operations carry the
 internal `@covarianceSafe` marker:
 
 - Proven from their signatures and audited implementations: `_foldInternal`,
-  `fold`, `map`, `onLeft`, `onRight`, `getOrNull`, `leftOrNull`, and
-  `isRightAnd`.
+  `fold`, `map`, `onLeft`, `onRight`, `getOrNull`, `leftOrNull`, `isLeftAnd`,
+  and `isRightAnd`.
 - Covered by widened covariance regression tests: `getOrDefault`, `combine`,
   `flatten`, and `merge`.
 

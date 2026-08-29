@@ -80,6 +80,10 @@ void main() {
   print(leftValue); // Prints none
   print(nullableValue); // Prints 10
 
+  /// Match the value on either side with a predicate
+  print(right.isRightAnd((value) => value > 0)); // Prints true
+  print(left.isLeftAnd((value) => value == 'none')); // Prints true
+
   /// Transform and compose
   final flatMap = right.flatMap((a) => Either.right(a + 10));
   print(flatMap); // Prints Either.Right(20)
