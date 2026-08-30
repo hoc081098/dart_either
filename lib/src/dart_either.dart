@@ -9,6 +9,7 @@ import 'either_extensions.dart';
 import 'extensions.dart';
 import 'internal.dart';
 import 'utils/semaphore.dart';
+import 'to_either_stream.dart';
 
 /// Map [error] and [stackTrace] to a [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
@@ -18,10 +19,12 @@ extension on Object {
   @pragma('vm:prefer-inline')
   @pragma('dart2js:tryInline')
   Object throwIfFatal() {
-    if (this is ControlError) {
-      throw this;
-    }
-    return this;
+    final self = this;
+    return switch (self) {
+      ControlError() => throw self,
+      _ when Either._fatalErrorTypes.contains(self) => throw self,
+      _ => this,
+    };
   }
 }
 
@@ -92,6 +95,14 @@ sealed class Either<L, R> {
         Right(value: final r) => ifRight(r),
       };
 
+  static final Set<Type> _fatalErrorTypes = <Type>{};
+
+  /// TODO
+  static void registerFatalErrorType(Type type) {
+    assert(type != Null);
+    _fatalErrorTypes.add(type);
+  }
+
   // -----------------------------------------------------------------------------
   //
   // BEGIN: constructors
@@ -113,9 +124,38 @@ sealed class Either<L, R> {
   /// Either<Object, int>.catchError((e, s) => e, () => throw Exception()); // Result: Left(Exception())
   /// Either<Object, String>.catchError((e, s) => e, () => 'hoc081098');    // Result: Right('hoc081098')
   /// ```
+  @Deprecated('Use Either<L, R>.tryCatch() instead. It will be removed in v3.')
   factory Either.catchError(ErrorMapper<L> errorMapper, R Function() block) {
     try {
       return Either.right(block());
+    } catch (e, s) {
+      return Either.left(errorMapper(e.throwIfFatal(), s));
+    }
+  }
+
+  /// Evaluates the specified [action] and wrap the result in a [Right].
+  ///
+  /// If an error is thrown, calling [errorMapper] with that error
+  /// and wrap the result in a [Left].
+  ///
+  /// ### Example
+  /// ```dart
+  /// Either<Object, int>.tryCatch(
+  ///   action: () => throw Exception(),
+  ///   errorMapper: (e, s) => e,
+  /// ); // Result: Left(Exception())
+  ///
+  /// Either<Object, String>.tryCatch(
+  ///   action: () => 'hoc081098',
+  ///   errorMapper: (e, s) => e,
+  /// ); // Result: Right('hoc081098')
+  /// ```
+  factory Either.tryCatch({
+    required ErrorMapper<L> errorMapper,
+    required R Function() action,
+  }) {
+    try {
+      return Either.right(action());
     } catch (e, s) {
       return Either.left(errorMapper(e.throwIfFatal(), s));
     }
@@ -163,6 +203,7 @@ sealed class Either<L, R> {
   /// - Do NOT store [EitherEffect] or invoke it after [block] returns.
   /// - Errors thrown by [block] are not converted to [Left].
   /// - Use [Either.catchError], [Either.catchFutureError] or [Either.catchStreamError] to catch error,
+  /// - Use [Either.tryCatch], [Either.tryCatchAsync] or [ToEitherStreamExtension.toEitherStream] to catch error,
   ///   then bind the resulting [Either].
   ///
   /// ```dart
@@ -277,7 +318,8 @@ sealed class Either<L, R> {
   /// - Errors thrown by [block], or emitted by a bound future, are not converted to [Left].
   /// - Use [Either.catchError], [Either.catchFutureError] or [Either.catchStreamError] to catch error,
   ///   then bind the resulting [Either].
-  ///
+  /// - Use [Either.tryCatch], [Either.tryCatchAsync] or [ToEitherStreamExtension.toEitherStream] to catch error,
+  ///   then bind the resulting [Either].
   /// ```dart
   /// /// This function can throw an error.
   /// int canThrowAnError() { ... }
@@ -341,27 +383,29 @@ sealed class Either<L, R> {
   /// // Result: Left(Exception())
   /// await Either.catchFutureError<Object, String>(
   ///   (e, s) => e,
-  ///   () => throw Exception())
+  ///   () => throw Exception(),
   /// );
   ///
   /// // Result: Left(Exception())
   /// await Either.catchFutureError<Object, String>(
   ///   (e, s) => e,
-  ///   () async => throw Exception())
+  ///   () async => throw Exception(),
   /// );
   ///
   /// // Result: Right('hoc081098')
   /// await Either.catchFutureError<Object, String>(
   ///   (e, s) => e,
-  ///   () => Future.value('hoc081098'))
+  ///   () => Future.value('hoc081098'),
   /// );
   ///
   /// // Result: Right('hoc081098')
   /// await Either.catchFutureError<Object, String>(
   ///   (e, s) => e,
-  ///   () async => await Future.value('hoc081098'))
+  ///   () async => await Future.value('hoc081098'),
   /// );
   /// ```
+  @Deprecated(
+      'Use Either.tryCatchAsync<L, R>() instead. It will be removed in v3.')
   static Future<Either<L, R>> catchFutureError<L, R>(
     ErrorMapper<L> errorMapper,
     FutureOr<R> Function() block,
@@ -370,6 +414,45 @@ sealed class Either<L, R> {
           .then((value) => Either<L, R>.right(value))
           .onError<Object>(
               (e, s) => Either.left(errorMapper(e.throwIfFatal(), s)));
+
+  /// Evaluates the specified [action] and wrap the result in a [Right].
+  ///
+  /// If an error is thrown or [action] returns a future that completes with an error,
+  /// calling [errorMapper] with that error and wrap the result in a [Left].
+  ///
+  /// ### Example
+  /// ```dart
+  /// // Result: Left(Exception())
+  /// await Either.tryCatchAsync<Object, String>(
+  ///   action: () => throw Exception()),
+  ///   errorMapper: (e, s) => e,
+  /// );
+  ///
+  /// // Result: Left(Exception())
+  /// await Either.tryCatchAsync<Object, String>(
+  ///   action: () async => throw Exception()),
+  ///   errorMapper: (e, s) => e,
+  /// );
+  ///
+  ///
+  /// // Result: Right('hoc081098')
+  /// await Either.tryCatchAsync<Object, String>(
+  ///   action: () => Future.value('hoc081098'),
+  ///   errorMapper: (e, s) => e,
+  /// );
+  ///
+  /// // Result: Right('hoc081098')
+  /// await Either.tryCatchAsync<Object, String>(
+  ///   action: () async => await Future.value('hoc081098'),
+  ///   errorMapper: (e, s) => e,
+  /// );
+  /// ```
+  static Future<Either<L, R>> tryCatchAsync<L, R>({
+    required FutureOr<R> Function() action,
+    required ErrorMapper<L> errorMapper,
+  }) =>
+      Future.sync(action).then(Either<L, R>.right).onError<Object>(
+          (e, s) => Either<L, R>.left(errorMapper(e.throwIfFatal(), s)));
 
   /// Transforms data events to [Right]s and error events to [Left]s.
   ///
@@ -396,6 +479,8 @@ sealed class Either<L, R> {
   ///
   /// eitherStream.listen(print); // prints Either.Left(Exception)
   /// ```
+  @Deprecated(
+      'Use Stream.toEitherStream extension instead. It will be removed in v3.')
   @useResult
   static Stream<Either<L, R>> catchStreamError<L, R>(
     ErrorMapper<L> errorMapper,
@@ -664,7 +749,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).tapLeft((_) => print('flower')); // Result: Right(12)
   /// Left<int, int>(12).tapLeft((_) => print('flower'));  // Result: prints 'flower' and returns: Left(12)
   /// ```
-  @Deprecated('Use onLeft instead.')
+  @Deprecated('Use onLeft instead. It will be removed in v3.')
   Either<L, R> tapLeft(void Function(L value) action) => onLeft(action);
 
   /// Performs the given [action] on the encapsulated [R] value if this is a [Right].
@@ -690,7 +775,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).tap((_) => print('flower')); // Result: prints 'flower' and returns: Right(12)
   /// Left<int, int>(12).tap((_) => print('flower'));  // Result: Left(12)
   /// ```
-  @Deprecated('Use onRight instead.')
+  @Deprecated('Use onRight instead. It will be removed in v3.')
   Either<L, R> tap(void Function(R value) action) => onRight(action);
 
   /// The given function is applied if this is a `Right`.
@@ -816,7 +901,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).exists((v) => v > 10); // Result: true
   /// Left<int, int>(12).exists((v) => v > 10);  // Result: false
   /// ```
-  @Deprecated('Use isRightAnd instead.')
+  @Deprecated('Use isRightAnd instead. It will be removed in v3.')
   @useResult
   bool exists(bool Function(R value) predicate) => isRightAnd(predicate);
 
@@ -852,7 +937,8 @@ sealed class Either<L, R> {
   /// Left<int, int>(12).getOrElse(() => 17);  // Result: 17
   /// ```
   @Deprecated(
-    'Use getOrDefault(value) for eager fallback, or getOrHandle for lazy fallback.',
+    'Use getOrDefault(value) for eager fallback, or getOrHandle for lazy fallback. '
+    'It will be removed in v3.',
   )
   R getOrElse(R Function() defaultValue) => getOrHandle((_) => defaultValue());
 
@@ -889,7 +975,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).orNull(); // Result: 12
   /// Left<int, int>(12).orNull();  // Result: null
   /// ```
-  @Deprecated('Use getOrNull instead.')
+  @Deprecated('Use getOrNull instead. It will be removed in v3.')
   R? orNull() => getOrNull();
 
   /// Returns the value from this [Right]

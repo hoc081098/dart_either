@@ -17,18 +17,18 @@ import 'shared_model.dart';
 Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
     Either.futureBinding((effect) async {
       // Create Uri
-      final uri = Either.catchError(
-        toAppError('Parse $uriString'),
-        () => Uri.parse(uriString),
+      final uri = Either.tryCatch(
+        action: () => Uri.parse(uriString),
+        errorMapper: toAppError('Parse $uriString'),
       ).bind(effect);
 
       // Get response
-      final response = await Either.catchFutureError(
-        toAppError('http.get($uri)'),
-        () async {
+      final response = await Either.tryCatchAsync(
+        action: () async {
           await delay(500);
           return http.get(uri);
         },
+        errorMapper: toAppError('http.get($uri)'),
       ).bind(effect);
 
       final statusCode = response.statusCode;
@@ -48,9 +48,9 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
       );
 
       // Decode body to json
-      return Either.catchError(
-        toAppError('jsonDecode: $body'),
-        () => jsonDecode(body),
+      return Either.tryCatch(
+        action: () => jsonDecode(body),
+        errorMapper: toAppError('jsonDecode: $body'),
       ).bind(effect);
     });
 

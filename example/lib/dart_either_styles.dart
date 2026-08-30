@@ -66,24 +66,24 @@ Future<void> imperativeCode() async {
 // ---------------------------------------------------------------------------
 
 Future<Either<String, User?>> findUserByIdEither(String id) =>
-    Either.catchFutureError(
-      (e, s) => 'findUserById failed: $e, $s',
-      () => findUserById(id),
+    Either.tryCatchAsync(
+      action: () => findUserById(id),
+      errorMapper: (e, s) => 'findUserById failed: $e, $s',
     );
 
 Future<Either<String, List<Post>>> getPostsByUserEither(User user) =>
-    Either.catchFutureError(
-      (e, s) => 'getPostsByUser failed: $e, $s',
-      () => getPostsByUser(user),
+    Either.tryCatchAsync(
+      action: () => getPostsByUser(user),
+      errorMapper: (e, s) => 'getPostsByUser failed: $e, $s',
     );
 
 Future<Either<String, void>> doSomethingWithPostsEither(
   User user,
   List<Post> posts,
 ) =>
-    Either.catchFutureError(
-      (e, s) => 'doSomethingWithPosts failed: $e, $s',
-      () => doSomethingWithPosts(user, posts),
+    Either.tryCatchAsync(
+      action: () => doSomethingWithPosts(user, posts),
+      errorMapper: (e, s) => 'doSomethingWithPosts failed: $e, $s',
     );
 
 // ---------------------------------------------------------------------------

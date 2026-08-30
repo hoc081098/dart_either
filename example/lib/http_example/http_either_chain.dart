@@ -20,9 +20,9 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) {
     final body = response.body;
 
     return statusCode >= 200 && statusCode < 300
-        ? Either<AppError, dynamic>.catchError(
-            toAppError('jsonDecode: body=$body'),
-            () => jsonDecode(body),
+        ? Either<AppError, dynamic>.tryCatch(
+            action: () => jsonDecode(body),
+            errorMapper: toAppError('jsonDecode: body=$body'),
           )
         : AppError(
             HttpException(
@@ -35,18 +35,18 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) {
   }
 
   Future<Either<AppError, http.Response>> httpGet(Uri uri) =>
-      Either.catchFutureError(
-        toAppError('http.get($uri)'),
-        () async {
+      Either.tryCatchAsync(
+        action: () async {
           await delay(500);
           return http.get(uri);
         },
+        errorMapper: toAppError('http.get($uri)'),
       );
 
   final uri = Future.value(
-    Either.catchError(
-      toAppError('Parse $uriString'),
-      () => Uri.parse(uriString),
+    Either.tryCatch(
+      action: () => Uri.parse(uriString),
+      errorMapper: toAppError('Parse $uriString'),
     ),
   );
 
