@@ -97,9 +97,11 @@ sealed class Either<L, R> {
 
   static final Set<Type> _fatalErrorTypes = <Type>{};
 
-  /// TODO
+  /// Register a type of fatal error that should not be caught
+  /// by [Either.catchError], [Either.catchFutureError], [Either.catchStreamError],
+  /// [Either.tryCatch], [Either.tryCatchAsync] and [ToEitherStreamExtension.toEitherStream].
   static void registerFatalErrorType(Type type) {
-    assert(type != Null);
+    assert(type != Null, 'a null value is not considered a throwable error in Dart');
     _fatalErrorTypes.add(type);
   }
 
