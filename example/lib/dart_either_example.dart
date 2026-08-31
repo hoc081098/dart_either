@@ -57,11 +57,11 @@ void main() {
 
   /// Return [Left] if the function throws an error.
   /// Otherwise return [Right].
-  final catchError = Either.tryCatch(
+  final tryCatchResult = Either.tryCatch(
     action: () => int.parse('invalid'),
     errorMapper: (e, s) => 'Error: $e',
   );
-  print(catchError);
+  print(tryCatchResult);
   // Prints Either.Left(Error: FormatException: Invalid radix-10 number (at character 1)
   // invalid
   // ^
