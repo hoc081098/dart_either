@@ -16,7 +16,8 @@ lib/
   dart_either.dart              # Public library barrel file (exports all public APIs)
   src/
     dart_either.dart            # Core Either sealed class (Left, Right), constructors, instance methods, static methods, EitherEffect (monad comprehension), ControlError
-    extensions.dart             # Extension methods: toEitherStream, toEitherFuture, thenFlatMapEither, thenMapEither, .left(), .right()
+    extensions.dart             # Extension methods: toEitherFuture, thenFlatMapEither, thenMapEither, .left(), .right()
+    to_either_stream.dart       # Stream.toEitherStream error-capture adapter
     either_extensions.dart      # Extension methods: toFuture, getOrThrow, getOrDefault, combine, flatten, merge
     binding.dart                # Monad comprehension extensions: ensure, ensureNotNull, bindFuture, bind on Either, bind on Future<Either>
     internal.dart               # Shared internal helpers and @covarianceSafe marker
