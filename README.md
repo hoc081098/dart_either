@@ -144,10 +144,10 @@ final mapRight = right.map((a) => 'String: $a'); // Either.Right(String: 10)
 // Map the left value to an [int]
 final mapLeft = right.mapLeft((a) => a.length); // Either.Right(10)
 
-// Return [Left] if the function throws an error, otherwise return [Right]
-final catchError = Either.catchError(
-  (e, s) => 'Error: $e',
-  () => int.parse('invalid'),
+// Return [Left] if the action throws an error, otherwise return [Right]
+final tryCatchResult = Either.tryCatch(
+  action: () => int.parse('invalid'),
+  errorMapper: (e, s) => 'Error: $e',
 );
 // Either.Left(Error: FormatException: Invalid radix-10 number (at character 1)
 // invalid
@@ -215,7 +215,7 @@ print(nullableValue); // 10
 | [`Either.left`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.left.html)             | Creates a `Left` value      |
 | [`Either.right`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.right.html)           | Creates a `Right` value     |
 | [`Either.binding`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.binding.html)       | Sync monad comprehension    |
-| [`Either.catchError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.catchError.html) | Wraps a throwing expression |
+| [`Either.tryCatch`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.tryCatch.html)     | Wraps a throwing expression |
 | [`Left`](https://pub.dev/documentation/dart_either/latest/dart_either/Left/Left.html)                             | Direct `Left` constructor   |
 | [`Right`](https://pub.dev/documentation/dart_either/latest/dart_either/Right/Right.html)                          | Direct `Right` constructor  |
 
@@ -235,9 +235,9 @@ Either<Object, String>.binding((effect) {
 });
 
 // 3) Catch thrown exception into Left
-Either.catchError(
-  (e, s) => 'Error: $e',
-  () => int.parse('invalid'),
+Either.tryCatch(
+  action: () => int.parse('invalid'),
+  errorMapper: (e, s) => 'Error: $e',
 );
 ```
 
@@ -245,8 +245,8 @@ Either.catchError(
 
 | Method                                                                                                                 | Description                              |
 |------------------------------------------------------------------------------------------------------------------------|------------------------------------------|
-| [`Either.catchFutureError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/catchFutureError.html) | Wraps an async throwing expression       |
-| [`Either.catchStreamError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/catchStreamError.html) | Wraps a stream that may throw            |
+| [`Either.tryCatchAsync`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/tryCatchAsync.html)       | Wraps an async throwing expression       |
+| [`Either.registerFatalError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/registerFatalError.html) | Excludes an error type from capture   |
 | [`Either.fromNullable`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fromNullable.html)         | Converts a nullable value                |
 | [`Either.futureBinding`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/futureBinding.html)       | Async monad comprehension                |
 | [`Either.parSequenceN`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/parSequenceN.html)         | Parallel sequence with concurrency limit |
@@ -261,29 +261,21 @@ import 'package:built_collection/built_collection.dart';
 import 'package:dart_either/dart_either.dart';
 import 'package:http/http.dart' as http;
 
-// 1) Either.catchFutureError
-Future<Either<String, http.Response>> eitherFuture = Either.catchFutureError(
-  (e, s) => 'Error: $e',
-  () async {
+// 1) Either.tryCatchAsync
+Future<Either<String, http.Response>> eitherFuture = Either.tryCatchAsync(
+  action: () async {
     final uri = Uri.parse('https://pub.dev/packages/dart_either');
     return http.get(uri);
   },
+  errorMapper: (e, s) => 'Error: $e',
 );
 (await eitherFuture).fold(ifLeft: print, ifRight: print);
 
 
-// 2) Either.catchStreamError
-Stream<int> genStream() async* {
-  for (var i = 0; i < 5; i++) {
-    yield i;
-  }
-  throw Exception('Fatal');
-}
-Stream<Either<String, int>> eitherStream = Either.catchStreamError(
-  (e, s) => 'Error: $e',
-  genStream(),
-);
-eitherStream.listen(print);
+// 2) Keep app-specific control-flow exceptions out of Left
+class CancellationException implements Exception {}
+
+Either.registerFatalError<CancellationException>();
 
 
 // 3) Either.fromNullable
@@ -295,25 +287,25 @@ Either.fromNullable<int>(1);    // Right(1)
 String url1 = 'url1';
 String url2 = 'url2';
 Either.futureBinding<String, http.Response>((effect) async {
-  final response = await Either.catchFutureError(
-    (e, s) => 'Get $url1: $e',
-    () async {
+  final response = await Either.tryCatchAsync(
+    action: () async {
       final uri = Uri.parse(url1);
       return http.get(uri);
     },
+    errorMapper: (e, s) => 'Get $url1: $e',
   ).bind(effect);
 
-  final id = Either.catchError(
-    (e, s) => 'Parse $url1 body: $e',
-    () => jsonDecode(response.body)['id'] as String,
+  final id = Either.tryCatch(
+    action: () => jsonDecode(response.body)['id'] as String,
+    errorMapper: (e, s) => 'Parse $url1 body: $e',
   ).bind(effect);
 
-  return await Either.catchFutureError(
-    (e, s) => 'Get $url2: $e',
-    () async {
+  return await Either.tryCatchAsync(
+    action: () async {
       final uri = Uri.parse('$url2?id=$id');
       return http.get(uri);
     },
+    errorMapper: (e, s) => 'Get $url2: $e',
   ).bind(effect);
 });
 
@@ -322,12 +314,12 @@ Either.futureBinding<String, http.Response>((effect) async {
 List<Either<String, http.Response>> eithers = await Future.wait(
   [1, 2, 3, 4, 5].map((id) {
     final url = 'url?id=$id';
-    return Either.catchFutureError(
-      (e, s) => 'Get $url: $e',
-      () async {
+    return Either.tryCatchAsync(
+      action: () async {
         final uri = Uri.parse(url);
         return http.get(uri);
       },
+      errorMapper: (e, s) => 'Get $url: $e',
     );
   }),
 );
@@ -339,9 +331,9 @@ Either<String, BuiltList<http.Response>> sequencedResponses = Either.sequence(
 // 6) Either.traverse
 Either<String, BuiltList<Uri>> urisEither = Either.traverse(
   ['url1', 'url2', '::invalid::'],
-  (String uriString) => Either.catchError(
-    (e, s) => 'Failed to parse $uriString: $e',
-    () => Uri.parse(uriString),
+  (String uriString) => Either.tryCatch(
+    action: () => Uri.parse(uriString),
+    errorMapper: (e, s) => 'Failed to parse $uriString: $e',
   ),
 ); // Left(FormatException('Failed to parse ::invalid:::...'))
 
@@ -363,6 +355,14 @@ Future<Either<String, BuiltList<int>>> parallelTraverse = Either.parTraverseN(
   maxConcurrent: 2,
 );
 ```
+
+`registerFatalError<T>()` is isolate-local, additive, and idempotent. Registered
+types and their subtypes are rethrown by the error-capture helpers instead of
+being converted to `Left`.
+
+> Deprecated aliases remain available during `2.x`: `catchError` → `tryCatch`,
+> `catchFutureError` → `tryCatchAsync`, and `catchStreamError` →
+> `Stream.toEitherStream`.
 
 #### 1.3. Binding capability and extension methods
 
@@ -500,9 +500,9 @@ ok.fold(
 Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
   Either<AsyncError, dynamic> toJson(http.Response response) =>
       response.statusCode >= 200 && response.statusCode < 300
-          ? Either<AsyncError, dynamic>.catchError(
-              toAsyncError,
-              () => jsonDecode(response.body),
+          ? Either<AsyncError, dynamic>.tryCatch(
+              action: () => jsonDecode(response.body),
+              errorMapper: toAsyncError,
             )
           : AsyncError(
               HttpException(
@@ -513,10 +513,17 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
             ).left<dynamic>();
 
   Future<Either<AsyncError, http.Response>> httpGet(Uri uri) =>
-      Either.catchFutureError(toAsyncError, () => http.get(uri));
+      Either.tryCatchAsync(
+        action: () => http.get(uri),
+        errorMapper: toAsyncError,
+      );
 
-  final uri =
-      Future.value(Either.catchError(toAsyncError, () => Uri.parse(uriString)));
+  final uri = Future.value(
+    Either.tryCatch(
+      action: () => Uri.parse(uriString),
+      errorMapper: toAsyncError,
+    ),
+  );
 
   return uri.thenFlatMapEither(httpGet).thenFlatMapEither<dynamic>(toJson);
 }
@@ -621,14 +628,14 @@ final insufficientStock = calculateOrderTotal(
 ```dart
 Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
     Either.futureBinding<AsyncError, dynamic>((effect) async {
-      final uri = Either.catchError(
-        toAsyncError,
-        () => Uri.parse(uriString),
+      final uri = Either.tryCatch(
+        action: () => Uri.parse(uriString),
+        errorMapper: toAsyncError,
       ).bind(effect);
 
-      final response = await Either.catchFutureError(
-        toAsyncError,
-        () => http.get(uri),
+      final response = await Either.tryCatchAsync(
+        action: () => http.get(uri),
+        errorMapper: toAsyncError,
       ).bind(effect);
 
       effect.ensure(
@@ -642,9 +649,9 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
         ),
       );
 
-      return Either<AsyncError, dynamic>.catchError(
-        toAsyncError,
-        () => jsonDecode(response.body),
+      return Either<AsyncError, dynamic>.tryCatch(
+        action: () => jsonDecode(response.body),
+        errorMapper: toAsyncError,
       ).bind(effect);
     });
 
