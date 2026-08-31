@@ -98,16 +98,24 @@ sealed class Either<L, R> {
 
   /// Registers errors of type [T] as fatal to `Either` error capture.
   ///
-  /// A registered error, including any subtype of [T], is rethrown instead of
-  /// being passed to an [ErrorMapper] and converted to a [Left]. Registration
-  /// is isolate-local, additive, and idempotent for each type.
+  /// An error matching [T], including any subtype of [T], remains an error with
+  /// its original stack trace instead of being passed to an [ErrorMapper] and
+  /// converted to a [Left].
   ///
   /// This policy applies to [Either.tryCatch], [Either.tryCatchAsync],
   /// [ToEitherFutureExtension.toEitherFuture], and
-  /// [ToEitherStreamExtension.toEitherStream]. Internal [ControlError] values
-  /// are always rethrown and do not need to be registered.
+  /// [ToEitherStreamExtension.toEitherStream].
+  ///
+  /// Each Dart isolate keeps its own registry. Registering [T] in one isolate
+  /// does not affect other isolates, so each spawned isolate must register the
+  /// types it needs. Registrations are additive, and registering the same type
+  /// more than once has no additional effect.
+  ///
+  /// Internal [ControlError] values are always treated as fatal and do not need
+  /// to be registered.
   ///
   /// ### Example
+  ///
   /// ```dart
   /// class CancellationException implements Exception {}
   ///

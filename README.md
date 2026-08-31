@@ -356,20 +356,30 @@ Future<Either<String, BuiltList<int>>> parallelTraverse = Either.parTraverseN(
 );
 ```
 
-`registerFatalError<T>()` is isolate-local, additive, and idempotent. Registered
-types and their subtypes are rethrown by the error-capture helpers instead of
-being converted to `Left`.
+`registerFatalError<T>()` keeps a separate registry in each Dart isolate.
+Registering a type in one isolate does not affect other isolates, so each
+spawned isolate must register the types it needs. Registrations are additive,
+and registering the same type more than once has no additional effect.
 
-> Deprecated aliases remain available during `2.x`: `catchError` → `tryCatch`,
-> `catchFutureError` → `tryCatchAsync`, and `catchStreamError` →
-> `Stream.toEitherStream`.
+The policy applies to `tryCatch`, `tryCatchAsync`, `Future.toEitherFuture`, and
+`Stream.toEitherStream`. An error matching a registered type, including any
+subtype of it, remains an error instead of being converted to `Left`.
 
-#### 1.3. Binding capability and extension methods
+##### Migrating from deprecated error-capture APIs
+
+The old names remain available in `2.x` so existing code keeps working:
+
+- `Either.catchError` is deprecated in favor of `Either.tryCatch`.
+- `Either.catchFutureError` is deprecated in favor of `Either.tryCatchAsync`.
+- `Either.catchStreamError` is deprecated in favor of
+  `Stream.toEitherStream`.
+
+#### 1.3. Extension methods and binding capabilities
 
 | API                                                                                                                                                | Description                                          |
 |----------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------|
-| [`Stream.toEitherStream`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherStreamExtension/toEitherStream.html)                | Converts a stream, catching errors into `Left`       |
-| [`Future.toEitherFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherFutureExtension/toEitherFuture.html)                | Converts a future, catching errors into `Left`       |
+| [`Stream.toEitherStream`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherStreamExtension/toEitherStream.html)                | Maps non-fatal stream errors to `Left`               |
+| [`Future.toEitherFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherFutureExtension/toEitherFuture.html)                | Maps a non-fatal future error to `Left`              |
 | [`T.left`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/left.html)                                         | Wraps any value as `Left`                            |
 | [`T.right`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/right.html)                                       | Wraps any value as `Right`                           |
 | [`EitherEffect.bind`](https://pub.dev/documentation/dart_either/latest/dart_either/BindEitherEffectExtension/bind.html)                            | Extracts `Right` or short-circuits its binding scope |
@@ -380,26 +390,25 @@ being converted to `Left`.
 | [`EitherEffect.ensureNotNull`](https://pub.dev/documentation/dart_either/latest/dart_either/EnsureNotNullEitherEffectExtension/ensureNotNull.html) | Extracts a non-null value or short-circuits          |
 | [`EitherEffect.raise`](https://pub.dev/documentation/dart_either/latest/dart_either/RaiseEitherEffectExtension/raise.html)                         | Short-circuits without constructing a `Left` to bind |
 
+##### Future and Stream conversion examples
+
 ```dart
-// 1) Stream.toEitherStream
-Stream<int> genStream() async* {
-  for (var i = 0; i < 5; i++) {
-    yield i;
-  }
-  throw Exception('Fatal');
-}
-Stream<Either<String, int>> eitherStream =
-    genStream().toEitherStream((e, s) => 'Error: $e');
-eitherStream.listen(print);
+String mapError(Object error, StackTrace stackTrace) => 'Error: $error';
+
+// 1) Future.toEitherFuture
+final futureRight = await Future<int>.value(1).toEitherFuture(mapError);
+final futureLeft = await Future<int>.error(Exception('boom')).toEitherFuture(mapError);
+
+print(futureRight); // Either.Right(1)
+print(futureLeft);  // Either.Left(Error: Exception: boom)
 
 
-// 2) Future.toEitherFuture
-Future<Either<Object, int>> f1 =
-    Future<int>.error('An error').toEitherFuture((e, s) => e);
-Future<Either<Object, int>> f2 =
-    Future<int>.value(1).toEitherFuture((e, s) => e);
-await f1; // Left('An error')
-await f2; // Right(1)
+// 2) Stream.toEitherStream
+final valueStream = Stream<int>.fromIterable([1, 2]).toEitherStream(mapError);
+final errorStream = Stream<int>.error(Exception('boom')).toEitherStream(mapError);
+
+print(await valueStream.toList()); // [Either.Right(1), Either.Right(2)]
+print(await errorStream.toList()); // [Either.Left(Error: Exception: boom)]
 
 
 // 3) T.left / T.right
