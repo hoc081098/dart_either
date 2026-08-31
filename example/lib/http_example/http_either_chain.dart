@@ -16,22 +16,24 @@ import 'shared_model.dart';
 /// Get response from Uri as either using flatMap.
 Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) {
   Either<AppError, dynamic> toJson(http.Response response) {
-    final statusCode = response.statusCode;
-    final body = response.body;
+    final int statusCode = response.statusCode;
+    final String body = response.body;
 
     return statusCode >= 200 && statusCode < 300
         ? Either<AppError, dynamic>.tryCatch(
             action: () => jsonDecode(body),
             errorMapper: toAppError('jsonDecode: body=$body'),
           )
-        : AppError(
-            HttpException(
-              'statusCode=$statusCode, body=$body',
-              uri: response.request?.url,
+        : Either<AppError, dynamic>.left(
+            AppError(
+              HttpException(
+                'statusCode=$statusCode, body=$body',
+                uri: response.request?.url,
+              ),
+              StackTrace.current,
+              'statusCode: $statusCode',
             ),
-            StackTrace.current,
-            'statusCode: $statusCode',
-          ).left();
+          );
   }
 
   Future<Either<AppError, http.Response>> httpGet(Uri uri) =>
@@ -43,7 +45,7 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) {
         errorMapper: toAppError('http.get($uri)'),
       );
 
-  final uri = Future.value(
+  final Future<Either<AppError, Uri>> uri = Future.value(
     Either.tryCatch(
       action: () => Uri.parse(uriString),
       errorMapper: toAppError('Parse $uriString'),

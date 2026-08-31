@@ -17,13 +17,13 @@ import 'shared_model.dart';
 Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
     Either.futureBinding((effect) async {
       // Create Uri
-      final uri = Either.tryCatch(
+      final Uri uri = Either.tryCatch(
         action: () => Uri.parse(uriString),
         errorMapper: toAppError('Parse $uriString'),
       ).bind(effect);
 
       // Get response
-      final response = await Either.tryCatchAsync(
+      final http.Response response = await Either.tryCatchAsync(
         action: () async {
           await delay(500);
           return http.get(uri);
@@ -31,8 +31,8 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
         errorMapper: toAppError('http.get($uri)'),
       ).bind(effect);
 
-      final statusCode = response.statusCode;
-      final body = response.body;
+      final int statusCode = response.statusCode;
+      final String body = response.body;
 
       // Check status code
       effect.ensure(
@@ -68,12 +68,12 @@ void main() async {
               print('--> Get posts for $user...');
 
               // Get posts for user
-              final list = await httpGetAsEither(
+              final dynamic list = await httpGetAsEither(
                       'https://jsonplaceholder.typicode.com/posts?userId=${user.id}')
                   .bind(effect);
 
               // Convert to post models
-              final posts = toPosts(list).bind(effect);
+              final BuiltList<Post> posts = toPosts(list).bind(effect);
 
               // Return user and posts
               return (user: user, posts: posts);
@@ -81,15 +81,16 @@ void main() async {
         maxConcurrent: 3,
       );
 
-  final result = await Either.futureBinding<AppError, BuiltList<UserAndPosts>>(
+  final Either<AppError, BuiltList<UserAndPosts>> result =
+      await Either.futureBinding<AppError, BuiltList<UserAndPosts>>(
     (effect) async {
       // Get user list
-      final list =
+      final dynamic list =
           await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
               .bind(effect);
 
       // Convert to user models
-      final users = toUsers(list).bind(effect);
+      final BuiltList<User> users = toUsers(list).bind(effect);
 
       // Get posts for each user
       return await getPosts(users).bind(effect);

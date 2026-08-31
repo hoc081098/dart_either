@@ -93,7 +93,7 @@ Future<Either<String, void>> doSomethingWithPostsEither(
 Future<Either<String, void>> eitherFlatMapCode() =>
     findUserByIdEither('user_id').thenFlatMapEither((user) {
       if (user == null) {
-        return 'User is null'.left<List<Post>>();
+        return Either<String, List<Post>>.left('User is null');
       }
       return getPostsByUserEither(user).thenFlatMapEither(
           (posts) => doSomethingWithPostsEither(user, posts));
@@ -105,9 +105,13 @@ Future<Either<String, void>> eitherFlatMapCode() =>
 
 Future<Either<String, void>> eitherBindingCode() =>
     Either.futureBinding((effect) async {
-      final nullableUser = await findUserByIdEither('user_id').bind(effect);
-      final user = effect.ensureNotNull(nullableUser, () => 'User is null');
-      final posts = await getPostsByUserEither(user).bind(effect);
+      final User? nullableUser =
+          await findUserByIdEither('user_id').bind(effect);
+      final User user = effect.ensureNotNull(
+        nullableUser,
+        () => 'User is null',
+      );
+      final List<Post> posts = await getPostsByUserEither(user).bind(effect);
       await doSomethingWithPostsEither(user, posts).bind(effect);
     });
 
