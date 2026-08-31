@@ -6,11 +6,25 @@ import 'dart_either.dart';
 
 /// Provide [toEitherFuture] extension on [Future].
 extension ToEitherFutureExtension<R> on Future<R> {
-  /// Transform data value to [Right] or error value to [Left].
-  /// If this Future completes with a value, returns a [Right] containing that value.
-  /// Otherwise, calling [errorMapper] with the error value and wrap the result in a [Left].
+  /// Returns a future that wraps this future's value or non-fatal error in an
+  /// [Either].
+  ///
+  /// If this future completes with a value, the returned future completes with
+  /// a [Right] containing that value.
+  /// If this future completes with a non-fatal error, [errorMapper] maps that
+  /// error and the returned future completes with a [Left] containing the
+  /// mapped value.
+  ///
+  /// If the error matches [Either.registerFatalError], it is not converted to a
+  /// [Left]. The returned future completes with the original error and stack
+  /// trace instead.
+  ///
+  /// This extension operates on a future that has already been created. Use
+  /// [Either.tryCatchAsync] when invoking the operation may throw before it
+  /// returns a future.
   ///
   /// ### Example
+  ///
   /// ```dart
   /// final Future<int> f = Future.value(1);
   /// final Future<Either<Object, int>> eitherFuture = f.toEitherFuture((e, s) => e);
@@ -18,8 +32,7 @@ extension ToEitherFutureExtension<R> on Future<R> {
   /// eitherFuture.then(print); // prints Either.Right(1)
   /// ```
   Future<Either<L, R>> toEitherFuture<L>(ErrorMapper<L> errorMapper) =>
-      // ignore: deprecated_member_use_from_same_package
-      Either.catchFutureError(errorMapper, () => this);
+      Either.tryCatchAsync(action: () => this, errorMapper: errorMapper);
 }
 
 /// Provide [thenFlatMapEither] extension on [Future] of [Either].

@@ -8,25 +8,24 @@ import 'binding.dart';
 import 'either_extensions.dart';
 import 'extensions.dart';
 import 'internal.dart';
-import 'utils/semaphore.dart';
 import 'to_either_stream.dart';
+import 'utils/semaphore.dart';
 
 /// Map [error] and [stackTrace] to a [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 
-extension on Object {
-  @pragma('vm:always-consider-inlining')
-  @pragma('vm:prefer-inline')
-  @pragma('dart2js:tryInline')
-  Object throwIfFatal() {
-    final self = this;
-    return switch (self) {
-      ControlError() => throw self,
-      _ when Either._fatalErrorTypes.contains(self) => throw self,
-      _ => this,
+/// Rethrows [error] with [stackTrace] when it is an internal control signal or
+/// matches a type registered through [Either.registerFatalError].
+@internal
+@pragma('vm:always-consider-inlining')
+@pragma('vm:prefer-inline')
+@pragma('dart2js:tryInline')
+Object throwIfFatal(Object error, StackTrace stackTrace) => switch (error) {
+      ControlError() => Error.throwWithStackTrace(error, stackTrace),
+      _ when Either._fatalErrorTests.values.any((test) => test(error)) =>
+        Error.throwWithStackTrace(error, stackTrace),
+      _ => error,
     };
-  }
-}
 
 @pragma('vm:always-consider-inlining')
 @pragma('vm:prefer-inline')
@@ -95,15 +94,27 @@ sealed class Either<L, R> {
         Right(value: final r) => ifRight(r),
       };
 
-  static final Set<Type> _fatalErrorTypes = <Type>{};
+  static final Map<Type, bool Function(Object)> _fatalErrorTests = {};
 
-  /// Register a type of fatal error that should not be caught
-  /// by [Either.catchError], [Either.catchFutureError], [Either.catchStreamError],
-  /// [Either.tryCatch], [Either.tryCatchAsync] and [ToEitherStreamExtension.toEitherStream].
-  static void registerFatalErrorType(Type type) {
-    assert(type != Null, 'a null value is not considered a throwable error in Dart');
-    _fatalErrorTypes.add(type);
-  }
+  /// Registers errors of type [T] as fatal to `Either` error capture.
+  ///
+  /// A registered error, including any subtype of [T], is rethrown instead of
+  /// being passed to an [ErrorMapper] and converted to a [Left]. Registration
+  /// is isolate-local, additive, and idempotent for each type.
+  ///
+  /// This policy applies to [Either.tryCatch], [Either.tryCatchAsync],
+  /// [ToEitherFutureExtension.toEitherFuture], and
+  /// [ToEitherStreamExtension.toEitherStream]. Internal [ControlError] values
+  /// are always rethrown and do not need to be registered.
+  ///
+  /// ### Example
+  /// ```dart
+  /// class CancellationException implements Exception {}
+  ///
+  /// Either.registerFatalError<CancellationException>();
+  /// ```
+  static void registerFatalError<T extends Object>() =>
+      _fatalErrorTests.putIfAbsent(T, () => (error) => error is T);
 
   // -----------------------------------------------------------------------------
   //
@@ -117,9 +128,10 @@ sealed class Either<L, R> {
   /// Create a [Right].
   const factory Either.right(R right) = Right;
 
-  /// Evaluates the specified [block] and wrap the result in a [Right].
+  /// Evaluates the specified [block] and wraps the result in a [Right].
   ///
-  /// If an error is thrown, calling [errorMapper] with that error and wrap the result in a [Left].
+  /// If an error is thrown, [errorMapper] maps it and the result is wrapped in
+  /// a [Left].
   ///
   /// ### Example
   /// ```dart
@@ -127,18 +139,13 @@ sealed class Either<L, R> {
   /// Either<Object, String>.catchError((e, s) => e, () => 'hoc081098');    // Result: Right('hoc081098')
   /// ```
   @Deprecated('Use Either<L, R>.tryCatch() instead. It will be removed in v3.')
-  factory Either.catchError(ErrorMapper<L> errorMapper, R Function() block) {
-    try {
-      return Either.right(block());
-    } catch (e, s) {
-      return Either.left(errorMapper(e.throwIfFatal(), s));
-    }
-  }
+  factory Either.catchError(ErrorMapper<L> errorMapper, R Function() block) =>
+      Either.tryCatch(action: block, errorMapper: errorMapper);
 
-  /// Evaluates the specified [action] and wrap the result in a [Right].
+  /// Evaluates the specified [action] and wraps the result in a [Right].
   ///
-  /// If an error is thrown, calling [errorMapper] with that error
-  /// and wrap the result in a [Left].
+  /// If an error is thrown, [errorMapper] maps it and the result is wrapped in
+  /// a [Left]. Errors matching [Either.registerFatalError] are rethrown instead.
   ///
   /// ### Example
   /// ```dart
@@ -153,13 +160,13 @@ sealed class Either<L, R> {
   /// ); // Result: Right('hoc081098')
   /// ```
   factory Either.tryCatch({
-    required ErrorMapper<L> errorMapper,
     required R Function() action,
+    required ErrorMapper<L> errorMapper,
   }) {
     try {
       return Either.right(action());
     } catch (e, s) {
-      return Either.left(errorMapper(e.throwIfFatal(), s));
+      return Either.left(errorMapper(throwIfFatal(e, s), s));
     }
   }
 
@@ -204,7 +211,6 @@ sealed class Either<L, R> {
   /// - Do NOT catch [ControlError] in [block].
   /// - Do NOT store [EitherEffect] or invoke it after [block] returns.
   /// - Errors thrown by [block] are not converted to [Left].
-  /// - Use [Either.catchError], [Either.catchFutureError] or [Either.catchStreamError] to catch error,
   /// - Use [Either.tryCatch], [Either.tryCatchAsync] or [ToEitherStreamExtension.toEitherStream] to catch error,
   ///   then bind the resulting [Either].
   ///
@@ -222,9 +228,9 @@ sealed class Either<L, R> {
   /// ExampleError toExampleError(Object e, StackTrace st) { ... }
   ///
   /// final result = Either<ExampleError, int>.binding((effect) {
-  ///   final int value = Either<ExampleError, int>.catchError(
-  ///     toExampleError,
-  ///     canThrowAnError,
+  ///   final int value = Either<ExampleError, int>.tryCatch(
+  ///     action: canThrowAnError,
+  ///     errorMapper: toExampleError,
   ///   ).bind(effect);
   ///   return value;
   /// });
@@ -318,8 +324,6 @@ sealed class Either<L, R> {
   /// - Do NOT catch [ControlError] in [block].
   /// - Do NOT store [EitherEffect] or invoke it after the returned future settles.
   /// - Errors thrown by [block], or emitted by a bound future, are not converted to [Left].
-  /// - Use [Either.catchError], [Either.catchFutureError] or [Either.catchStreamError] to catch error,
-  ///   then bind the resulting [Either].
   /// - Use [Either.tryCatch], [Either.tryCatchAsync] or [ToEitherStreamExtension.toEitherStream] to catch error,
   ///   then bind the resulting [Either].
   /// ```dart
@@ -340,19 +344,19 @@ sealed class Either<L, R> {
   /// ExampleError toExampleError(Object e, StackTrace st) { ... }
   ///
   /// final result = Either.futureBinding<ExampleError, int>((effect) async {
-  ///   final int value1 = Either<ExampleError, int>.catchError(
-  ///     toExampleError,
-  ///     canThrowAnError,
+  ///   final int value1 = Either<ExampleError, int>.tryCatch(
+  ///     action: canThrowAnError,
+  ///     errorMapper: toExampleError,
   ///   ).bind(effect);
   ///
-  ///   final int value2 = await Either.catchFutureError<ExampleError, int>(
-  ///     toExampleError,
-  ///     canReturnAnErrorFuture,
+  ///   final int value2 = await Either.tryCatchAsync<ExampleError, int>(
+  ///     action: canReturnAnErrorFuture,
+  ///     errorMapper: toExampleError,
   ///   ).bind(effect);
   ///
-  ///   final int value3 = await Either.catchFutureError<ExampleError, int>(
-  ///     toExampleError,
-  ///     () => errorFuture,
+  ///   final int value3 = await Either.tryCatchAsync<ExampleError, int>(
+  ///     action: () => errorFuture,
+  ///     errorMapper: toExampleError,
   ///   ).bind(effect);
   ///
   ///   return value1 + value2 + value3;
@@ -412,30 +416,27 @@ sealed class Either<L, R> {
     ErrorMapper<L> errorMapper,
     FutureOr<R> Function() block,
   ) =>
-      Future.sync(block)
-          .then((value) => Either<L, R>.right(value))
-          .onError<Object>(
-              (e, s) => Either.left(errorMapper(e.throwIfFatal(), s)));
+      tryCatchAsync(action: block, errorMapper: errorMapper);
 
-  /// Evaluates the specified [action] and wrap the result in a [Right].
+  /// Evaluates the specified [action] and wraps the result in a [Right].
   ///
   /// If an error is thrown or [action] returns a future that completes with an error,
-  /// calling [errorMapper] with that error and wrap the result in a [Left].
+  /// [errorMapper] maps that error and the result is wrapped in a [Left].
+  /// Errors matching [Either.registerFatalError] are rethrown instead.
   ///
   /// ### Example
   /// ```dart
   /// // Result: Left(Exception())
   /// await Either.tryCatchAsync<Object, String>(
-  ///   action: () => throw Exception()),
+  ///   action: () => throw Exception(),
   ///   errorMapper: (e, s) => e,
   /// );
   ///
   /// // Result: Left(Exception())
   /// await Either.tryCatchAsync<Object, String>(
-  ///   action: () async => throw Exception()),
+  ///   action: () async => throw Exception(),
   ///   errorMapper: (e, s) => e,
   /// );
-  ///
   ///
   /// // Result: Right('hoc081098')
   /// await Either.tryCatchAsync<Object, String>(
@@ -454,15 +455,15 @@ sealed class Either<L, R> {
     required ErrorMapper<L> errorMapper,
   }) =>
       Future.sync(action).then(Either<L, R>.right).onError<Object>(
-          (e, s) => Either<L, R>.left(errorMapper(e.throwIfFatal(), s)));
+          (e, s) => Either<L, R>.left(errorMapper(throwIfFatal(e, s), s)));
 
   /// Transforms data events to [Right]s and error events to [Left]s.
   ///
   /// When the source stream emits a data event, the result stream will emit
   /// a [Right] wrapping that data event.
   ///
-  /// When the source stream emits a error event, calling [errorMapper] with that error
-  /// and the result stream will emits a [Left] wrapping the result.
+  /// When the source stream emits an error event, [errorMapper] maps that error
+  /// and the result stream emits a [Left] wrapping the mapped value.
   ///
   /// The done events will be forwarded.
   ///
@@ -488,13 +489,7 @@ sealed class Either<L, R> {
     ErrorMapper<L> errorMapper,
     Stream<R> stream,
   ) =>
-      stream.transform(
-        StreamTransformer<R, Either<L, R>>.fromHandlers(
-          handleData: (data, sink) => sink.add(Either.right(data)),
-          handleError: (e, s, sink) =>
-              sink.add(Either.left(errorMapper(e.throwIfFatal(), s))),
-        ),
-      );
+      stream.toEitherStream(errorMapper);
 
   /// Traverses the [values] iterable and runs [mapper] on each element.
   ///
