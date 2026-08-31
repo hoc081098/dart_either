@@ -4,6 +4,14 @@
 
 - **Left-side predicate**
   - Added `isLeftAnd` to match a `Left` value with a predicate.
+- **Error capture**
+  - Added `tryCatch` and `tryCatchAsync` with required named `action` and
+    `errorMapper` parameters.
+  - Deprecated aliases remain: `catchError` → `tryCatch`,
+    `catchFutureError` → `tryCatchAsync`, and `catchStreamError` →
+    `Stream.toEitherStream`.
+  - Added `registerFatalError<T>()` so applications can rethrow selected error
+    types, including their subtypes, instead of converting them to `Left`.
 
 ## 2.2.0 - Aug 27, 2026
 
