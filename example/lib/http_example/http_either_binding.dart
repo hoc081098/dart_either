@@ -13,16 +13,17 @@ import 'shared_model.dart';
 // 1) HTTP helper (futureBinding style)
 // ---------------------------------------------------------------------------
 
-/// Get response from Uri as either using Monad Comprehension
+/// Gets a response using direct-style asynchronous binding.
 Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
     Either.futureBinding((effect) async {
-      // Create Uri
+      // A synchronous Either binds immediately. Left exits this scope.
       final Uri uri = Either.tryCatch(
         action: () => Uri.parse(uriString),
         errorMapper: toAppError('Parse $uriString'),
       ).bind(effect);
 
-      // Get response
+      // A Future<Either> must be awaited before its Right can be used.
+      // tryCatchAsync turns non-fatal Future errors into AppError values.
       final http.Response response = await Either.tryCatchAsync(
         action: () async {
           await delay(500);
@@ -34,7 +35,7 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
       final int statusCode = response.statusCode;
       final String body = response.body;
 
-      // Check status code
+      // Guards participate in the same short-circuiting scope.
       effect.ensure(
         statusCode >= 200 && statusCode < 300,
         () => AppError(
@@ -47,7 +48,7 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
         ),
       );
 
-      // Decode body to json
+      // The final bound Right becomes the successful value of futureBinding.
       return Either.tryCatch(
         action: () => jsonDecode(body),
         errorMapper: toAppError('jsonDecode: $body'),
@@ -84,12 +85,13 @@ void main() async {
   final Either<AppError, BuiltList<UserAndPosts>> result =
       await Either.futureBinding<AppError, BuiltList<UserAndPosts>>(
     (effect) async {
-      // Get user list
+      // Each await + bind reads like ordinary async code. Any Left skips the
+      // remaining statements and becomes the result of this outer scope.
       final dynamic list =
           await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
               .bind(effect);
 
-      // Convert to user models
+      // Synchronous Either values use the same effect without await.
       final BuiltList<User> users = toUsers(list).bind(effect);
 
       // Get posts for each user

@@ -35,18 +35,44 @@ extension ToEitherFutureExtension<R> on Future<R> {
       Either.tryCatchAsync(action: () => this, errorMapper: errorMapper);
 }
 
-/// Provide [thenFlatMapEither] extension on [Future] of [Either].
+/// Provides [thenFlatMapEither] on a [Future] of [Either].
 extension AsyncFlatMapFutureExtension<L, R> on Future<Either<L, R>> {
-  /// `flatMap` the [Either] in the [Future] context.
+  /// Chains the right value of the [Either] produced by this future.
   ///
-  /// When this [Future] completes with a [Right] value,
-  /// calling [f] callback with [Right.value].
-  /// And returns a new [Future] which is completed with the result of the call to [f].
+  /// When this future produces a [Right], [f] receives its value. The returned
+  /// [Either], whether produced immediately or asynchronously, becomes the
+  /// result without introducing a nested `Either`.
   ///
-  /// If this [Future] completes with a [Left] value,
-  /// returns a [Future] that completes with a [Left] which containing original [Left.value].
+  /// When this future produces a [Left], [f] is not called and that left value
+  /// is forwarded unchanged. Errors from this future or [f] remain errors of
+  /// the returned future; this method does not convert them to [Left] values.
   ///
-  /// This function does not handle any errors. See [Future.then].
+  /// This is the pipeline-style `flatMap` operation for a
+  /// `Future<Either<L, R>>`. In the name, `then` refers to completion of the
+  /// outer future, `flatMap` describes the right-side operation, and `Either`
+  /// identifies the inner type. For a direct `async`/`await` flow, use
+  /// [Either.futureBinding] and bind each `Future<Either>` to its effect.
+  /// This keeps longer flows flat when later operations depend on earlier
+  /// right values, instead of nesting callbacks.
+  /// [Either.binding] is the synchronous counterpart.
+  ///
+  /// ### Example
+  ///
+  /// ```dart
+  /// Future<Either<String, int>> loadUserId() async =>
+  ///     Either<String, int>.right(1);
+  ///
+  /// Future<Either<String, String>> loadUserName(int id) async =>
+  ///     id == 1
+  ///         ? Either<String, String>.right('Petrus')
+  ///         : Either<String, String>.left('User not found');
+  ///
+  /// Future<void> main() async {
+  ///   final Either<String, String> result =
+  ///       await loadUserId().thenFlatMapEither(loadUserName);
+  ///   print(result); // Right('Petrus')
+  /// }
+  /// ```
   Future<Either<L, C>> thenFlatMapEither<C>(
           FutureOr<Either<L, C>> Function(R value) f) =>
       then(
@@ -57,19 +83,38 @@ extension AsyncFlatMapFutureExtension<L, R> on Future<Either<L, R>> {
       );
 }
 
-/// Provide [thenMapEither] extension on [Future] of [Either].
+/// Provides [thenMapEither] on a [Future] of [Either].
 extension AsyncMapFutureExtension<L, R> on Future<Either<L, R>> {
-  /// `map` the [Either] in the [Future] context.
+  /// Transforms the right value of the [Either] produced by this future.
   ///
-  /// When this [Future] completes with a [Right] value,
-  /// calling [f] callback with [Right.value].
-  /// And returns a new [Future] which is completed with a [Right] value
-  /// which containing the result of the call to [f].
+  /// When this future produces a [Right], [f] receives its value. The callback
+  /// may return [C] immediately or asynchronously, and its result is wrapped in
+  /// a new [Right].
   ///
-  /// If this [Future] completes with a [Left] value,
-  /// returns a [Future] that completes with a [Left] which containing original [Left.value].
+  /// When this future produces a [Left], [f] is not called and that left value
+  /// is forwarded unchanged. Errors from this future or [f] remain errors of
+  /// the returned future; this method does not convert them to [Left] values.
   ///
-  /// This function does not handle any errors. See [Future.then].
+  /// This is the pipeline-style `map` operation for a
+  /// `Future<Either<L, R>>`. In the name, `then` refers to completion of the
+  /// outer future, `map` describes the right-side operation, and `Either`
+  /// identifies the inner type. For a direct `async`/`await` flow, use
+  /// [Either.futureBinding] and bind each `Future<Either>` to its effect.
+  /// This keeps longer flows flat when later operations depend on earlier
+  /// right values, instead of nesting callbacks.
+  /// [Either.binding] is the synchronous counterpart.
+  ///
+  /// ### Example
+  ///
+  /// ```dart
+  /// Future<void> main() async {
+  ///   final Future<Either<String, int>> count =
+  ///       Future.value(Either<String, List<String>>.right(['a', 'b']))
+  ///           .thenMapEither((items) => items.length);
+  ///
+  ///   print(await count); // Right(2)
+  /// }
+  /// ```
   Future<Either<L, C>> thenMapEither<C>(FutureOr<C> Function(R value) f) =>
       then(
         (either) => either.fold(

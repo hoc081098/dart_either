@@ -87,11 +87,13 @@ Future<Either<String, void>> doSomethingWithPostsEither(
     );
 
 // ---------------------------------------------------------------------------
-// 4) Composition style A: flatMap chain
+// 4) Composition style A: Future<Either> pipeline
 // ---------------------------------------------------------------------------
 
 Future<Either<String, void>> eitherFlatMapCode() =>
     findUserByIdEither('user_id').thenFlatMapEither((user) {
+      // thenFlatMapEither skips this callback when findUserByIdEither returns
+      // Left. It also flattens the Either returned below into this pipeline.
       if (user == null) {
         return Either<String, List<Post>>.left('User is null');
       }
@@ -105,6 +107,7 @@ Future<Either<String, void>> eitherFlatMapCode() =>
 
 Future<Either<String, void>> eitherBindingCode() =>
     Either.futureBinding((effect) async {
+      // Awaiting and binding extracts Right. A Left exits the whole scope.
       final User? nullableUser =
           await findUserByIdEither('user_id').bind(effect);
       final User user = effect.ensureNotNull(
@@ -113,6 +116,7 @@ Future<Either<String, void>> eitherBindingCode() =>
       );
       final List<Post> posts = await getPostsByUserEither(user).bind(effect);
       await doSomethingWithPostsEither(user, posts).bind(effect);
+      // Reaching the end normally produces Right(null), whose R is void.
     });
 
 // ---------------------------------------------------------------------------

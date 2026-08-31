@@ -564,22 +564,41 @@ final Either<String, int> insufficientStock = calculateOrderTotal(
 
 #### Asynchronous binding
 
-`Either.futureBinding` uses the same effect operations while allowing awaited
-`Future<Either<L, R>>` values to participate in the computation:
+`Either.futureBinding` opens an asynchronous binding scope. Inside that scope,
+ordinary `await`, local variables, conditions, and `return` remain available:
+
+- `either.bind(effect)` extracts a `Right` from an `Either` immediately.
+- `await eitherFuture.bind(effect)` waits for a `Future<Either>` and extracts
+  its `Right`.
+- Both forms short-circuit the whole scope when they encounter a `Left`.
+- An error from a `Future` is not converted to a `Left`; it propagates through
+  the future's error channel. Use `Either.tryCatchAsync` when it should become a
+  typed `Left` instead.
+
+This is the direct-style alternative to the `Future<Either>` pipelines in the
+next section. Use `Either.binding` for synchronous code and
+`Either.futureBinding` as soon as the flow needs `await`. It is especially
+useful when several `Either`-producing operations depend on values produced by
+earlier steps: each value can be bound to a local variable, keeping the flow
+flat instead of nesting callbacks.
 
 ```dart
 Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
     Either.futureBinding<AsyncError, dynamic>((effect) async {
+      // A synchronous Either can be bound without await.
       final Uri uri = Either.tryCatch(
         action: () => Uri.parse(uriString),
         errorMapper: toAsyncError,
       ).bind(effect);
 
+      // A Future<Either> is awaited and then bound. tryCatchAsync converts
+      // non-fatal Future errors into AsyncError values on the Left.
       final http.Response response = await Either.tryCatchAsync(
         action: () => http.get(uri),
         errorMapper: toAsyncError,
       ).bind(effect);
 
+      // A failed guard also short-circuits this futureBinding scope.
       effect.ensure(
         response.statusCode >= 200 && response.statusCode < 300,
         () => AsyncError(
@@ -591,6 +610,7 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
         ),
       );
 
+      // Returning a plain value completes the scope with Right(value).
       return Either<AsyncError, dynamic>.tryCatch(
         action: () => jsonDecode(response.body),
         errorMapper: toAsyncError,
@@ -601,6 +621,7 @@ Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
 
 Either<AsyncError, BuiltList<User>> usersEither = await Either.futureBinding(
   (effect) async {
+    // Left from either operation exits this outer scope immediately.
     final dynamic json = await httpGetAsEither(
       'https://jsonplaceholder.typicode.com/users',
     ).bind(effect);
@@ -614,13 +635,48 @@ Either<AsyncError, BuiltList<User>> usersEither = await Either.futureBinding(
 
 ### 6. Pipelines on `Future<Either<L, R>>`
 
-| Method                                                                                                                                 | Description                           |
-|----------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
-| [`thenFlatMapEither`](https://pub.dev/documentation/dart_either/latest/dart_either/AsyncFlatMapFutureExtension/thenFlatMapEither.html) | Async `flatMap` on a `Future<Either>` |
-| [`thenMapEither`](https://pub.dev/documentation/dart_either/latest/dart_either/AsyncMapFutureExtension/thenMapEither.html)             | Async `map` on a `Future<Either>`     |
+These extensions keep the outer `Future` and operate on the `Right` inside its
+`Either`. A `Left` skips the callback and passes through unchanged. An error
+from the source future or callback remains a future error.
+
+| Receiver                   | Method                                                                                                                                 | Right-side operation                                      |
+|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
+| `Future<Either<L, R>>`     | [`thenMapEither`](https://pub.dev/documentation/dart_either/latest/dart_either/AsyncMapFutureExtension/thenMapEither.html)             | `R -> FutureOr<C>`, then wrap the result in `Right<C>`     |
+| `Future<Either<L, R>>`     | [`thenFlatMapEither`](https://pub.dev/documentation/dart_either/latest/dart_either/AsyncFlatMapFutureExtension/thenFlatMapEither.html) | `R -> FutureOr<Either<L, C>>`, without nesting the result  |
+
+Conceptually, these are `map` and `flatMap` for the concrete composition of
+`Future` and `Either`. The names make the layers explicit: `then` signals that
+the operation runs after the outer future completes, the middle verb describes
+the right-side operation, and the `Either` suffix distinguishes these helpers
+from operations on a plain `Future`.
+
+Libraries with higher-kinded types can wrap the same shape in a monad
+transformer. [Cats `EitherT`](https://typelevel.org/cats/datatypes/eithert.html),
+for example, wraps `F[Either[E, A]]` and offers `map`/`flatMap` together with
+more specific variants. The corresponding Cats name depends on the callback
+shape: synchronous and asynchronous `thenMapEither` resemble `map` and
+`semiflatMap`; synchronous and asynchronous `thenFlatMapEither` resemble
+`subflatMap` and `flatMapF`. They are still the map-like and flatMap-like
+operations exposed by this concrete Dart API, rather than one-to-one copies of
+the Cats method names.
+The corresponding standard Haskell transformer is
+[`ExceptT e m a`](https://downloads.haskell.org/~ghc/9.12.2/docs/libraries/transformers-0.6.1.2-1307/Control-Monad-Trans-Except.html),
+which wraps `m (Either e a)` and composes through `fmap` and `(>>=)`.
+`dart_either` does not emulate higher-kinded types or expose an `EitherT`, so it
+provides concrete, discoverable extensions for `Future<Either<L, R>>` instead.
+
+Use these extensions when a short pipeline reads clearly. For a longer flow
+where later `Either`-producing operations depend on earlier results,
+`Either.futureBinding` keeps the code flat and avoids nested callbacks. It also
+provides the same `Left` short-circuiting while allowing ordinary awaited
+values, guards, and local variables in direct `async`/`await` style.
+`Either.binding` is the synchronous counterpart and does not operate on
+`Future<Either>`.
 
 ```dart
-// 1) Define a reusable async pipeline with thenFlatMapEither / thenMapEither
+// 1) Define a reusable pipeline. thenFlatMapEither is used when the next
+// operation already returns Either (or Future<Either>), so no nested Either
+// is created.
 Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
   Either<AsyncError, dynamic> toJson(http.Response response) =>
       response.statusCode >= 200 && response.statusCode < 300
@@ -656,7 +712,8 @@ Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
 
 Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
 
-// 2) Build end-to-end flow
+// 2) thenMapEither transforms a successful value. thenFlatMapEither then
+// chains toUsers, which already returns Either, without nesting the result.
 final Either<AsyncError, BuiltList<User>> usersEither =
     await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
     .thenMapEither((dynamic json) => json as List)

@@ -10,10 +10,10 @@ import 'package:rxdart_ext/rxdart_ext.dart';
 import 'shared_model.dart';
 
 // ---------------------------------------------------------------------------
-// 1) HTTP helper (flatMap chain style)
+// 1) HTTP helper (Future<Either> pipeline style)
 // ---------------------------------------------------------------------------
 
-/// Get response from Uri as either using flatMap.
+/// Gets a response by chaining operations on `Future<Either>`.
 Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) {
   Either<AppError, dynamic> toJson(http.Response response) {
     final int statusCode = response.statusCode;
@@ -52,6 +52,8 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) {
     ),
   );
 
+  // Each thenFlatMapEither waits for Right before invoking the next operation.
+  // Left skips the remaining callbacks; Future errors still propagate.
   return uri.thenFlatMapEither(httpGet).thenFlatMapEither(toJson);
 }
 
@@ -70,7 +72,9 @@ void main() async {
 
           return httpGetAsEither(
                   'https://jsonplaceholder.typicode.com/posts?userId=${user.id}')
+              // toPosts already returns Either, so flatMap avoids nesting it.
               .thenFlatMapEither(toPosts)
+              // This callback returns a plain value, so map wraps it in Right.
               .thenMapEither((posts) => (user: user, posts: posts));
         },
         maxConcurrent: 3,
