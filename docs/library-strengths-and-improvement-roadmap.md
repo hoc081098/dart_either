@@ -64,9 +64,9 @@ The current API covers the operations that make `Either` practical in an app:
   `fold`, `combine`, `flatten`, `merge`, and `swap`;
 - recovery and extraction with `getOrNull`, `leftOrNull`, `getOrDefault`,
   `getOrHandle`, `handleError`, and `handleErrorWith`;
-- exception, `Future`, and `Stream` bridges through `catchError`,
-  `catchFutureError`, `catchStreamError`, `toEitherFuture`, and
-  `toEitherStream`;
+- exception, `Future`, and `Stream` bridges through `tryCatch`,
+  `tryCatchAsync`, `toEitherFuture`, and `toEitherStream`, with
+  `registerFatalError` for app-wide rethrow policy;
 - async chaining with `thenMapEither` and `thenFlatMapEither`;
 - sequential and parallel collection operations through `sequence`,
   `traverse`, `parSequenceN`, and `parTraverseN`; and
@@ -138,12 +138,12 @@ Important guarantees visible in
   binding scope.
 - Ordinary exceptions and failed futures propagate unchanged. They are not
   silently converted to `Left`.
-- Explicit conversion is available through `catchError`, `catchFutureError`,
-  and `catchStreamError`. Their `ErrorMapper` receives both the object and its
-  `StackTrace`.
+- Explicit conversion is available through `tryCatch`, `tryCatchAsync`,
+  `toEitherFuture`, and `toEitherStream`. Their `ErrorMapper` receives both the
+  object and its `StackTrace`.
 - Those helpers call the internal `throwIfFatal` guard, which rethrows
-  `ControlError` instead of mapping a binding short-circuit into a domain
-  `Left`.
+  `ControlError` and types registered through `registerFatalError` instead of
+  mapping them into a domain `Left`.
 - The capability remains active across work returned from `futureBinding`,
   then is closed when the computation settles. Using a captured capability
   afterward throws `StateError`.
@@ -314,26 +314,27 @@ the existing signature under the same name is not a `2.x` option.
 
 ### Priority 1: make exception capture selective
 
-`catchError`, `catchFutureError`, and `catchStreamError` currently catch
-`Object`, except that their internal guard rethrows `ControlError`. This means
-`StateError`, `TypeError`, `AssertionError`, and application exceptions are all
-eligible for mapping if they reach the helper.
+`tryCatch`, `tryCatchAsync`, and `toEitherStream` catch `Object`, except that
+their internal guard rethrows `ControlError` and types registered through
+`registerFatalError`. This means `StateError`, `TypeError`, `AssertionError`,
+and application exceptions remain eligible for mapping unless the application
+registers a matching fatal type.
 
-Teams often want to recover only from an expected exception class. Consider a
-non-breaking predicate:
+The global registration policy handles app-wide exclusions such as
+cancellation exceptions. Teams may still want an individual call to recover
+only from an expected exception class. Consider a non-breaking predicate:
 
 ```dart
-Either.catchError(
-  mapper,
-  block,
+Either.tryCatch(
+  action: block,
+  errorMapper: mapper,
   test: (error) => error is FormatException,
 )
 ```
 
 or a typed API such as `catchOnly<FormatException, L, R>`. The internal control
-signal must always be rethrown before any user predicate or mapper runs. Add
-regressions proving that `ControlError` cannot be converted to `Left` by each
-sync, future, and stream helper.
+signal and registered fatal errors must always be rethrown before any user
+predicate or mapper runs.
 
 ### Priority 2: decide the collection return strategy
 
