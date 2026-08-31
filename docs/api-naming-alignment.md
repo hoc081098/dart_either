@@ -55,7 +55,7 @@ the `Either` class. Declaration placement is determined mechanically:
 | `Either` instance member | The receiver is unconstrained `Either<L, R>` and every occurrence of `L` and `R` is safe at a covariant virtual-method boundary | `fold`, `map`, `mapLeft`, `swap`, `onLeft`, `onRight`, `getOrNull` |
 | Generic extension on `Either` | An `L` or `R` occurs negatively or invariantly in the operation's signature | `flatMap`, `getOrDefault`, `combine`, and the final left-aware `getOrElse` |
 | Specialized extension on `Either` | The operation exists only for a constrained or refined receiver shape | `flatten`, `merge`, `toFuture`, `getOrThrow` |
-| `Either` static member | The operation constructs, handles, or combines values without consuming the enclosing class's `L` or `R` | `catchError`, `binding`, `sequence`, `traverse` |
+| `Either` static member | The operation constructs, handles, or combines values without consuming the enclosing class's `L` or `R` | `tryCatch`, `tryCatchAsync`, `binding`, `sequence`, `traverse` |
 | Extension on another receiver | The operation adapts a foreign type into or through `Either` | `Future.toEitherFuture`, `Stream.toEitherStream`, `T.left`, `T.right` |
 | Binding extension | The operation belongs to the scoped `EitherEffect` capability rather than the `Either` value | `bind`, `raise`, `ensure`, `ensureNotNull` |
 
@@ -115,9 +115,14 @@ Dart decision.
 | `handleError(R Function(L))` | No direct rename | Reviewed; retain in 2.x | PR #2830 initially replaced it through `recover`, but [Arrow's later final deprecation](https://github.com/arrow-kt/arrow/commit/b6a00df2a234131f62c95812958bad406641b13f) was `getOrElse(f).right()` and current Arrow has no `handleError` | Arrow `recover` is a richer Raise-DSL operation, not a compatibility alias. Treat any deprecation/removal and variance hardening as separate work |
 | `handleErrorWith(Either<C, R> Function(L))` | `handleErrorWith` | Reviewed; retain the name | PR #2830 proposed replacement through `recover`, but PR #3456 restored `handleErrorWith` and current Arrow exposes it | No rename. Its unsafe legacy instance placement may be handled separately from naming |
 | Proposed `recoverWith` | No Arrow target | Rejected as Arrow alignment | Current Arrow exposes `handleErrorWith` and richer `recover`, but no `recoverWith` | Remove it from the rename candidates; reconsider only as an explicitly Dart/Cats-style API proposal |
-| `catchError` | No direct rename | Reviewed; retain the name | The closest Arrow API is companion `Either.catch`, but it returns `Either<Throwable, R>` and does not take Dart's mapper plus `StackTrace` | `catch` is also a reserved Dart keyword. A different family such as `tryCatch` would require a separate semantic and naming proposal |
-| `catchFutureError` | `catchFuture` | Deferred | No direct Arrow `Either` equivalent | Do not rename independently while the synchronous catch-family name remains unresolved; keep it static |
-| `catchStreamError` | `catchStream` | Deferred | No direct Arrow `Either` equivalent | Do not rename independently while the synchronous catch-family name remains unresolved; keep it static |
+| `catchError` | `tryCatch` | Unreleased | The closest Arrow API is companion `Either.catch`, but it returns `Either<Throwable, R>` and does not take Dart's mapper plus `StackTrace` | `catch` is a reserved Dart keyword. `tryCatch` keeps the synchronous factory shape while using required named parameters; `catchError` remains a deprecated positional alias |
+| `catchFutureError` | `tryCatchAsync` | Unreleased | No direct Arrow `Either` equivalent | The async suffix keeps the family grouped with `tryCatch`; `catchFutureError` remains a deprecated positional static alias |
+| `catchStreamError` | `Stream.toEitherStream` | Unreleased | No direct Arrow `Either` equivalent | A `Stream` is a multi-event foreign receiver rather than a one-shot computation. The existing receiver adapter is canonical; `catchStreamError` remains a deprecated positional static alias |
+
+`registerFatalError<T>()` is a Dart-specific error-capture policy rather than
+an Arrow naming migration. It lets an application declare that values of `T`,
+including subtypes, must be rethrown by the catch family instead of being
+mapped to `Left`. Registration is isolate-local, additive, and idempotent.
 
 ### Fallback migration details
 
