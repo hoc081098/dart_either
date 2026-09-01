@@ -3,7 +3,7 @@
 This note distills an earlier discussion about the value proposition of
 `dart_either` and the improvements that could make it more robust. It is not a
 transcript or marketing copy. Every technical statement below was last
-reconciled with the repository state on 2026-08-29.
+reconciled with the repository state on 2026-09-01.
 
 The package currently declares version `2.2.0`, which has been released. Newer
 source changes remain under [Unreleased](../CHANGELOG.md) until the next
@@ -32,7 +32,8 @@ detected, `raise` is implemented, and the full test suite runs in CI.
 The main remaining technical debt is not a lack of more convenience methods.
 It is semantic precision:
 
-1. finish the variance audit for legacy instance methods;
+1. migrate the five variance-unsafe legacy instance methods identified by the
+   completed audit;
 2. define and test what parallel "short-circuit" does to still-running and
    queued work;
 3. make nullable and exception conversion more domain-selective;
@@ -224,12 +225,14 @@ copy. Renovate-only PR activity likewise says little about architecture.
 
 ## Remaining risks and improvement roadmap
 
-### Priority 0: finish the variance audit
+### Priority 0: migrate variance-unsafe instance APIs
 
-[`docs/either-variance-safety.md`](either-variance-safety.md) explicitly says
-its rule does not imply every existing API is safe. The following current
-instance methods still place a covariant class type parameter in an unsafe
-callback-produced position:
+[`docs/either-variance-safety.md`](either-variance-safety.md) now classifies
+every public instance member declared directly on `Either<L, R>`. Widened
+regression tests cover the safe operations, and every canonical safe method is
+marked only after its signature and implementation have been audited. The
+following current instance methods still place a covariant class type parameter
+in an unsafe callback-produced position:
 
 ```dart
 flatMap
@@ -239,24 +242,22 @@ handleError
 handleErrorWith
 ```
 
-A consumer probe against current `master` reproduced `_TypeError` for
-`flatMap`, `getOrHandle`, `handleError`, and `handleErrorWith` when an
-analyzer-valid widened `Right<Never, int>` was viewed as
-`Either<String, num>`. The failure happens at the virtual method boundary,
+A consumer probe against current `master` reproduced `_TypeError` for all five
+methods when an analyzer-valid widened `Right<Never, int>` was viewed as
+`Either<String, num>`; `flatMap` was also reproduced with a widened
+`Left<String, Never>`. The failure happens at the virtual method boundary,
 potentially before the branch or method body can protect the call.
 
-This is the highest-value correctness work remaining:
+Migrating these five methods is the highest-value correctness work remaining:
 
-1. Audit every public `Either<L, R>` instance signature, not only the methods
-   already suspected.
-2. Add widened `Left<L, Never>`, `Right<Never, R>`, and subtype-to-supertype
-   regression fixtures for each unsafe shape.
-3. In `2.x`, introduce safe canonical operations as generic extensions or
+1. Preserve analyzer-valid widened receiver reproductions for each unsafe
+   shape and use them as regression fixtures for replacement operations.
+2. In `2.x`, introduce safe canonical operations as generic extensions or
    top-level functions using direct pattern matching; retain old methods as
    deprecated compatibility paths where Dart name resolution permits it.
-4. Reserve removal or reclamation of conflicting canonical names for the next
+3. Reserve removal or reclamation of conflicting canonical names for the next
    major version.
-5. Do not "fix" only the method body: runtime argument checks may fail before
+4. Do not "fix" only the method body: runtime argument checks may fail before
    it executes.
 
 ### Priority 0: make parallel short-circuit semantics exact
@@ -458,14 +459,13 @@ technical correctness verdict or quote stale PR counts as evidence.
 
 ## Recommended next slice
 
-Start with one variance-hardening slice, not another convenience API:
+Continue with one variance-migration slice, not another convenience API:
 
-1. turn the four reproduced unsafe methods plus deprecated `getOrElse` into a
-   complete signature audit;
-2. capture analyzer-valid runtime failures as regression fixtures;
-3. propose additive safe names and a `2.x` deprecation path using the
+1. capture analyzer-valid runtime failures for the five classified unsafe
+   methods as replacement regression fixtures;
+2. propose additive safe names and a `2.x` deprecation path using the
    repository's API-rename workflow; and
-4. keep the parallel-semantics clarification as the next independent slice.
+3. keep the parallel-semantics clarification as the next independent slice.
 
 This follows the maturity level the library has reached. The question is no
 longer whether `Left` and `Right` work. It is whether every public type boundary
