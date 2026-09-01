@@ -1619,6 +1619,22 @@ void main() {
     });
 
     test('redeem', () {
+      final inferredResults = [
+        rightOf1.redeem(
+          leftOperation: (v) => v.toString(),
+          rightOperation: (v) => v.toString(),
+        ),
+      ];
+      inferredResults.add(const Left<int, String>(2));
+
+      expect(
+        inferredResults,
+        const <Either<int, String>>[
+          Right<int, String>('1'),
+          Left<int, String>(2),
+        ],
+      );
+
       expect(
         rightOf1.redeem(
           leftOperation: (v) => v.toString(),

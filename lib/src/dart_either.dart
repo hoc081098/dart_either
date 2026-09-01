@@ -1099,15 +1099,38 @@ sealed class Either<L, R> {
   ///
   /// [redeem] is derived from [map] and [handleError].
   /// This is functionally equivalent to `map(rightOperation).handleError(leftOperation)`.
+  ///
+  /// On successful completion, both branches are represented by a [Right]:
+  /// [leftOperation] recovers the left side, while [rightOperation] maps the
+  /// right side.
+  ///
+  /// ### Example
+  ///
+  /// ```dart
+  /// final Either<String, int> recovered = Left<String, int>('missing').redeem(
+  ///   leftOperation: (error) => error.length,
+  ///   rightOperation: (value) => value * 2,
+  /// );
+  /// // recovered: Either.Right(7)
+  ///
+  /// final Either<String, int> mapped = Right<String, int>(21).redeem(
+  ///   leftOperation: (error) => error.length,
+  ///   rightOperation: (value) => value * 2,
+  /// );
+  /// // mapped: Either.Right(42)
+  /// ```
   @covarianceSafe
   @useResult
-  Right<L, C> redeem<C>({
+  Either<L, C> redeem<C>({
     required C Function(L value) leftOperation,
     required C Function(R value) rightOperation,
   }) =>
-      _foldInternal(
-          ifLeft: (v) => Right<L, C>(leftOperation(v)),
-          ifRight: (v) => Right<L, C>(rightOperation(v)));
+      Right<L, C>(
+        _foldInternal(
+          ifLeft: leftOperation,
+          ifRight: rightOperation,
+        ),
+      );
 
   /// Redeem an [Either] to an [Either] by resolving the error
   /// **or** mapping the value [R] to [C] **with** an [Either].
