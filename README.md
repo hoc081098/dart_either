@@ -300,6 +300,12 @@ The policy applies to `tryCatch`, `tryCatchAsync`, `Future.toEitherFuture`, and
 `Stream.toEitherStream`. An error matching a registered type, including any
 subtype of it, remains an error instead of being converted to `Left`.
 
+Both `Right` and `Left` are ordinary values in the returned `Either`. A matching
+fatal error stays in Dart's error channel instead: `tryCatch` rethrows it, the
+Future-based APIs complete with it as an error, and `toEitherStream` forwards it
+as a stream error event. Internal binding-control signals are excluded from
+capture automatically.
+
 #### Migrating from deprecated error-capture APIs
 
 The old names remain available in `2.x` so existing code keeps working:
@@ -582,50 +588,58 @@ useful when several `Either`-producing operations depend on values produced by
 earlier steps: each value can be bound to a local variable, keeping the flow
 flat instead of nesting callbacks.
 
+The shortened example below uses the shared
+[`AppError`, `toAppError`, and model decoders](https://github.com/hoc081098/dart_either/blob/master/example/lib/http_example/shared_model.dart)
+from the [complete runnable binding example](https://github.com/hoc081098/dart_either/blob/master/example/lib/http_example/http_either_binding.dart).
+
 ```dart
-Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) =>
-    Either.futureBinding<AsyncError, dynamic>((effect) async {
+Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
+    Either.futureBinding((effect) async {
       // A synchronous Either can be bound without await.
       final Uri uri = Either.tryCatch(
         action: () => Uri.parse(uriString),
-        errorMapper: toAsyncError,
+        errorMapper: toAppError('Parse $uriString'),
       ).bind(effect);
 
       // A Future<Either> is awaited and then bound. tryCatchAsync converts
-      // non-fatal Future errors into AsyncError values on the Left.
+      // non-fatal Future errors into AppError values on the Left.
       final http.Response response = await Either.tryCatchAsync(
         action: () => http.get(uri),
-        errorMapper: toAsyncError,
+        errorMapper: toAppError('http.get($uri)'),
       ).bind(effect);
+
+      final int statusCode = response.statusCode;
+      final String body = response.body;
 
       // A failed guard also short-circuits this futureBinding scope.
       effect.ensure(
-        response.statusCode >= 200 && response.statusCode < 300,
-        () => AsyncError(
+        statusCode >= 200 && statusCode < 300,
+        () => AppError(
           HttpException(
-            'statusCode=${response.statusCode}, body=${response.body}',
+            'statusCode=$statusCode, body=$body',
             uri: response.request?.url,
           ),
           StackTrace.current,
+          'statusCode: $statusCode',
         ),
       );
 
       // Returning a plain value completes the scope with Right(value).
-      return Either<AsyncError, dynamic>.tryCatch(
-        action: () => jsonDecode(response.body),
-        errorMapper: toAsyncError,
+      return Either<AppError, dynamic>.tryCatch(
+        action: () => jsonDecode(body),
+        errorMapper: toAppError('jsonDecode: $body'),
       ).bind(effect);
     });
 
-Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
+Either<AppError, BuiltList<User>> toUsers(dynamic list) { ... }
 
-Either<AsyncError, BuiltList<User>> usersEither = await Either.futureBinding(
+Either<AppError, BuiltList<User>> usersEither = await Either.futureBinding(
   (effect) async {
     // Left from either operation exits this outer scope immediately.
     final dynamic json = await httpGetAsEither(
       'https://jsonplaceholder.typicode.com/users',
     ).bind(effect);
-    final BuiltList<User> users = toUsers(json as List).bind(effect);
+    final BuiltList<User> users = toUsers(json).bind(effect);
     return users;
   },
 );
@@ -673,48 +687,57 @@ values, guards, and local variables in direct `async`/`await` style.
 `Either.binding` is the synchronous counterpart and does not operate on
 `Future<Either>`.
 
+The shortened example below uses the same
+[shared model](https://github.com/hoc081098/dart_either/blob/master/example/lib/http_example/shared_model.dart)
+as the [complete runnable pipeline example](https://github.com/hoc081098/dart_either/blob/master/example/lib/http_example/http_either_chain.dart).
+
 ```dart
 // 1) Define a reusable pipeline. thenFlatMapEither is used when the next
 // operation already returns Either (or Future<Either>), so no nested Either
 // is created.
-Future<Either<AsyncError, dynamic>> httpGetAsEither(String uriString) {
-  Either<AsyncError, dynamic> toJson(http.Response response) =>
-      response.statusCode >= 200 && response.statusCode < 300
-          ? Either<AsyncError, dynamic>.tryCatch(
-              action: () => jsonDecode(response.body),
-              errorMapper: toAsyncError,
-            )
-          : Either<AsyncError, dynamic>.left(
-              AsyncError(
-                HttpException(
-                  'statusCode=${response.statusCode}, body=${response.body}',
-                  uri: response.request?.url,
-                ),
-                StackTrace.current,
-              ),
-            );
+Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) {
+  Either<AppError, dynamic> toJson(http.Response response) {
+    final int statusCode = response.statusCode;
+    final String body = response.body;
 
-  Future<Either<AsyncError, http.Response>> httpGet(Uri uri) =>
+    return statusCode >= 200 && statusCode < 300
+        ? Either<AppError, dynamic>.tryCatch(
+            action: () => jsonDecode(body),
+            errorMapper: toAppError('jsonDecode: body=$body'),
+          )
+        : Either<AppError, dynamic>.left(
+            AppError(
+              HttpException(
+                'statusCode=$statusCode, body=$body',
+                uri: response.request?.url,
+              ),
+              StackTrace.current,
+              'statusCode: $statusCode',
+            ),
+          );
+  }
+
+  Future<Either<AppError, http.Response>> httpGet(Uri uri) =>
       Either.tryCatchAsync(
         action: () => http.get(uri),
-        errorMapper: toAsyncError,
+        errorMapper: toAppError('http.get($uri)'),
       );
 
-  final Future<Either<AsyncError, Uri>> uri = Future.value(
+  final Future<Either<AppError, Uri>> uri = Future.value(
     Either.tryCatch(
       action: () => Uri.parse(uriString),
-      errorMapper: toAsyncError,
+      errorMapper: toAppError('Parse $uriString'),
     ),
   );
 
-  return uri.thenFlatMapEither(httpGet).thenFlatMapEither<dynamic>(toJson);
+  return uri.thenFlatMapEither(httpGet).thenFlatMapEither(toJson);
 }
 
-Either<AsyncError, BuiltList<User>> toUsers(List list) { ... }
+Either<AppError, BuiltList<User>> toUsers(dynamic list) { ... }
 
 // 2) thenMapEither transforms a successful value. thenFlatMapEither then
 // chains toUsers, which already returns Either, without nesting the result.
-final Either<AsyncError, BuiltList<User>> usersEither =
+final Either<AppError, BuiltList<User>> usersEither =
     await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
     .thenMapEither((dynamic json) => json as List)
     .thenFlatMapEither(toUsers);

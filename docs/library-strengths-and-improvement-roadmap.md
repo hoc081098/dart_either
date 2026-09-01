@@ -314,11 +314,11 @@ the existing signature under the same name is not a `2.x` option.
 
 ### Priority 1: make exception capture selective
 
-`tryCatch`, `tryCatchAsync`, and `toEitherStream` catch `Object`, except that
-their internal guard rethrows `ControlError` and types registered through
-`registerFatalError`. This means `StateError`, `TypeError`, `AssertionError`,
-and application exceptions remain eligible for mapping unless the application
-registers a matching fatal type.
+`tryCatch`, `tryCatchAsync`, `toEitherFuture`, and `toEitherStream` catch
+`Object`, except that their internal guard rethrows `ControlError` and types
+registered through `registerFatalError`. This means `StateError`, `TypeError`,
+`AssertionError`, and application exceptions remain eligible for mapping unless
+the application registers a matching fatal type.
 
 The global registration policy handles app-wide exclusions such as
 cancellation exceptions. Teams may still want an individual call to recover

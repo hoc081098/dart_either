@@ -12,7 +12,7 @@
     - `catchFutureError` in favor of `tryCatchAsync`.
     - `catchStreamError` in favor of `Stream.toEitherStream`.
     - All three deprecated aliases remain available in `2.x`.
-  
+
   - Added `registerFatalError<T>()`. Errors of a registered type or subtype
     remain errors instead of being converted to `Left`.
     Fatal-error registration is per isolate, additive, and idempotent. Spawned
