@@ -322,7 +322,7 @@ sealed class Either<L, R> {
   /// Future<Either<ExampleError, int>> provideY() { ... }
   /// Future<Either<ExampleError, int>> provideZ(int x, int y) { ... }
   ///
-  /// final result = Either.futureBinding<ExampleError, int>((effect) async {
+  /// final result = Either.bindingAsync<ExampleError, int>((effect) async {
   ///   final int x = provideX().bind(effect);
   ///   final int y = await effect.bindFuture(provideY());
   ///   final int z = await provideZ(x, y).bind(effect);
@@ -343,7 +343,7 @@ sealed class Either<L, R> {
   /// Future<int> errorFuture = Future.error(Exception());
   ///
   /// // DON'T
-  /// final badResult = Either.futureBinding<ExampleError, int>((_) async {
+  /// final badResult = Either.bindingAsync<ExampleError, int>((_) async {
   ///   final int value1 = canThrowAnError();                // DON'T
   ///   final int value2 = await canReturnAnErrorFuture();   // DON'T
   ///   final int value3 = await errorFuture;                // DON'T
@@ -353,7 +353,7 @@ sealed class Either<L, R> {
   /// // DO
   /// ExampleError toExampleError(Object e, StackTrace st) { ... }
   ///
-  /// final result = Either.futureBinding<ExampleError, int>((effect) async {
+  /// final result = Either.bindingAsync<ExampleError, int>((effect) async {
   ///   final int value1 = Either<ExampleError, int>.tryCatch(
   ///     action: canThrowAnError,
   ///     errorMapper: toExampleError,
@@ -372,7 +372,7 @@ sealed class Either<L, R> {
   ///   return value1 + value2 + value3;
   /// });
   /// ```
-  static Future<Either<L, R>> futureBinding<L, R>(
+  static Future<Either<L, R>> bindingAsync<L, R>(
       @monadComprehensions FutureOr<R> Function(EitherEffect<L> effect) block) {
     final EitherEffect<L> effect = _BindingScope<Never Function(L)>._(_Token());
 
@@ -388,6 +388,25 @@ sealed class Either<L, R> {
         )
         .whenComplete(() => effect._close());
   }
+
+  /// Runs an asynchronous binding scope using the deprecated API name.
+  ///
+  /// This method delegates to [Either.bindingAsync] without changing the
+  /// callback timing, short-circuit behavior, exception propagation, or scope
+  /// lifetime.
+  ///
+  /// ### Example
+  /// ```dart
+  /// final result = await Either.futureBinding<String, int>((effect) async {
+  ///   return Future.value(Either<String, int>.right(1)).bind(effect);
+  /// }); // Right(1)
+  /// ```
+  @Deprecated(
+      'Use Either.bindingAsync<L, R>() instead. It will be removed in v3.')
+  static Future<Either<L, R>> futureBinding<L, R>(
+    @monadComprehensions FutureOr<R> Function(EitherEffect<L> effect) block,
+  ) =>
+      bindingAsync<L, R>(block);
 
   /// Evaluates the specified [block] and wraps the result in a [Right].
   ///
@@ -1176,15 +1195,15 @@ final class _MonadComprehensions {
 ///
 /// [BindEitherEffectExtension.bind] returns an [Either]'s [Right.value].
 /// Binding a [Left] short-circuits the surrounding [Either.binding] or
-/// [Either.futureBinding] scope with that left value.
+/// [Either.bindingAsync] scope with that left value.
 /// [RaiseEitherEffectExtension.raise] is the convenience syntax for
 /// short-circuiting with a left value when there is no [Right] to extract, so
 /// callers do not need to construct a [Left] solely to bind it.
 ///
 /// Obtain a library-managed capability from the binding callback. A capability
-/// supplied by [Either.binding] or [Either.futureBinding] is valid only for
+/// supplied by [Either.binding] or [Either.bindingAsync] is valid only for
 /// that callback's lifetime, including asynchronous work returned by
-/// [Either.futureBinding]. Invoking it after its scope has completed throws a
+/// [Either.bindingAsync]. Invoking it after its scope has completed throws a
 /// [StateError].
 ///
 /// Construction and binding behavior are owned by this library. Code outside
@@ -1209,7 +1228,7 @@ typedef EitherEffect<L> = _BindingScope<Never Function(L)>;
 /// Internal control-flow signal raised when [EitherEffect] short-circuits by
 /// binding a [Left] or calling [RaiseEitherEffectExtension.raise].
 ///
-/// [Either.binding] and [Either.futureBinding] catch only signals belonging to
+/// [Either.binding] and [Either.bindingAsync] catch only signals belonging to
 /// their own scope. User code must not catch this error. If a block swallows
 /// its scope's signal and then completes normally, the binding scope fails with
 /// a [StateError].
@@ -1299,10 +1318,10 @@ final class _BindingScope<AcceptsLeft extends Function> {
 extension BindEitherEffectExtension<L> on EitherEffect<L> {
   /// Returns [either]'s [Right.value].
   ///
-  /// A [Left] short-circuits the [Either.binding] or [Either.futureBinding]
+  /// A [Left] short-circuits the [Either.binding] or [Either.bindingAsync]
   /// scope that owns this effect.
   ///
-  /// See [Either.binding] and [Either.futureBinding].
+  /// See [Either.binding] and [Either.bindingAsync].
   ///
   /// ### Example
   /// ```dart
@@ -1317,7 +1336,7 @@ extension BindEitherEffectExtension<L> on EitherEffect<L> {
 
 /// Provides convenience raise syntax on a scope-bound [EitherEffect].
 extension RaiseEitherEffectExtension<L> on EitherEffect<L> {
-  /// Short-circuits the [Either.binding] or [Either.futureBinding] scope that
+  /// Short-circuits the [Either.binding] or [Either.bindingAsync] scope that
   /// owns this effect with [value] as its [Left].
   ///
   /// This is convenience syntax for the case where the caller already has a
@@ -1327,7 +1346,7 @@ extension RaiseEitherEffectExtension<L> on EitherEffect<L> {
   /// `effect.bind(Either<String, Never>.left('error'))` without creating the
   /// intermediate [Left]. Its [Never] return type allows use in expressions.
   ///
-  /// See [Either.binding] and [Either.futureBinding].
+  /// See [Either.binding] and [Either.bindingAsync].
   ///
   /// ### Example
   /// ```dart

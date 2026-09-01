@@ -13,7 +13,7 @@ extension EnsureEitherEffectExtension<L> on EitherEffect<L> {
   /// When [value] is `false`, evaluates [orLeft] and short-circuits the scope
   /// with its result in a [Left].
   ///
-  /// See [Either.binding] and [Either.futureBinding].
+  /// See [Either.binding] and [Either.bindingAsync].
   ///
   /// ### Example
   /// ```dart
@@ -39,7 +39,7 @@ extension EnsureNotNullEitherEffectExtension<L> on EitherEffect<L> {
   /// scope with its result in a [Left]. Assign the returned value; Dart does
   /// not promote the original variable across this method call.
   ///
-  /// See [Either.binding] and [Either.futureBinding].
+  /// See [Either.binding] and [Either.bindingAsync].
   ///
   /// ### Example
   /// ```dart
@@ -60,15 +60,15 @@ extension EnsureNotNullEitherEffectExtension<L> on EitherEffect<L> {
 extension BindFutureEitherEffectExtension<L> on EitherEffect<L> {
   /// Returns the right value produced by [eitherFuture].
   ///
-  /// A produced [Left] short-circuits the surrounding [Either.futureBinding]
+  /// A produced [Left] short-circuits the surrounding [Either.bindingAsync]
   /// scope. An error emitted by [eitherFuture] propagates unchanged.
   /// This is a shorthand for `eitherFuture.then(bind)`.
   ///
-  /// See [Either.futureBinding].
+  /// See [Either.bindingAsync].
   ///
   /// ### Example
   /// ```dart
-  /// final result = await Either.futureBinding<String, int>((effect) async {
+  /// final result = await Either.bindingAsync<String, int>((effect) async {
   ///   final int userId = await effect.bindFuture(
   ///     Future.value(Either<String, int>.right(1)),
   ///   );
@@ -91,10 +91,10 @@ extension BindFutureEitherEffectExtension<L> on EitherEffect<L> {
 extension BindEitherExtension<L, R> on Either<L, R> {
   /// Returns this [Either]'s right value through [effect].
   ///
-  /// A [Left] short-circuits the [Either.binding] or [Either.futureBinding]
+  /// A [Left] short-circuits the [Either.binding] or [Either.bindingAsync]
   /// scope that owns [effect].
   ///
-  /// See [Either.binding] and [Either.futureBinding].
+  /// See [Either.binding] and [Either.bindingAsync].
   ///
   /// ### Example
   /// ```dart
@@ -110,14 +110,14 @@ extension BindEitherExtension<L, R> on Either<L, R> {
 extension BindEitherFutureExtension<L, R> on Future<Either<L, R>> {
   /// Returns the right value produced by this future through [effect].
   ///
-  /// A produced [Left] short-circuits the [Either.futureBinding] scope that
+  /// A produced [Left] short-circuits the [Either.bindingAsync] scope that
   /// owns [effect]. An error emitted by this future propagates unchanged.
   ///
-  /// See [Either.futureBinding].
+  /// See [Either.bindingAsync].
   ///
   /// ### Example
   /// ```dart
-  /// final result = await Either.futureBinding<String, int>((effect) async {
+  /// final result = await Either.bindingAsync<String, int>((effect) async {
   ///   return Future.value(Either<String, int>.right(1)).bind(effect);
   /// }); // Right(1)
   /// ```
