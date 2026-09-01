@@ -13,28 +13,29 @@ import 'shared_model.dart';
 // 1) HTTP helper (futureBinding style)
 // ---------------------------------------------------------------------------
 
-/// Get response from Uri as either using Monad Comprehension
+/// Gets a response using direct-style asynchronous binding.
 Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
     Either.futureBinding((effect) async {
-      // Create Uri
-      final uri = Either.catchError(
-        toAppError('Parse $uriString'),
-        () => Uri.parse(uriString),
+      // A synchronous Either binds immediately. Left exits this scope.
+      final Uri uri = Either.tryCatch(
+        action: () => Uri.parse(uriString),
+        errorMapper: toAppError('Parse $uriString'),
       ).bind(effect);
 
-      // Get response
-      final response = await Either.catchFutureError(
-        toAppError('http.get($uri)'),
-        () async {
+      // A Future<Either> must be awaited before its Right can be used.
+      // tryCatchAsync turns non-fatal Future errors into AppError values.
+      final http.Response response = await Either.tryCatchAsync(
+        action: () async {
           await delay(500);
           return http.get(uri);
         },
+        errorMapper: toAppError('http.get($uri)'),
       ).bind(effect);
 
-      final statusCode = response.statusCode;
-      final body = response.body;
+      final int statusCode = response.statusCode;
+      final String body = response.body;
 
-      // Check status code
+      // Guards participate in the same short-circuiting scope.
       effect.ensure(
         statusCode >= 200 && statusCode < 300,
         () => AppError(
@@ -47,10 +48,10 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
         ),
       );
 
-      // Decode body to json
-      return Either.catchError(
-        toAppError('jsonDecode: $body'),
-        () => jsonDecode(body),
+      // The final bound Right becomes the successful value of futureBinding.
+      return Either.tryCatch(
+        action: () => jsonDecode(body),
+        errorMapper: toAppError('jsonDecode: $body'),
       ).bind(effect);
     });
 
@@ -68,12 +69,12 @@ void main() async {
               print('--> Get posts for $user...');
 
               // Get posts for user
-              final list = await httpGetAsEither(
+              final dynamic list = await httpGetAsEither(
                       'https://jsonplaceholder.typicode.com/posts?userId=${user.id}')
                   .bind(effect);
 
               // Convert to post models
-              final posts = toPosts(list).bind(effect);
+              final BuiltList<Post> posts = toPosts(list).bind(effect);
 
               // Return user and posts
               return (user: user, posts: posts);
@@ -81,15 +82,17 @@ void main() async {
         maxConcurrent: 3,
       );
 
-  final result = await Either.futureBinding<AppError, BuiltList<UserAndPosts>>(
+  final Either<AppError, BuiltList<UserAndPosts>> result =
+      await Either.futureBinding<AppError, BuiltList<UserAndPosts>>(
     (effect) async {
-      // Get user list
-      final list =
+      // Each await + bind reads like ordinary async code. Any Left skips the
+      // remaining statements and becomes the result of this outer scope.
+      final dynamic list =
           await httpGetAsEither('https://jsonplaceholder.typicode.com/users')
               .bind(effect);
 
-      // Convert to user models
-      final users = toUsers(list).bind(effect);
+      // Synchronous Either values use the same effect without await.
+      final BuiltList<User> users = toUsers(list).bind(effect);
 
       // Get posts for each user
       return await getPosts(users).bind(effect);

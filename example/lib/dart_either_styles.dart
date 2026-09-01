@@ -66,34 +66,36 @@ Future<void> imperativeCode() async {
 // ---------------------------------------------------------------------------
 
 Future<Either<String, User?>> findUserByIdEither(String id) =>
-    Either.catchFutureError(
-      (e, s) => 'findUserById failed: $e, $s',
-      () => findUserById(id),
+    Either.tryCatchAsync(
+      action: () => findUserById(id),
+      errorMapper: (e, s) => 'findUserById failed: $e, $s',
     );
 
 Future<Either<String, List<Post>>> getPostsByUserEither(User user) =>
-    Either.catchFutureError(
-      (e, s) => 'getPostsByUser failed: $e, $s',
-      () => getPostsByUser(user),
+    Either.tryCatchAsync(
+      action: () => getPostsByUser(user),
+      errorMapper: (e, s) => 'getPostsByUser failed: $e, $s',
     );
 
 Future<Either<String, void>> doSomethingWithPostsEither(
   User user,
   List<Post> posts,
 ) =>
-    Either.catchFutureError(
-      (e, s) => 'doSomethingWithPosts failed: $e, $s',
-      () => doSomethingWithPosts(user, posts),
+    Either.tryCatchAsync(
+      action: () => doSomethingWithPosts(user, posts),
+      errorMapper: (e, s) => 'doSomethingWithPosts failed: $e, $s',
     );
 
 // ---------------------------------------------------------------------------
-// 4) Composition style A: flatMap chain
+// 4) Composition style A: Future<Either> pipeline
 // ---------------------------------------------------------------------------
 
 Future<Either<String, void>> eitherFlatMapCode() =>
     findUserByIdEither('user_id').thenFlatMapEither((user) {
+      // thenFlatMapEither skips this callback when findUserByIdEither returns
+      // Left. It also flattens the Either returned below into this pipeline.
       if (user == null) {
-        return 'User is null'.left<List<Post>>();
+        return Either<String, List<Post>>.left('User is null');
       }
       return getPostsByUserEither(user).thenFlatMapEither(
           (posts) => doSomethingWithPostsEither(user, posts));
@@ -105,10 +107,16 @@ Future<Either<String, void>> eitherFlatMapCode() =>
 
 Future<Either<String, void>> eitherBindingCode() =>
     Either.futureBinding((effect) async {
-      final nullableUser = await findUserByIdEither('user_id').bind(effect);
-      final user = effect.ensureNotNull(nullableUser, () => 'User is null');
-      final posts = await getPostsByUserEither(user).bind(effect);
+      // Awaiting and binding extracts Right. A Left exits the whole scope.
+      final User? nullableUser =
+          await findUserByIdEither('user_id').bind(effect);
+      final User user = effect.ensureNotNull(
+        nullableUser,
+        () => 'User is null',
+      );
+      final List<Post> posts = await getPostsByUserEither(user).bind(effect);
       await doSomethingWithPostsEither(user, posts).bind(effect);
+      // Reaching the end normally produces Right(null), whose R is void.
     });
 
 // ---------------------------------------------------------------------------

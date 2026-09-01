@@ -37,8 +37,10 @@ class User {
       );
 
   static Either<AppError, User> fromJsonAsEither(dynamic json) =>
-      Either.catchError(toAppError('User.fromJsonAsEither: $json'),
-          () => User.fromJson(json as Map<String, dynamic>));
+      Either.tryCatch(
+        action: () => User.fromJson(json as Map<String, dynamic>),
+        errorMapper: toAppError('User.fromJsonAsEither: $json'),
+      );
 
   @override
   String toString() => 'User{id: $id, name: $name, username: $username}';
@@ -62,8 +64,10 @@ class Post {
       );
 
   static Either<AppError, Post> fromJsonAsEither(dynamic json) =>
-      Either.catchError(toAppError('Post.fromJsonAsEither: $json'),
-          () => Post.fromJson(json as Map<String, dynamic>));
+      Either.tryCatch(
+        action: () => Post.fromJson(json as Map<String, dynamic>),
+        errorMapper: toAppError('Post.fromJsonAsEither: $json'),
+      );
 
   @override
   String toString() => 'Post{id: $id, userId: $userId, title: $title}';

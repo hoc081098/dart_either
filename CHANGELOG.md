@@ -5,6 +5,19 @@
 - **Left-side predicate**
   - Added `isLeftAnd` to match a `Left` value with a predicate.
 
+- **Error capture**
+  - Added `tryCatch` and `tryCatchAsync` with required named `action` and `errorMapper` parameters.
+  - Deprecated
+    - `catchError` in favor of `tryCatch`.
+    - `catchFutureError` in favor of `tryCatchAsync`.
+    - `catchStreamError` in favor of `Stream.toEitherStream`.
+    - All three deprecated aliases remain available in `2.x`.
+
+  - Added `registerFatalError<T>()`. Errors of a registered type or subtype
+    remain errors instead of being converted to `Left`.
+    Fatal-error registration is per isolate, additive, and idempotent. Spawned
+    isolates must register the types they need separately.
+
 ## 2.2.0 - Aug 27, 2026
 
 ### `Either`

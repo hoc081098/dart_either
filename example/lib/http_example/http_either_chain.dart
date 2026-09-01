@@ -10,46 +10,50 @@ import 'package:rxdart_ext/rxdart_ext.dart';
 import 'shared_model.dart';
 
 // ---------------------------------------------------------------------------
-// 1) HTTP helper (flatMap chain style)
+// 1) HTTP helper (Future<Either> pipeline style)
 // ---------------------------------------------------------------------------
 
-/// Get response from Uri as either using flatMap.
+/// Gets a response by chaining operations on `Future<Either>`.
 Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) {
   Either<AppError, dynamic> toJson(http.Response response) {
-    final statusCode = response.statusCode;
-    final body = response.body;
+    final int statusCode = response.statusCode;
+    final String body = response.body;
 
     return statusCode >= 200 && statusCode < 300
-        ? Either<AppError, dynamic>.catchError(
-            toAppError('jsonDecode: body=$body'),
-            () => jsonDecode(body),
+        ? Either<AppError, dynamic>.tryCatch(
+            action: () => jsonDecode(body),
+            errorMapper: toAppError('jsonDecode: body=$body'),
           )
-        : AppError(
-            HttpException(
-              'statusCode=$statusCode, body=$body',
-              uri: response.request?.url,
+        : Either<AppError, dynamic>.left(
+            AppError(
+              HttpException(
+                'statusCode=$statusCode, body=$body',
+                uri: response.request?.url,
+              ),
+              StackTrace.current,
+              'statusCode: $statusCode',
             ),
-            StackTrace.current,
-            'statusCode: $statusCode',
-          ).left();
+          );
   }
 
   Future<Either<AppError, http.Response>> httpGet(Uri uri) =>
-      Either.catchFutureError(
-        toAppError('http.get($uri)'),
-        () async {
+      Either.tryCatchAsync(
+        action: () async {
           await delay(500);
           return http.get(uri);
         },
+        errorMapper: toAppError('http.get($uri)'),
       );
 
-  final uri = Future.value(
-    Either.catchError(
-      toAppError('Parse $uriString'),
-      () => Uri.parse(uriString),
+  final Future<Either<AppError, Uri>> uri = Future.value(
+    Either.tryCatch(
+      action: () => Uri.parse(uriString),
+      errorMapper: toAppError('Parse $uriString'),
     ),
   );
 
+  // Each thenFlatMapEither waits for Right before invoking the next operation.
+  // Left skips the remaining callbacks; Future errors still propagate.
   return uri.thenFlatMapEither(httpGet).thenFlatMapEither(toJson);
 }
 
@@ -68,7 +72,9 @@ void main() async {
 
           return httpGetAsEither(
                   'https://jsonplaceholder.typicode.com/posts?userId=${user.id}')
+              // toPosts already returns Either, so flatMap avoids nesting it.
               .thenFlatMapEither(toPosts)
+              // This callback returns a plain value, so map wraps it in Right.
               .thenMapEither((posts) => (user: user, posts: posts));
         },
         maxConcurrent: 3,
