@@ -558,8 +558,10 @@ void main() {
       });
 
       group('Either.registerFatalError', () {
-        test('rethrows registered types and their subtypes', () async {
+        test('preserves registered types, their subtypes, and the stack trace',
+            () async {
           final fatalSubType = _RegisteredFatalSubtype();
+          final originalStackTrace = StackTrace.fromString('fatal origin');
 
           var mapperCalls = 0;
           Object errorMapper(Object error, StackTrace stackTrace) {
@@ -586,10 +588,16 @@ void main() {
             throwsA(same(fatalSubType)),
           );
 
-          await expectLater(
-            Future<int>.error(fatalSubType).toEitherFuture(errorMapper),
-            throwsA(same(fatalSubType)),
-          );
+          try {
+            await Future<int>.error(
+              fatalSubType,
+              originalStackTrace,
+            ).toEitherFuture(errorMapper);
+            fail('Expected the registered fatal error to propagate');
+          } catch (error, stackTrace) {
+            expect(error, same(fatalSubType));
+            expect(stackTrace.toString(), originalStackTrace.toString());
+          }
 
           await expectLater(
             Stream<int>.error(fatalSubType).toEitherStream(errorMapper),
