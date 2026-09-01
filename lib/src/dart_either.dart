@@ -138,8 +138,9 @@ sealed class Either<L, R> {
 
   /// Evaluates the specified [block] and wraps the result in a [Right].
   ///
-  /// If an error is thrown, [errorMapper] maps it and the result is wrapped in
-  /// a [Left].
+  /// If a non-fatal error is thrown, [errorMapper] maps it and the result is
+  /// wrapped in a [Left]. Errors matching [Either.registerFatalError] are
+  /// rethrown with their original stack trace instead.
   ///
   /// ### Example
   /// ```dart
@@ -152,8 +153,9 @@ sealed class Either<L, R> {
 
   /// Evaluates the specified [action] and wraps the result in a [Right].
   ///
-  /// If an error is thrown, [errorMapper] maps it and the result is wrapped in
-  /// a [Left]. Errors matching [Either.registerFatalError] are rethrown instead.
+  /// If a non-fatal error is thrown, [errorMapper] maps it and the result is
+  /// wrapped in a [Left]. Errors matching [Either.registerFatalError] are
+  /// rethrown with their original stack trace instead.
   ///
   /// ### Example
   /// ```dart
@@ -387,10 +389,12 @@ sealed class Either<L, R> {
         .whenComplete(() => effect._close());
   }
 
-  /// Evaluates the specified [block] and wrap the result in a [Right].
+  /// Evaluates the specified [block] and wraps the result in a [Right].
   ///
-  /// If an error is thrown or [block] returns a future that completes with an error,
-  /// calling [errorMapper] with that error and wrap the result in a [Left].
+  /// If [block] throws a non-fatal error or returns a future that completes with
+  /// one, [errorMapper] maps that error and the returned future completes with a
+  /// [Left]. If the error matches [Either.registerFatalError], the returned
+  /// future completes with the original error and stack trace instead.
   ///
   /// ### Example
   /// ```dart
@@ -428,9 +432,10 @@ sealed class Either<L, R> {
 
   /// Evaluates the specified [action] and wraps the result in a [Right].
   ///
-  /// If an error is thrown or [action] returns a future that completes with an error,
-  /// [errorMapper] maps that error and the result is wrapped in a [Left].
-  /// Errors matching [Either.registerFatalError] are rethrown instead.
+  /// If [action] throws a non-fatal error or returns a future that completes
+  /// with one, [errorMapper] maps that error and the returned future completes
+  /// with a [Left]. If the error matches [Either.registerFatalError], the
+  /// returned future completes with the original error and stack trace instead.
   ///
   /// ### Example
   /// ```dart
@@ -465,15 +470,18 @@ sealed class Either<L, R> {
       Future.sync(action).then(Either<L, R>.right).onError<Object>(
           (e, s) => Either<L, R>.left(errorMapper(throwIfFatal(e, s), s)));
 
-  /// Transforms data events to [Right]s and error events to [Left]s.
+  /// Transforms data events to [Right]s and non-fatal error events to [Left]s.
   ///
   /// When the source stream emits a data event, the result stream will emit
   /// a [Right] wrapping that data event.
   ///
-  /// When the source stream emits an error event, [errorMapper] maps that error
-  /// and the result stream emits a [Left] wrapping the mapped value.
+  /// When the source stream emits a non-fatal error event, [errorMapper] maps
+  /// that error and the returned stream emits a [Left] wrapping the mapped
+  /// value. If the error matches [Either.registerFatalError], the returned
+  /// stream emits the original error and stack trace instead.
   ///
-  /// The done events will be forwarded.
+  /// When the source stream closes, the returned stream also closes with a done
+  /// event.
   ///
   /// ### Example
   /// ```dart

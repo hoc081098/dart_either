@@ -6,14 +6,15 @@ import 'dart_either.dart';
 
 /// Provide [toEitherStream] extension on [Stream].
 extension ToEitherStreamExtension<R> on Stream<R> {
-  /// Transform data events to [Right]s and error events to [Left]s.
+  /// Transforms data events to [Right]s and non-fatal error events to [Left]s.
   ///
   /// When the source stream emits a data event, the result stream will emit
   /// a [Right] wrapping that data event.
   ///
-  /// When the source stream emits an error event, [errorMapper] maps that error
-  /// and the result stream emits a [Left] wrapping the mapped value.
-  /// Errors matching [Either.registerFatalError] are rethrown instead.
+  /// When the source stream emits a non-fatal error event, [errorMapper] maps
+  /// that error and the returned stream emits a [Left] wrapping the mapped
+  /// value. If the error matches [Either.registerFatalError], the returned
+  /// stream emits the original error and stack trace instead.
   ///
   /// When the source stream closes, the returned stream also closes with a
   /// done event.
