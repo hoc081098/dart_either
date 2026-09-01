@@ -1113,6 +1113,172 @@ void main() {
     });
 
     group('covariance safety', () {
+      test('basic inspection supports widened variants', () {
+        const Either<Object, num> widenedLeft = Left<String, Never>('error');
+        const Either<Object, num> widenedRight = Right<Never, int>(1);
+
+        expect(widenedLeft.isLeft, isTrue);
+        expect(widenedLeft.isRight, isFalse);
+        expect(widenedRight.isLeft, isFalse);
+        expect(widenedRight.isRight, isTrue);
+
+        var leftCalls = 0;
+        var rightCalls = 0;
+
+        expect(
+          widenedLeft.fold<String>(
+            ifLeft: (value) {
+              leftCalls += 1;
+              return 'left:$value';
+            },
+            ifRight: (value) {
+              rightCalls += 1;
+              return 'right:$value';
+            },
+          ),
+          'left:error',
+        );
+        expect(leftCalls, 1);
+        expect(rightCalls, 0);
+
+        leftCalls = 0;
+        rightCalls = 0;
+        expect(
+          widenedRight.fold<String>(
+            ifLeft: (value) {
+              leftCalls += 1;
+              return 'left:$value';
+            },
+            ifRight: (value) {
+              rightCalls += 1;
+              return 'right:$value';
+            },
+          ),
+          'right:1',
+        );
+        expect(leftCalls, 0);
+        expect(rightCalls, 1);
+      });
+
+      test('foldLeft and swap support widened variants', () {
+        const Either<Object, num> widenedLeft = Left<String, Never>('error');
+        const Either<Object, num> widenedRight = Right<Never, int>(1);
+        var operationCalls = 0;
+
+        // ------------ foldLeft ------------
+        expect(
+          widenedLeft.foldLeft<num>(0.5, (acc, value) {
+            operationCalls += 1;
+            return acc + value;
+          }),
+          0.5,
+        );
+        expect(operationCalls, 0);
+
+        expect(
+          widenedRight.foldLeft<num>(0.5, (acc, value) {
+            operationCalls += 1;
+            return acc + value;
+          }),
+          1.5,
+        );
+        expect(operationCalls, 1);
+
+        // ------------ swap ------------
+        expect(widenedLeft.swap(), Right<num, Object>('error'));
+        expect(widenedRight.swap(), Left<num, Object>(1));
+      });
+
+      test('side effects and mappings support widened variants', () {
+        const Either<Object, num> widenedLeft = Left<String, Never>('error');
+        const Either<Object, num> widenedRight = Right<Never, int>(1);
+        var leftCalls = 0;
+        var rightCalls = 0;
+
+        // ------------ onLeft and onRight ------------
+        expect(
+          widenedLeft.onLeft((value) {
+            leftCalls += 1;
+            expect(value, 'error');
+          }),
+          widenedLeft,
+        );
+        expect(
+          widenedLeft.onRight((_) => rightCalls += 1),
+          widenedLeft,
+        );
+        expect(leftCalls, 1);
+        expect(rightCalls, 0);
+
+        leftCalls = rightCalls = 0;
+        expect(
+          widenedRight.onLeft((_) => leftCalls += 1),
+          widenedRight,
+        );
+        expect(
+          widenedRight.onRight((value) {
+            rightCalls += 1;
+            expect(value, 1);
+          }),
+          widenedRight,
+        );
+        expect(leftCalls, 0);
+        expect(rightCalls, 1);
+
+        // ------------ map and mapLeft ------------
+        expect(
+          widenedLeft.map((value) => 'right:$value'),
+          Left<Object, String>('error'),
+        );
+        expect(
+          widenedRight.map((value) => 'right:$value'),
+          Right<Object, String>('right:1'),
+        );
+        expect(
+          widenedLeft.mapLeft((value) => 'left:$value'),
+          Left<String, num>('left:error'),
+        );
+        expect(
+          widenedRight.mapLeft((value) => 'left:$value'),
+          Right<String, num>(1),
+        );
+
+        // ------------ bimap ------------
+        leftCalls = rightCalls = 0;
+        expect(
+          widenedLeft.bimap(
+            leftOperation: (value) {
+              leftCalls += 1;
+              return 'left:$value';
+            },
+            rightOperation: (value) {
+              rightCalls += 1;
+              return 'right:$value';
+            },
+          ),
+          Left<String, String>('left:error'),
+        );
+        expect(leftCalls, 1);
+        expect(rightCalls, 0);
+
+        leftCalls = rightCalls = 0;
+        expect(
+          widenedRight.bimap(
+            leftOperation: (value) {
+              leftCalls += 1;
+              return 'left:$value';
+            },
+            rightOperation: (value) {
+              rightCalls += 1;
+              return 'right:$value';
+            },
+          ),
+          Right<String, String>('right:1'),
+        );
+        expect(leftCalls, 0);
+        expect(rightCalls, 1);
+      });
+
       test('side predicates support widened variants', () {
         const Either<Object, int> widenedLeft = Left<String, Never>('error');
         const Either<String, num> widenedRight = Right<Never, int>(1);
@@ -1121,6 +1287,145 @@ void main() {
         expect(widenedLeft.isRightAnd((value) => value > 0), isFalse);
         expect(widenedRight.isRightAnd((value) => value > 0), isTrue);
         expect(widenedRight.isLeftAnd((value) => value.isNotEmpty), isFalse);
+      });
+
+      test('all and nullable extraction support widened variants', () {
+        const Either<Object, num> widenedLeft = Left<String, Never>('error');
+        const Either<Object, num> widenedRight = Right<Never, int>(1);
+        var predicateCalls = 0;
+
+        // ------------ all ------------
+        expect(
+          widenedLeft.all((_) {
+            predicateCalls += 1;
+            return false;
+          }),
+          isTrue,
+        );
+        expect(predicateCalls, 0);
+
+        expect(
+          widenedRight.all((value) {
+            predicateCalls += 1;
+            return value > 0;
+          }),
+          isTrue,
+        );
+        expect(predicateCalls, 1);
+
+        // ------------ getOrNull and leftOrNull ------------
+        expect(widenedLeft.getOrNull(), isNull);
+        expect(widenedLeft.leftOrNull(), 'error');
+        expect(widenedRight.getOrNull(), 1);
+        expect(widenedRight.leftOrNull(), isNull);
+
+        // ------------ findOrNull ------------
+        predicateCalls = 0;
+        expect(
+          widenedLeft.findOrNull((_) {
+            predicateCalls += 1;
+            return true;
+          }),
+          isNull,
+        );
+        expect(predicateCalls, 0);
+
+        expect(
+          widenedRight.findOrNull((value) {
+            predicateCalls += 1;
+            return value > 0;
+          }),
+          1,
+        );
+        expect(predicateCalls, 1);
+      });
+
+      test('when supports widened variants', () {
+        const Either<Object, num> widenedLeft = Left<String, Never>('error');
+        const Either<Object, num> widenedRight = Right<Never, int>(1);
+        var leftCalls = 0;
+        var rightCalls = 0;
+
+        String resolve(Either<Object, num> either) {
+          leftCalls = 0;
+          rightCalls = 0;
+
+          return either.when(
+            ifLeft: (left) {
+              leftCalls += 1;
+              return 'left:${left.value}';
+            },
+            ifRight: (right) {
+              rightCalls += 1;
+              return 'right:${right.value}';
+            },
+          );
+        }
+
+        expect(resolve(widenedLeft), 'left:error');
+        expect(leftCalls, 1);
+        expect(rightCalls, 0);
+
+        expect(resolve(widenedRight), 'right:1');
+        expect(leftCalls, 0);
+        expect(rightCalls, 1);
+      });
+
+      test('redeem operations support widened variants', () {
+        const Either<Object, num> widenedLeft = Left<String, Never>('error');
+        const Either<Object, num> widenedRight = Right<Never, int>(1);
+        var leftCalls = 0;
+        var rightCalls = 0;
+
+        // ------------ redeem ------------
+        Either<Object, String> redeem(Either<Object, num> either) {
+          leftCalls = 0;
+          rightCalls = 0;
+
+          return either.redeem(
+            leftOperation: (value) {
+              leftCalls += 1;
+              return 'left:$value';
+            },
+            rightOperation: (value) {
+              rightCalls += 1;
+              return 'right:$value';
+            },
+          );
+        }
+
+        expect(redeem(widenedLeft), Right<Object, String>('left:error'));
+        expect(leftCalls, 1);
+        expect(rightCalls, 0);
+
+        expect(redeem(widenedRight), Right<Object, String>('right:1'));
+        expect(leftCalls, 0);
+        expect(rightCalls, 1);
+
+        // ------------ redeemWith ------------
+        Either<String, String> redeemWith(Either<Object, num> either) {
+          leftCalls = 0;
+          rightCalls = 0;
+
+          return either.redeemWith(
+            leftOperation: (value) {
+              leftCalls += 1;
+              return 'left:$value'.right<String>();
+            },
+            rightOperation: (value) {
+              rightCalls += 1;
+              return 'right:$value'.right<String>();
+            },
+          );
+        }
+
+        expect(redeemWith(widenedLeft), Right<String, String>('left:error'));
+        expect(leftCalls, 1);
+        expect(rightCalls, 0);
+
+        expect(redeemWith(widenedRight), Right<String, String>('right:1'));
+        expect(leftCalls, 0);
+        expect(rightCalls, 1);
       });
 
       test('getOrDefault supports widened variants', () {

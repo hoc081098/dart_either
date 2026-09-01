@@ -739,6 +739,7 @@ sealed class Either<L, R> {
   ///
   /// result.foldLeft<String>(initial, combine); // Result: 'dart_either hoc081098'
   /// ```
+  @covarianceSafe
   C foldLeft<C>(C initial, C Function(C acc, R element) rightOperation) =>
       _foldInternal(
         ifLeft: _const(initial),
@@ -752,6 +753,7 @@ sealed class Either<L, R> {
   /// Left<String, Never>('left').swap();   // Result: Right('left')
   /// Right<Never, String>('right').swap(); // Result: Left('right')
   /// ```
+  @covarianceSafe
   @useResult
   Either<R, L> swap() => _foldInternal(
         ifLeft: (l) => Either.right(l),
@@ -831,6 +833,7 @@ sealed class Either<L, R> {
   /// Right<int, int>(12).mapLeft((_) => 'flower'); // Result: Right(12)
   /// Left<int, int>(12).mapLeft((_) => 'flower');  // Result: Left('flower')
   /// ```
+  @covarianceSafe
   @useResult
   Either<C, R> mapLeft<C>(C Function(L value) f) => _foldInternal(
         ifLeft: (l) => Either<C, R>.left(f(l)),
@@ -880,6 +883,7 @@ sealed class Either<L, R> {
   ///   rightOperation: (int i) => i.toString(),
   /// );
   /// ```
+  @covarianceSafe
   @useResult
   Either<C, D> bimap<C, D>({
     required C Function(L value) leftOperation,
@@ -948,6 +952,7 @@ sealed class Either<L, R> {
   /// Left<int, int>(12).all((v) => v > 10);  // Result: true
   /// Left<int, int>(12).all((v) => v < 10);  // Result: true
   /// ```
+  @covarianceSafe
   @useResult
   bool all(bool Function(R value) predicate) => _foldInternal(
         ifLeft: _const(true),
@@ -1025,6 +1030,7 @@ sealed class Either<L, R> {
 
   /// Returns the [Right.value] matching the given [predicate],
   /// or `null` if this is a [Left] or [Right.value] does not match.
+  @covarianceSafe
   R? findOrNull(bool Function(R value) predicate) => switch (this) {
         Left() => null,
         Right(value: final value) => predicate(value) ? value : null,
@@ -1051,6 +1057,7 @@ sealed class Either<L, R> {
   ///   ifRight: (right) => print('operation succeeded with ${right.value}'),
   /// );
   /// ```
+  @covarianceSafe
   C when<C>({
     required C Function(Left<L, R> left) ifLeft,
     required C Function(Right<L, R> right) ifRight,
@@ -1092,21 +1099,22 @@ sealed class Either<L, R> {
   ///
   /// [redeem] is derived from [map] and [handleError].
   /// This is functionally equivalent to `map(rightOperation).handleError(leftOperation)`.
+  @covarianceSafe
   @useResult
-  Either<L, C> redeem<C>({
+  Right<L, C> redeem<C>({
     required C Function(L value) leftOperation,
     required C Function(R value) rightOperation,
   }) =>
       _foldInternal(
-        ifLeft: (v) => leftOperation(v).right(),
-        ifRight: (v) => rightOperation(v).right(),
-      );
+          ifLeft: (v) => Right<L, C>(leftOperation(v)),
+          ifRight: (v) => Right<L, C>(rightOperation(v)));
 
   /// Redeem an [Either] to an [Either] by resolving the error
   /// **or** mapping the value [R] to [C] **with** an [Either].
   ///
   /// [redeemWith] is derived from [flatMap] and [handleErrorWith].
   /// This is functionally equivalent to `flatMap(rightOperation).handleErrorWith(leftOperation)`.
+  @covarianceSafe
   @useResult
   Either<C, D> redeemWith<C, D>({
     required Either<C, D> Function(L value) leftOperation,
