@@ -99,10 +99,10 @@ void reproduce() {
       expect(result, Left<String, int>('outer'));
     });
 
-    test('nested futureBinding catches only its own short-circuit', () async {
-      final result = await Either.futureBinding<String, int>(
+    test('nested bindingAsync catches only its own short-circuit', () async {
+      final result = await Either.bindingAsync<String, int>(
         (outerEffect) async {
-          final inner = await Either.futureBinding<String, int>(
+          final inner = await Either.bindingAsync<String, int>(
             (innerEffect) async {
               await Future<void>.delayed(Duration.zero);
               return outerEffect.bind(Either<String, int>.left('outer'));
@@ -136,10 +136,10 @@ void reproduce() {
       );
     });
 
-    test('rejects a captured capability after futureBinding settles', () async {
+    test('rejects a captured capability after bindingAsync settles', () async {
       late EitherEffect<String> captured;
 
-      final result = await Either.futureBinding<String, int>((effect) async {
+      final result = await Either.bindingAsync<String, int>((effect) async {
         captured = effect;
         await Future<void>.delayed(Duration.zero);
         return 1;
@@ -178,9 +178,9 @@ void reproduce() {
       );
     });
 
-    test('rejects an intercepted futureBinding short-circuit', () async {
+    test('rejects an intercepted bindingAsync short-circuit', () async {
       await expectLater(
-        Either.futureBinding<String, int>((effect) async {
+        Either.bindingAsync<String, int>((effect) async {
           try {
             effect.bind(Either<String, int>.left('failure'));
           } on ControlError<String> catch (error) {

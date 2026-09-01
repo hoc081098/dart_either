@@ -102,11 +102,11 @@ Future<Either<String, void>> eitherFlatMapCode() =>
     });
 
 // ---------------------------------------------------------------------------
-// 5) Composition style B: futureBinding (monad comprehensions)
+// 5) Composition style B: bindingAsync (monad comprehensions)
 // ---------------------------------------------------------------------------
 
 Future<Either<String, void>> eitherBindingCode() =>
-    Either.futureBinding((effect) async {
+    Either.bindingAsync((effect) async {
       // Awaiting and binding extracts Right. A Left exits the whole scope.
       final User? nullableUser =
           await findUserByIdEither('user_id').bind(effect);

@@ -51,7 +51,7 @@ extension AsyncFlatMapFutureExtension<L, R> on Future<Either<L, R>> {
   /// `Future<Either<L, R>>`. In the name, `then` refers to completion of the
   /// outer future, `flatMap` describes the right-side operation, and `Either`
   /// identifies the inner type. For a direct `async`/`await` flow, use
-  /// [Either.futureBinding] and bind each `Future<Either>` to its effect.
+  /// [Either.bindingAsync] and bind each `Future<Either>` to its effect.
   /// This keeps longer flows flat when later operations depend on earlier
   /// right values, instead of nesting callbacks.
   /// [Either.binding] is the synchronous counterpart.
@@ -99,7 +99,7 @@ extension AsyncMapFutureExtension<L, R> on Future<Either<L, R>> {
   /// `Future<Either<L, R>>`. In the name, `then` refers to completion of the
   /// outer future, `map` describes the right-side operation, and `Either`
   /// identifies the inner type. For a direct `async`/`await` flow, use
-  /// [Either.futureBinding] and bind each `Future<Either>` to its effect.
+  /// [Either.bindingAsync] and bind each `Future<Either>` to its effect.
   /// This keeps longer flows flat when later operations depend on earlier
   /// right values, instead of nesting callbacks.
   /// [Either.binding] is the synchronous counterpart.

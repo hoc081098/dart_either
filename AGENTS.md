@@ -46,7 +46,7 @@ docs/
 
 - **`Either<L, R>`**: A sealed class representing a disjunction — `Left(L)` for errors/undesired values, `Right(R)` for success/desired values.
 - **Right-biased**: `map`, `flatMap`, and other operations act on the `Right` value. `Left` short-circuits the computation.
-- **Monad comprehensions**: `Either.binding` (sync) and `Either.futureBinding` (async) provide do-notation style via `EitherEffect.bind`.
+- **Monad comprehensions**: `Either.binding` (sync) and `Either.bindingAsync` (async) provide do-notation style via `EitherEffect.bind`.
 - **ControlError**: Internal error type used by monad comprehensions. Must NEVER be caught by user code.
 - **ErrorMapper<T>**: `T Function(Object error, StackTrace stackTrace)` — maps thrown errors to the Left type.
 
@@ -154,14 +154,14 @@ This repo uses a single-context domain documentation layout. See `docs/agents/do
      - `bool` returns (e.g., `isLeft`, `isRight`, `isRightAnd`, `all`) — boolean results must be used for logic
      - `ensureNotNull<R>()` — returns non-nullable `R`, needs assignment for type-checking: `final ok = e.ensureNotNull(nullable);`
    - ❌ **DON'T** use on:
-     - `Future<Either<...>>` returns (e.g., `toEitherFuture`, `futureBinding`) — just `await` is enough
+     - `Future<Either<...>>` returns (e.g., `toEitherFuture`, `bindingAsync`) — just `await` is enough
      - Fire-and-forget side-effect helpers that intentionally support ignored results (e.g., `onLeft`, `onRight`)
      - Generic `C` that can be `void` (e.g., `fold<C>`, `when<C>`) — often used for side effects
 4. **Use Dart 3 patterns** — prefer `switch` expressions and sealed class pattern matching over `is` type checks.
 5. **Keep the library lightweight** — avoid adding unnecessary dependencies.
 6. **Run `dart analyze` and `dart test`** after any change to verify correctness.
 7. **Prefer `prefer_single_quotes`** — use single quotes for strings.
-8. **Never catch `ControlError`** in library or user code (except in `Either.binding` / `Either.futureBinding` internals).
+8. **Never catch `ControlError`** in library or user code (except in `Either.binding` / `Either.bindingAsync` internals).
 9. **Extension naming convention**: `<Purpose><Type>Extension` (e.g., `ToEitherStreamExtension`, `BindEitherExtension`).
 10. **Test structure**: Mirror the source structure. Group tests by class/method name.
 11. **API renames**: Follow `.agents/skills/api-rename-flow/SKILL.md` and keep deprecated aliases non-breaking.

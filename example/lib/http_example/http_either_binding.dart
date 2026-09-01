@@ -10,12 +10,12 @@ import 'package:rxdart_ext/rxdart_ext.dart';
 import 'shared_model.dart';
 
 // ---------------------------------------------------------------------------
-// 1) HTTP helper (futureBinding style)
+// 1) HTTP helper (bindingAsync style)
 // ---------------------------------------------------------------------------
 
 /// Gets a response using direct-style asynchronous binding.
 Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
-    Either.futureBinding((effect) async {
+    Either.bindingAsync((effect) async {
       // A synchronous Either binds immediately. Left exits this scope.
       final Uri uri = Either.tryCatch(
         action: () => Uri.parse(uriString),
@@ -48,7 +48,7 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
         ),
       );
 
-      // The final bound Right becomes the successful value of futureBinding.
+      // The final bound Right becomes the successful value of bindingAsync.
       return Either.tryCatch(
         action: () => jsonDecode(body),
         errorMapper: toAppError('jsonDecode: $body'),
@@ -65,7 +65,7 @@ void main() async {
   ) =>
       Either.parTraverseN(
         values: users,
-        mapper: (User user) => () => Either.futureBinding((effect) async {
+        mapper: (User user) => () => Either.bindingAsync((effect) async {
               print('--> Get posts for $user...');
 
               // Get posts for user
@@ -83,7 +83,7 @@ void main() async {
       );
 
   final Either<AppError, BuiltList<UserAndPosts>> result =
-      await Either.futureBinding<AppError, BuiltList<UserAndPosts>>(
+      await Either.bindingAsync<AppError, BuiltList<UserAndPosts>>(
     (effect) async {
       // Each await + bind reads like ordinary async code. Any Left skips the
       // remaining statements and becomes the result of this outer scope.

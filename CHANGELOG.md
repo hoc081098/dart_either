@@ -18,6 +18,11 @@
     Fatal-error registration is per isolate, additive, and idempotent. Spawned
     isolates must register the types they need separately.
 
+- **Async binding**
+  - Added `bindingAsync` as the canonical asynchronous counterpart to `binding`.
+  - Deprecated `futureBinding` in favor of `bindingAsync`; the alias retains
+    its existing behavior throughout `2.x`.
+
 ## 2.2.0 - Aug 27, 2026
 
 ### `Either`
