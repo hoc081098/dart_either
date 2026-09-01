@@ -6,6 +6,7 @@ import 'package:test/test.dart';
 void main() {
   const Either<int, int> leftOf1 = Left(1);
   const Either<int, int> rightOf1 = Right(1);
+  final exception = Exception();
 
   group('Deprecated aliases', () {
     test('tapLeft delegates to onLeft', () {
@@ -64,6 +65,46 @@ void main() {
     test('orNull delegates to getOrNull', () {
       expect(rightOf1.orNull(), 1);
       expect(leftOf1.orNull(), isNull);
+    });
+
+    test('catchError delegates to tryCatch', () {
+      expect(
+        Either<Object, int>.catchError((e, s) => e, () => 1),
+        rightOf1,
+      );
+      expect(
+        Either<Object, int>.catchError((e, s) => e, () => throw exception),
+        Left<Object, Never>(exception),
+      );
+    });
+
+    test('catchFutureError delegates to tryCatchAsync', () async {
+      await expectLater(
+        Either.catchFutureError<Object, int>((e, s) => e, () => 1),
+        completion(rightOf1),
+      );
+      await expectLater(
+        Either.catchFutureError<Object, int>(
+          (e, s) => e,
+          () async => throw exception,
+        ),
+        completion(Left<Object, Never>(exception)),
+      );
+    });
+
+    test('catchStreamError delegates to toEitherStream', () async {
+      await expectLater(
+        Either.catchStreamError<Object, int>(
+          (e, s) => e,
+          Stream<int>.error(exception),
+        ),
+        emitsInOrder(
+          <Object>[
+            Left<Object, Never>(exception),
+            emitsDone,
+          ],
+        ),
+      );
     });
   });
 }

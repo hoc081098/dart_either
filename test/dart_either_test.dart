@@ -3,13 +3,13 @@ import 'package:dart_either/dart_either.dart';
 import 'package:rxdart_ext/single.dart';
 import 'package:test/test.dart';
 
-import 'semaphore_test.dart' as semaphore_test;
-
 Object takeOnlyError(Object error, StackTrace stackTrace) => error;
 
-void main() {
-  semaphore_test.main();
+class _RegisteredFatalException implements Exception {}
 
+final class _RegisteredFatalSubtype extends _RegisteredFatalException {}
+
+void main() {
   const Either<int, int> leftOf1 = Left(1);
   const Either<int, int> rightOf1 = Right(1);
 
@@ -87,45 +87,48 @@ void main() {
         expect(Either<Never, int>.right(1), isA<Either<Object, int>>());
       });
 
-      group('Either.catchError', () {
-        test('block does not throw', () {
-          // block does not throw
+      group('Either.tryCatch', () {
+        test('action does not throw', () {
           expect(
-            Either<Object, int>.catchError(takeOnlyError, () => 1),
+            Either<Object, int>.tryCatch(
+              action: () => 1,
+              errorMapper: takeOnlyError,
+            ),
             rightOf1,
           );
         });
 
         test('catch exception', () {
-          // catch exception
           expect(
-            Either<Object, String>.catchError(
-                takeOnlyError, () => throw exception),
+            Either<Object, String>.tryCatch(
+              action: () => throw exception,
+              errorMapper: takeOnlyError,
+            ),
             exceptionLeft,
           );
         });
 
         test('ErrorMapper throws', () {
-          // ErrorMapper throws
           expect(
-            () => Either<Object, String>.catchError(
-              (e, s) => throw e,
-              () => throw exception,
+            () => Either<Object, String>.tryCatch(
+              action: () => throw exception,
+              errorMapper: (e, s) => throw e,
             ),
             throwsException,
           );
         });
 
-        // test('block throws [ControlError].', () {
-        //   // block throws [ControlError].
-        //   expect(
-        //     () => Either<Object, String>.catchError(
-        //       takeOnlyError,
-        //       () => throw MyControlError<Object>(),
-        //     ),
-        //     throwsA(isA<MyControlError>()),
-        //   );
-        // });
+        test('rethrows ControlError to the owning binding scope', () {
+          final result = Either<String, int>.binding((effect) {
+            Either<String, int>.tryCatch(
+              action: () => effect.raise('raised'),
+              errorMapper: (e, s) => 'mapped',
+            );
+            return 42;
+          });
+
+          expect(result, const Left<String, Never>('raised'));
+        });
       });
 
       group('Either.binding', () {
@@ -396,47 +399,60 @@ void main() {
         });
       });
 
-      group('Either.catchFutureError', () {
+      group('Either.tryCatchAsync', () {
         test('single return', () async {
-          // single return
           await expectLater(
-            Either.catchFutureError<Object, int>(takeOnlyError, () => 1),
+            Either.tryCatchAsync<Object, int>(
+              action: () => 1,
+              errorMapper: takeOnlyError,
+            ),
             completion(rightOf1),
           );
 
           await expectLater(
-            Either.catchFutureError<Object, int>(takeOnlyError, () async => 1),
+            Either.tryCatchAsync<Object, int>(
+              action: () async => 1,
+              errorMapper: takeOnlyError,
+            ),
             completion(rightOf1),
           );
 
           await expectLater(
-            Either.catchFutureError<Object, int>(
-                takeOnlyError, () => Future.value(1)),
+            Either.tryCatchAsync<Object, int>(
+              action: () => Future.value(1),
+              errorMapper: takeOnlyError,
+            ),
             completion(rightOf1),
           );
         });
 
         test('single return with delay', () async {
           await expectLater(
-            Either.catchFutureError<Object, int>(takeOnlyError, () async {
-              await Future<void>.delayed(const Duration(milliseconds: 10));
-              return 1;
-            }),
+            Either.tryCatchAsync<Object, int>(
+              action: () async {
+                await Future<void>.delayed(const Duration(milliseconds: 10));
+                return 1;
+              },
+              errorMapper: takeOnlyError,
+            ),
             completion(rightOf1),
           );
         });
 
         test('catch exception', () async {
-          // catch exception
           await expectLater(
-            Either.catchFutureError<Object, int>(
-                takeOnlyError, () => throw exception),
+            Either.tryCatchAsync<Object, int>(
+              action: () => throw exception,
+              errorMapper: takeOnlyError,
+            ),
             completion(exceptionLeft),
           );
 
           await expectLater(
-            Either.catchFutureError<Object, int>(
-                takeOnlyError, () async => throw exception),
+            Either.tryCatchAsync<Object, int>(
+              action: () async => throw exception,
+              errorMapper: takeOnlyError,
+            ),
             completion(exceptionLeft),
           );
         });
@@ -444,7 +460,10 @@ void main() {
         test('catch error from future', () async {
           final errorFuture = Future<int>.error(exception);
           await expectLater(
-            Either.catchFutureError(takeOnlyError, () => errorFuture),
+            Either.tryCatchAsync(
+              action: () => errorFuture,
+              errorMapper: takeOnlyError,
+            ),
             completion(exceptionLeft),
           );
           await expectLater(
@@ -452,17 +471,26 @@ void main() {
             completion(exceptionLeft),
           );
         });
+
+        test('rethrows ControlError to the owning futureBinding scope',
+            () async {
+          final result =
+              await Either.futureBinding<String, int>((effect) async {
+            await Either.tryCatchAsync<String, int>(
+              action: () => effect.raise('raised'),
+              errorMapper: (e, s) => 'mapped',
+            );
+            return 42;
+          });
+
+          expect(result, const Left<String, Never>('raised'));
+        });
       });
 
-      group('Either.catchStreamError', () {
+      group('Stream.toEitherStream', () {
         test('single value', () async {
-          // single value
           await expectLater(
-            Either.catchStreamError(takeOnlyError, Stream.value(1)),
-            emitsInOrder(<Object>[Right<Never, int>(1), emitsDone]),
-          );
-          await expectLater(
-            Either.catchStreamError(takeOnlyError, Single.value(1)),
+            Stream.value(1).toEitherStream(takeOnlyError),
             emitsInOrder(<Object>[Right<Never, int>(1), emitsDone]),
           );
           await expectLater(
@@ -472,15 +500,8 @@ void main() {
         });
 
         test('single error', () async {
-          // single error
           await expectLater(
-            Either.catchStreamError(
-                takeOnlyError, Stream<int>.error(exception)),
-            emitsInOrder(<Object>[exceptionLeft, emitsDone]),
-          );
-          await expectLater(
-            Either.catchStreamError(
-                takeOnlyError, Single<int>.error(exception)),
+            Stream<int>.error(exception).toEitherStream(takeOnlyError),
             emitsInOrder(<Object>[exceptionLeft, emitsDone]),
           );
           await expectLater(
@@ -490,15 +511,11 @@ void main() {
         });
 
         test('one value + one error', () async {
-          // one value + one error
           await expectLater(
-            Either.catchStreamError(
-              takeOnlyError,
-              Rx.concat<int>([
-                Single.value(1),
-                Single.error(exception),
-              ]),
-            ),
+            Rx.concat<int>([
+              Single.value(1),
+              Single.error(exception),
+            ]).toEitherStream(takeOnlyError),
             emitsInOrder(<Object>[
               Right<Never, int>(1),
               exceptionLeft,
@@ -508,17 +525,13 @@ void main() {
         });
 
         test('value + error + value + error', () async {
-          // value + error + value + error
           await expectLater(
-            Either.catchStreamError(
-              takeOnlyError,
-              Rx.concat<int>([
-                Single.value(1),
-                Single.error(exception),
-                Stream.value(2),
-                Single.error('Error'),
-              ]),
-            ),
+            Rx.concat<int>([
+              Single.value(1),
+              Single.error(exception),
+              Stream.value(2),
+              Single.error('Error'),
+            ]).toEitherStream(takeOnlyError),
             emitsInOrder(<Object>[
               Right<Never, int>(1),
               exceptionLeft,
@@ -527,6 +540,71 @@ void main() {
               emitsDone,
             ]),
           );
+        });
+
+        test('rethrows ControlError to the owning futureBinding scope',
+            () async {
+          final result =
+              await Either.futureBinding<String, int>((effect) async {
+            await Stream<int>.fromFuture(
+              Future<int>.sync(() => effect.raise('raised')),
+            ).toEitherStream<String>((e, s) => 'mapped').drain<void>();
+
+            return 1;
+          });
+
+          expect(result, const Left<String, Never>('raised'));
+        });
+      });
+
+      group('Either.registerFatalError', () {
+        test('preserves registered types, their subtypes, and the stack trace',
+            () async {
+          final fatalSubType = _RegisteredFatalSubtype();
+          final originalStackTrace = StackTrace.fromString('fatal origin');
+
+          var mapperCalls = 0;
+          Object errorMapper(Object error, StackTrace stackTrace) {
+            mapperCalls += 1;
+            return error;
+          }
+
+          Either.registerFatalError<_RegisteredFatalException>();
+          Either.registerFatalError<_RegisteredFatalException>();
+
+          expect(
+            () => Either<Object, int>.tryCatch(
+              action: () => throw fatalSubType,
+              errorMapper: errorMapper,
+            ),
+            throwsA(same(fatalSubType)),
+          );
+
+          await expectLater(
+            Either.tryCatchAsync<Object, int>(
+              action: () async => throw fatalSubType,
+              errorMapper: errorMapper,
+            ),
+            throwsA(same(fatalSubType)),
+          );
+
+          try {
+            await Future<int>.error(
+              fatalSubType,
+              originalStackTrace,
+            ).toEitherFuture(errorMapper);
+            fail('Expected the registered fatal error to propagate');
+          } catch (error, stackTrace) {
+            expect(error, same(fatalSubType));
+            expect(stackTrace.toString(), originalStackTrace.toString());
+          }
+
+          await expectLater(
+            Stream<int>.error(fatalSubType).toEitherStream(errorMapper),
+            emitsInOrder(<Object>[emitsError(same(fatalSubType)), emitsDone]),
+          );
+
+          expect(mapperCalls, 0);
         });
       });
 
@@ -982,6 +1060,26 @@ void main() {
       );
     });
 
+    group('isLeftAnd', () {
+      test('returns the predicate result for Left', () {
+        expect(leftOf1.isLeftAnd((value) => value > 0), isTrue);
+        expect(leftOf1.isLeftAnd((value) => value > 1), isFalse);
+      });
+
+      test('returns false without invoking the predicate for Right', () {
+        var calls = 0;
+
+        expect(
+          rightOf1.isLeftAnd((_) {
+            calls += 1;
+            return true;
+          }),
+          isFalse,
+        );
+        expect(calls, 0);
+      });
+    });
+
     test('all', () {
       expect(rightOf1.all((value) => value > 0), isTrue);
       expect(rightOf1.all((value) => value > 1), isFalse);
@@ -1017,6 +1115,16 @@ void main() {
     });
 
     group('covariance safety', () {
+      test('side predicates support widened variants', () {
+        const Either<Object, int> widenedLeft = Left<String, Never>('error');
+        const Either<String, num> widenedRight = Right<Never, int>(1);
+
+        expect(widenedLeft.isLeftAnd((value) => value == 'error'), isTrue);
+        expect(widenedLeft.isRightAnd((value) => value > 0), isFalse);
+        expect(widenedRight.isRightAnd((value) => value > 0), isTrue);
+        expect(widenedRight.isLeftAnd((value) => value.isNotEmpty), isFalse);
+      });
+
       test('getOrDefault supports widened variants', () {
         const Either<String, int> widenedLeft = Left<String, Never>('error');
         const Either<String, num> widenedRight = Right<Never, int>(1);

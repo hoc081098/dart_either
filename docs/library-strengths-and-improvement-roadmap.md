@@ -2,12 +2,12 @@
 
 This note distills an earlier discussion about the value proposition of
 `dart_either` and the improvements that could make it more robust. It is not a
-transcript or marketing copy. Every technical statement below was reconciled
-with repository `master` at commit `69ec7b1` on 2026-08-23.
+transcript or marketing copy. Every technical statement below was last
+reconciled with the repository state on 2026-08-29.
 
-The package currently declares version `2.2.0`; changes in that section of the
-[changelog](../CHANGELOG.md) are present in the repository but must not be
-described as published without checking the registry.
+The package currently declares version `2.2.0`, which has been released. Newer
+source changes remain under [Unreleased](../CHANGELOG.md) until the next
+version is prepared.
 
 ## Executive summary
 
@@ -59,14 +59,14 @@ of the public API and not merely an internal implementation detail.
 The current API covers the operations that make `Either` practical in an app:
 
 - construction and inspection with `left`, `right`, pattern matching,
-  `isLeft`, and `isRight`;
+  `isLeft`, `isRight`, `isLeftAnd`, and `isRightAnd`;
 - transformation and composition with `map`, `mapLeft`, `flatMap`, `bimap`,
   `fold`, `combine`, `flatten`, `merge`, and `swap`;
 - recovery and extraction with `getOrNull`, `leftOrNull`, `getOrDefault`,
   `getOrHandle`, `handleError`, and `handleErrorWith`;
-- exception, `Future`, and `Stream` bridges through `catchError`,
-  `catchFutureError`, `catchStreamError`, `toEitherFuture`, and
-  `toEitherStream`;
+- exception, `Future`, and `Stream` bridges through `tryCatch`,
+  `tryCatchAsync`, `toEitherFuture`, and `toEitherStream`, with
+  `registerFatalError` for app-wide rethrow policy;
 - async chaining with `thenMapEither` and `thenFlatMapEither`;
 - sequential and parallel collection operations through `sequence`,
   `traverse`, `parSequenceN`, and `parTraverseN`; and
@@ -138,12 +138,12 @@ Important guarantees visible in
   binding scope.
 - Ordinary exceptions and failed futures propagate unchanged. They are not
   silently converted to `Left`.
-- Explicit conversion is available through `catchError`, `catchFutureError`,
-  and `catchStreamError`. Their `ErrorMapper` receives both the object and its
-  `StackTrace`.
+- Explicit conversion is available through `tryCatch`, `tryCatchAsync`,
+  `toEitherFuture`, and `toEitherStream`. Their `ErrorMapper` receives both the
+  object and its `StackTrace`.
 - Those helpers call the internal `throwIfFatal` guard, which rethrows
-  `ControlError` instead of mapping a binding short-circuit into a domain
-  `Left`.
+  `ControlError` and types registered through `registerFatalError` instead of
+  mapping them into a domain `Left`.
 - The capability remains active across work returned from `futureBinding`,
   then is closed when the computation settles. Using a captured capability
   afterward throws `StateError`.
@@ -314,26 +314,78 @@ the existing signature under the same name is not a `2.x` option.
 
 ### Priority 1: make exception capture selective
 
-`catchError`, `catchFutureError`, and `catchStreamError` currently catch
-`Object`, except that their internal guard rethrows `ControlError`. This means
-`StateError`, `TypeError`, `AssertionError`, and application exceptions are all
-eligible for mapping if they reach the helper.
+`tryCatch`, `tryCatchAsync`, `toEitherFuture`, and `toEitherStream` catch
+`Object`, except that their internal guard rethrows `ControlError` and types
+registered through `registerFatalError`. This means `StateError`, `TypeError`,
+`AssertionError`, and application exceptions remain eligible for mapping unless
+the application registers a matching fatal type.
 
-Teams often want to recover only from an expected exception class. Consider a
-non-breaking predicate:
+The global registration policy handles app-wide exclusions such as
+cancellation exceptions. Teams may still want an individual call to recover
+only from an expected exception class. Consider a non-breaking predicate:
 
 ```dart
-Either.catchError(
-  mapper,
-  block,
+Either.tryCatch(
+  action: block,
+  errorMapper: mapper,
   test: (error) => error is FormatException,
 )
 ```
 
 or a typed API such as `catchOnly<FormatException, L, R>`. The internal control
-signal must always be rethrown before any user predicate or mapper runs. Add
-regressions proving that `ControlError` cannot be converted to `Left` by each
-sync, future, and stream helper.
+signal and registered fatal errors must always be rethrown before any user
+predicate or mapper runs.
+
+#### Recommended Flutter application policy
+
+When an application's failure type contains domain, infrastructure, and
+last-resort unexpected cases, name it `AppFailure` rather than `DomainError`.
+The `Left` type then honestly describes every recoverable failure that the
+application intentionally exposes to presentation code:
+
+```text
+Future<Either<AppFailure, A>>
+├── Right<A>                  success
+├── Left<AppFailure>         recoverable application failure
+└── Future error             fatal or control-flow failure
+```
+
+Register the base Dart [Error](https://api.dart.dev/dart-core/Error-class.html)
+type instead of enumerating `StateError`, `TypeError`, `AssertionError`, and
+the other programming-error subtypes individually:
+
+```dart
+void configureErrorCapture() {
+  Either.registerFatalError<Error>();
+  Either.registerFatalError<AppCancellationException>();
+}
+```
+
+Registration uses subtype matching, so `Error` covers all of its subtypes.
+Do not register the base `Exception` type: recoverable exceptions such as
+network, timeout, and invalid-response failures must remain eligible for
+specific `AppFailure` mapping. Internal `ControlError` values are always
+re-thrown and require no registration. Register application-specific
+cancellation and other control-flow exceptions separately.
+
+Use this mapping policy:
+
+| Failure category | Debug | Release |
+|---|---|---|
+| Registered `Error` or control-flow type | Propagate | Propagate |
+| Known recoverable exception | Map to a specific `AppFailure` | Map to a specific `AppFailure` |
+| Unexpected non-fatal error | Log/report, then rethrow with its original stack trace | Log/report, then return `AppFailure.unknown` |
+
+An unknown case should retain the original error and stack trace for
+diagnostics, but it must not be assumed to be retryable. For example, a remote
+write may have succeeded even if decoding its response failed. Avoid duplicate
+reporting when a debug rethrow also reaches a global error handler.
+
+In this API, “fatal” means that an error must bypass `ErrorMapper` and remain in
+the outer error channel. It does not necessarily mean that the process must
+terminate: cancellation still propagates to its owning lifecycle boundary, and
+a Flutter global error handler ultimately decides how an otherwise unhandled
+error is reported or terminated.
 
 ### Priority 2: decide the collection return strategy
 
