@@ -336,6 +336,57 @@ or a typed API such as `catchOnly<FormatException, L, R>`. The internal control
 signal and registered fatal errors must always be rethrown before any user
 predicate or mapper runs.
 
+#### Recommended Flutter application policy
+
+When an application's failure type contains domain, infrastructure, and
+last-resort unexpected cases, name it `AppFailure` rather than `DomainError`.
+The `Left` type then honestly describes every recoverable failure that the
+application intentionally exposes to presentation code:
+
+```text
+Future<Either<AppFailure, A>>
+├── Right<A>                  success
+├── Left<AppFailure>         recoverable application failure
+└── Future error             fatal or control-flow failure
+```
+
+Register the base Dart [Error](https://api.dart.dev/dart-core/Error-class.html)
+type instead of enumerating `StateError`, `TypeError`, `AssertionError`, and
+the other programming-error subtypes individually:
+
+```dart
+void configureErrorCapture() {
+  Either.registerFatalError<Error>();
+  Either.registerFatalError<AppCancellationException>();
+}
+```
+
+Registration uses subtype matching, so `Error` covers all of its subtypes.
+Do not register the base `Exception` type: recoverable exceptions such as
+network, timeout, and invalid-response failures must remain eligible for
+specific `AppFailure` mapping. Internal `ControlError` values are always
+re-thrown and require no registration. Register application-specific
+cancellation and other control-flow exceptions separately.
+
+Use this mapping policy:
+
+| Failure category | Debug | Release |
+|---|---|---|
+| Registered `Error` or control-flow type | Propagate | Propagate |
+| Known recoverable exception | Map to a specific `AppFailure` | Map to a specific `AppFailure` |
+| Unexpected non-fatal error | Log/report, then rethrow with its original stack trace | Log/report, then return `AppFailure.unknown` |
+
+An unknown case should retain the original error and stack trace for
+diagnostics, but it must not be assumed to be retryable. For example, a remote
+write may have succeeded even if decoding its response failed. Avoid duplicate
+reporting when a debug rethrow also reaches a global error handler.
+
+In this API, “fatal” means that an error must bypass `ErrorMapper` and remain in
+the outer error channel. It does not necessarily mean that the process must
+terminate: cancellation still propagates to its owning lifecycle boundary, and
+a Flutter global error handler ultimately decides how an otherwise unhandled
+error is reported or terminated.
+
 ### Priority 2: decide the collection return strategy
 
 `BuiltList` provides immutability and stable collection semantics, but it also
