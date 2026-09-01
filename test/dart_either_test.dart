@@ -210,16 +210,16 @@ void main() {
         );
       });
 
-      group('Either.futureBinding', () {
+      group('Either.bindingAsync', () {
         test('single return', () async {
           // single return
           await expectLater(
-            Either.futureBinding<Object, int>((e) => 1),
+            Either.bindingAsync<Object, int>((e) => 1),
             completion(rightOf1),
           );
 
           await expectLater(
-            Either.futureBinding<Object, int>((e) async => 1),
+            Either.bindingAsync<Object, int>((e) async => 1),
             completion(rightOf1),
           );
         });
@@ -227,7 +227,7 @@ void main() {
         test('rethrow exception', () async {
           // rethrow exception
           await expectLater(
-            Either.futureBinding<Object, int>((e) => throw exception),
+            Either.bindingAsync<Object, int>((e) => throw exception),
             throwsException,
           );
         });
@@ -235,7 +235,7 @@ void main() {
         test('rethrow error from bindFuture with an error Future', () async {
           // rethrow exception from bindFuture
           await expectLater(
-            Either.futureBinding<Object, int>(
+            Either.bindingAsync<Object, int>(
               (e) => e.bindFuture(Future.error(exception)),
             ),
             throwsException,
@@ -245,7 +245,7 @@ void main() {
         test('rethrow error from bind with an error Future', () async {
           // rethrow exception from bind
           await expectLater(
-            Either.futureBinding<Object, int>(
+            Either.bindingAsync<Object, int>(
               (e) => Future<Either<Object, int>>.error(exception).bind(e),
             ),
             throwsException,
@@ -255,7 +255,7 @@ void main() {
         // test('block throws [ControlError].', () {
         //   // block throws [ControlError].
         //   expect(
-        //     Either.futureBinding<Object, String>(
+        //     Either.bindingAsync<Object, String>(
         //       (e) => throw MyControlError<Object>(),
         //     ),
         //     throwsA(isA<NoSuchMethodError>()),
@@ -265,7 +265,7 @@ void main() {
         test('2 success bind (sync) - without async modifier', () {
           // 2 success bind (sync) - without async modifier
           expect(
-            Either.futureBinding<Object, int>((e) {
+            Either.bindingAsync<Object, int>((e) {
               final a = e.bind(Right(1));
               final b = e.bind(Right(2));
               return a + b;
@@ -277,7 +277,7 @@ void main() {
         test('2 success bind (sync) - with async modifier', () {
           // 2 success bind (sync) - with async modifier
           expect(
-            Either.futureBinding<Object, int>((e) async {
+            Either.bindingAsync<Object, int>((e) async {
               final a = e.bind(Right(1));
               final b = e.bind(Right(2));
               return a + b;
@@ -289,7 +289,7 @@ void main() {
         test('2 success bind (async) - with async modifier', () {
           // 2 success bind (async) - with async modifier
           expect(
-            Either.futureBinding<Object, int>((e) async {
+            Either.bindingAsync<Object, int>((e) async {
               final a =
                   await Future.sync(() => Either<Object, int>.right(1)).bind(e);
               final b = await e.bindFuture(Future.value(Right(2)));
@@ -304,7 +304,7 @@ void main() {
           () {
             // 1 success bind (sync) + 1 success bind (async) - with async modifier
             expect(
-              Either.futureBinding<Object, int>((e) async {
+              Either.bindingAsync<Object, int>((e) async {
                 final a = await Future.sync(() => Either<Object, int>.right(1))
                     .bind(e);
                 final b = e.bind(Right(2));
@@ -320,7 +320,7 @@ void main() {
           () {
             // 1 success bind (sync) + 1 success bind (async) - without async modifier
             expect(
-              Either.futureBinding<Object, int>(
+              Either.bindingAsync<Object, int>(
                 (e) => Future.sync(() => Either<Object, int>.right(1))
                     .bind(e)
                     .then((a) => a + e.bind(Right(2))),
@@ -333,7 +333,7 @@ void main() {
         test('2 success bind (async) either.bind - with async modifier', () {
           // 2 success bind (async) either.bind - with async modifier
           expect(
-            Either.futureBinding<Object, int>((e) async {
+            Either.bindingAsync<Object, int>((e) async {
               final a =
                   await Future.value(Either<Object, int>.right(1)).bind(e);
               final b =
@@ -349,7 +349,7 @@ void main() {
           () {
             // 1 success bind (async) + 1 failure bind (sync) - with async modifier
             expect(
-              Either.futureBinding<Object, int>((e) async {
+              Either.bindingAsync<Object, int>((e) async {
                 final a = await Future<Either<Object, int>>.delayed(
                   const Duration(milliseconds: 100),
                   () => Either<Object, int>.right(1),
@@ -369,7 +369,7 @@ void main() {
           () {
             // 1 success bind (async) + 1 failure bind (async) - with async modifier
             expect(
-              Either.futureBinding<Object, int>((e) async {
+              Either.bindingAsync<Object, int>((e) async {
                 final a = await Future<Either<Object, int>>.delayed(
                   const Duration(milliseconds: 100),
                   () => Either<Object, int>.right(1),
@@ -389,7 +389,7 @@ void main() {
         test('2 success either.bind (sync) with difference types.', () {
           // 2 success either.bind (sync) with difference types.
           expect(
-            Either.futureBinding<Object, String>((e) {
+            Either.bindingAsync<Object, String>((e) {
               final a = Either<Object, int>.right(1).bind(e);
               final b = Either<Object, String>.right('2').bind(e);
               return a.toString() + b;
@@ -472,10 +472,9 @@ void main() {
           );
         });
 
-        test('rethrows ControlError to the owning futureBinding scope',
+        test('rethrows ControlError to the owning bindingAsync scope',
             () async {
-          final result =
-              await Either.futureBinding<String, int>((effect) async {
+          final result = await Either.bindingAsync<String, int>((effect) async {
             await Either.tryCatchAsync<String, int>(
               action: () => effect.raise('raised'),
               errorMapper: (e, s) => 'mapped',
@@ -542,10 +541,9 @@ void main() {
           );
         });
 
-        test('rethrows ControlError to the owning futureBinding scope',
+        test('rethrows ControlError to the owning bindingAsync scope',
             () async {
-          final result =
-              await Either.futureBinding<String, int>((effect) async {
+          final result = await Either.bindingAsync<String, int>((effect) async {
             await Stream<int>.fromFuture(
               Future<int>.sync(() => effect.raise('raised')),
             ).toEitherStream<String>((e, s) => 'mapped').drain<void>();
@@ -1466,10 +1464,10 @@ void main() {
       });
 
       test(
-        'raise short-circuits binding with Left in Either.futureBinding',
+        'raise short-circuits binding with Left in Either.bindingAsync',
         () async {
           await expectLater(
-            Either.futureBinding<String, int>((effect) async {
+            Either.bindingAsync<String, int>((effect) async {
               effect.raise('error');
             }),
             completion(Left<String, int>('error')),
@@ -1477,9 +1475,9 @@ void main() {
         },
       );
 
-      test('code after raise is unreachable in Either.futureBinding', () async {
+      test('code after raise is unreachable in Either.bindingAsync', () async {
         var reached = false;
-        await Either.futureBinding<String, int>((effect) async {
+        await Either.bindingAsync<String, int>((effect) async {
           effect.raise('error');
           reached = true; // ignore: dead_code
           return 0;
@@ -1488,10 +1486,10 @@ void main() {
       });
 
       test(
-        'raise short-circuits after async bind in Either.futureBinding',
+        'raise short-circuits after async bind in Either.bindingAsync',
         () async {
           await expectLater(
-            Either.futureBinding<String, int>((effect) async {
+            Either.bindingAsync<String, int>((effect) async {
               final a = await effect
                   .bindFuture(Future.value(Either<String, int>.right(1)));
               effect.raise('stop');

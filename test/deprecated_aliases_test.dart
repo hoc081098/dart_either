@@ -67,6 +67,22 @@ void main() {
       expect(leftOf1.orNull(), isNull);
     });
 
+    test('futureBinding delegates to bindingAsync', () async {
+      await expectLater(
+        Either.futureBinding<Object, int>(
+          (effect) => effect.bind(Either<Object, int>.right(1)),
+        ),
+        completion(rightOf1),
+      );
+      await expectLater(
+        Either.futureBinding<Object, int>((effect) async {
+          await Future<void>.delayed(Duration.zero);
+          return effect.bind(Either<Object, int>.left(exception));
+        }),
+        completion(Either<Object, int>.left(exception)),
+      );
+    });
+
     test('catchError delegates to tryCatch', () {
       expect(
         Either<Object, int>.catchError((e, s) => e, () => 1),
