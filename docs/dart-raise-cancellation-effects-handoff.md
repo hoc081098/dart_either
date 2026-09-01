@@ -2,7 +2,7 @@
 
 ## Context
 
-Tôi đang maintain một Dart FP library có `Either`, `EitherEffect`, `binding`, `futureBinding`.
+Tôi đang maintain một Dart FP library có `Either`, `EitherEffect`, `binding`, `bindingAsync`.
 
 Hiện tại `EitherEffect<L>` đã có:
 
@@ -349,7 +349,7 @@ Current package:
 dart_either
 ├── Either
 ├── EitherEffect
-├── binding / futureBinding
+├── binding / bindingAsync
 ├── Raise-like semantics
 └── internal control-flow runtime
 ```

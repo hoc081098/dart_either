@@ -19,7 +19,7 @@ direct-style `binding` scopes, backed by documentation and edge-case tests.
 
 The current implementation is a credible focused alternative for projects
 that want typed failure without importing a broader FP toolkit. Its most
-distinctive feature is `Either.binding` / `Either.futureBinding`: sequential
+distinctive feature is `Either.binding` / `Either.bindingAsync`: sequential
 typed-failure code can retain ordinary Dart control flow (`await`, local
 variables, `if`, and `return`) while short-circuiting on the first `Left`.
 
@@ -70,12 +70,12 @@ The current API covers the operations that make `Either` practical in an app:
 - async chaining with `thenMapEither` and `thenFlatMapEither`;
 - sequential and parallel collection operations through `sequence`,
   `traverse`, `parSequenceN`, and `parTraverseN`; and
-- direct-style composition through `binding`, `futureBinding`, `bind`,
+- direct-style composition through `binding`, `bindingAsync`, `bind`,
   `bindFuture`, `ensure`, `ensureNotNull`, and `raise`.
 
 `traverse` and `sequence` remain useful for batch validation or transforming a
 collection of fallible operations. In ordinary Repository/UseCase code,
-however, `binding` and `futureBinding` are usually the more differentiating
+however, `binding` and `bindingAsync` are usually the more differentiating
 feature because they remove nested `flatMap` while preserving explicit typed
 failure.
 
@@ -85,7 +85,7 @@ This is valid current syntax; `Future<Either<L, R>>.bind(effect)` is provided by
 `BindEitherFutureExtension`:
 
 ```dart
-final result = await Either.futureBinding<AppError, Output>((effect) async {
+final result = await Either.bindingAsync<AppError, Output>((effect) async {
   final a = await getA().bind(effect);
   final b = await getB(a).bind(effect);
   effect.ensure(b.isValid, () => const AppError.invalid());
@@ -131,7 +131,7 @@ Important guarantees visible in
 [`lib/src/binding.dart`](../lib/src/binding.dart), and
 [`test/either_effect_test.dart`](../test/either_effect_test.dart) are:
 
-- Every `binding` or `futureBinding` call creates its own token. A boundary
+- Every `binding` or `bindingAsync` call creates its own token. A boundary
   catches only a `ControlError` with the identical token, so nested scopes do
   not consume one another's short-circuit.
 - `Right` values are unwrapped. `Left` and `raise` terminate only the owning
@@ -144,7 +144,7 @@ Important guarantees visible in
 - Those helpers call the internal `throwIfFatal` guard, which rethrows
   `ControlError` and types registered through `registerFatalError` instead of
   mapping them into a domain `Left`.
-- The capability remains active across work returned from `futureBinding`,
+- The capability remains active across work returned from `bindingAsync`,
   then is closed when the computation settles. Using a captured capability
   afterward throws `StateError`.
 - If user code catches the scope's `ControlError`, swallows it, and completes
@@ -183,7 +183,7 @@ The repository has no benchmark that quantifies the difference, so it would
 be inaccurate to promise that the overhead is negligible. A reasonable usage
 rule is:
 
-- prefer `binding` / `futureBinding` where readability dominates, especially
+- prefer `binding` / `bindingAsync` where readability dominates, especially
   I/O-heavy Repository, UseCase, API, and database flows;
 - consider explicit composition in CPU hot loops where `Left` is expected
   frequently as ordinary control flow; and

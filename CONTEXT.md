@@ -11,7 +11,7 @@ value on the right.
 _Avoid_: Result, response wrapper
 
 **Binding scope**:
-The lifetime of one `Either.binding` or `Either.futureBinding` computation.
+The lifetime of one `Either.binding` or `Either.bindingAsync` computation.
 _Avoid_: Global context, coroutine scope
 
 **Binding capability (`EitherEffect`)**:

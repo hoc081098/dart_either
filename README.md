@@ -12,7 +12,7 @@
 
 **Either monad for Dart & Flutter** — a type-safe, lightweight library for error handling and railway-oriented programming.
 
-- ✅ **Monad comprehensions** — both `sync` (`Either.binding`) and `async` (`Either.futureBinding`) versions.
+- ✅ **Monad comprehensions** — both `sync` (`Either.binding`) and `async` (`Either.bindingAsync`) versions.
 - ✅ **Async `map` / `flatMap`** — hides the boilerplate of working with `Future<Either<L, R>>`.
 - ✅ **Type-safe** — an explicit, compiler-friendly alternative to nullable values and thrown exceptions.
 
@@ -462,7 +462,7 @@ ok.fold(
 
 ### 5. Monad comprehensions
 
-Use `Either.binding` (sync) or `Either.futureBinding` (async) for do-notation
+Use `Either.binding` (sync) or `Either.bindingAsync` (async) for do-notation
 style sequential computations that short-circuit on the first `Left`.
 
 Their callback receives an `EitherEffect<L>`: a package-issued, opaque,
@@ -470,7 +470,7 @@ scope-bound binding capability. Use it as `effect.bind(either)`,
 `either.bind(effect)`, `eitherFuture.bind(effect)`, or `effect.raise(value)`.
 Its construction and binding behavior are library-owned; assigning it to
 another variable only aliases the same scope. Each `Either.binding` or
-`Either.futureBinding` invocation owns an isolated scope, ordinary exceptions
+`Either.bindingAsync` invocation owns an isolated scope, ordinary exceptions
 propagate unchanged, and the capability must not be stored or invoked after
 that scope settles.
 
@@ -479,7 +479,7 @@ that scope settles.
 | API                                                                                                                                              | Description                        |
 |--------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------|
 | [`Either.binding`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.binding.html)                                      | Runs a synchronous binding scope   |
-| [`Either.futureBinding`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/futureBinding.html)                                 | Runs an asynchronous binding scope |
+| [`Either.bindingAsync`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bindingAsync.html)                                 | Runs an asynchronous binding scope |
 
 #### Extracting bound values
 
@@ -570,7 +570,7 @@ final Either<String, int> insufficientStock = calculateOrderTotal(
 
 #### Asynchronous binding
 
-`Either.futureBinding` opens an asynchronous binding scope. Inside that scope,
+`Either.bindingAsync` opens an asynchronous binding scope. Inside that scope,
 ordinary `await`, local variables, conditions, and `return` remain available:
 
 - `either.bind(effect)` extracts a `Right` from an `Either` immediately.
@@ -583,7 +583,7 @@ ordinary `await`, local variables, conditions, and `return` remain available:
 
 This is the direct-style alternative to the `Future<Either>` pipelines in the
 next section. Use `Either.binding` for synchronous code and
-`Either.futureBinding` as soon as the flow needs `await`. It is especially
+`Either.bindingAsync` as soon as the flow needs `await`. It is especially
 useful when several `Either`-producing operations depend on values produced by
 earlier steps: each value can be bound to a local variable, keeping the flow
 flat instead of nesting callbacks.
@@ -594,7 +594,7 @@ from the [complete runnable binding example](https://github.com/hoc081098/dart_e
 
 ```dart
 Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
-    Either.futureBinding((effect) async {
+    Either.bindingAsync((effect) async {
       // A synchronous Either can be bound without await.
       final Uri uri = Either.tryCatch(
         action: () => Uri.parse(uriString),
@@ -611,7 +611,7 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
       final int statusCode = response.statusCode;
       final String body = response.body;
 
-      // A failed guard also short-circuits this futureBinding scope.
+      // A failed guard also short-circuits this bindingAsync scope.
       effect.ensure(
         statusCode >= 200 && statusCode < 300,
         () => AppError(
@@ -633,7 +633,7 @@ Future<Either<AppError, dynamic>> httpGetAsEither(String uriString) =>
 
 Either<AppError, BuiltList<User>> toUsers(dynamic list) { ... }
 
-Either<AppError, BuiltList<User>> usersEither = await Either.futureBinding(
+Either<AppError, BuiltList<User>> usersEither = await Either.bindingAsync(
   (effect) async {
     // Left from either operation exits this outer scope immediately.
     final dynamic json = await httpGetAsEither(
@@ -644,6 +644,14 @@ Either<AppError, BuiltList<User>> usersEither = await Either.futureBinding(
   },
 );
 ```
+
+#### Migrating from deprecated binding APIs
+
+The old name remains available in `2.x` so existing code keeps working:
+
+- `Either.futureBinding` is deprecated in favor of `Either.bindingAsync`. The
+  alias preserves the same callback, short-circuit, exception, and
+  scope-lifetime semantics.
 
 ---
 
@@ -681,7 +689,7 @@ provides concrete, discoverable extensions for `Future<Either<L, R>>` instead.
 
 Use these extensions when a short pipeline reads clearly. For a longer flow
 where later `Either`-producing operations depend on earlier results,
-`Either.futureBinding` keeps the code flat and avoids nested callbacks. It also
+`Either.bindingAsync` keeps the code flat and avoids nested callbacks. It also
 provides the same `Left` short-circuiting while allowing ordinary awaited
 values, guards, and local variables in direct `async`/`await` style.
 `Either.binding` is the synchronous counterpart and does not operate on

@@ -25,14 +25,14 @@ is an invariant of this decision because a public typedef would forward an
 unnamed constructor from its aliased class.
 
 Token identity continues to isolate nested scopes. Each capability issued by
-`binding` or `futureBinding` is closed when its synchronous or asynchronous
+`binding` or `bindingAsync` is closed when its synchronous or asynchronous
 block settles.
 
 ## Compatibility boundary
 
 This representation hardening targets a `2.x.y` release. Supported usage keeps
 the same source shape and behavior: obtain an effect from `Either.binding` or
-`Either.futureBinding`, then use `effect.bind(either)`, `either.bind(effect)`,
+`Either.bindingAsync`, then use `effect.bind(either)`, `either.bind(effect)`,
 `eitherFuture.bind(effect)`, or `effect.raise(value)` within the owning scope.
 `raise` is convenience syntax for short-circuiting with an available left value
 without constructing a `Left` solely to bind it.
