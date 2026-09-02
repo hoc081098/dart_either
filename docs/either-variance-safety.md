@@ -83,11 +83,11 @@ different design.
 Consider:
 
 ```dart
-Either<L, C> map<C>(C Function(R value) transform);
+Either<L, R2> map<R2>(R2 Function(R value) transform);
 ```
 
-As a standalone function type, `C Function(R)` is contravariant in `R` and
-covariant in `C`: its parameter is `in R` and its result is `out C`.
+As a standalone function type, `R2 Function(R)` is contravariant in `R` and
+covariant in `R2`: its parameter is `in R` and its result is `out R2`.
 
 However, `transform` is itself an input parameter of `map`. The path to `R`
 therefore crosses two input positions:
@@ -135,7 +135,7 @@ such as a `double`, even if the `Right` branch would never invoke that callback.
 Consider:
 
 ```dart
-Either<L, C> flatMap<C>(Either<L, C> Function(R value) transform);
+Either<L, R2> flatMap<R2>(Either<L, R2> Function(R value) transform);
 ```
 
 `R` is positive overall:
@@ -160,21 +160,50 @@ The callback consumes `R`, which is safe, but it produces an `Either` carrying
 An operation can therefore be safe for one class type parameter and unsafe for
 the other.
 
-## Signature audit table
+## Complete `Either` instance-member audit
 
-| Signature shape | Position of class type parameter | Instance-member result |
+The following table covers every public instance member declared directly on
+`Either<L, R>`. `Left.value` and `Right.value` expose their type parameter only
+as output, so those subtype fields are also safe. Object overrides on `Left`
+and `Right` do not consume `L` or `R` in their signatures.
+
+| Member | Position of class type parameter | Instance-member result |
 |---|---|---|
-| `R? getOrNull()` | `R: +` | Safe |
-| `C fold(C Function(L), C Function(R))` | `L/R: - x - = +` | Safe |
-| `C map(C Function(R))` | `R: - x - = +` | Safe |
-| `void onRight(void Function(R))` | `R: - x - = +` | Safe |
-| `bool isLeftAnd(bool Function(L))` | `L: - x - = +` | Safe |
-| `bool isRightAnd(bool Function(R))` | `R: - x - = +` | Safe |
-| `R getOrDefault(R)` | `R: -` and `R: +` | Unsafe |
-| `R getOrElse(R Function())` | input `R: - x + = -` | Unsafe |
-| `combine(Either<L, R> other, ...)` | `L/R: - x + = -` in `other` | Unsafe |
-| `flatMap(Either<L, C> Function(R))` | `R: +`, callback-result `L: -` | Unsafe for `L` |
-| `handleErrorWith(Either<C, R> Function(L))` | `L: +`, callback-result `R: -` | Unsafe for `R` |
+| `isLeft`, `isRight` | No `L` or `R` occurrence | Safe |
+| `fold(T Function(L), T Function(R))` | `L/R: - x - = +` | Safe |
+| `foldLeft(T, T Function(T, R))` | `R: - x - = +` | Safe |
+| `swap()` | `L/R: +` in the returned `Either<R, L>` | Safe |
+| `onLeft(void Function(L))` | callback `L: - x - = +`; returned `L/R: +` | Safe |
+| `onRight(void Function(R))` | callback `R: - x - = +`; returned `L/R: +` | Safe |
+| `map(R2 Function(R))` | callback `R: - x - = +`; returned `L: +` | Safe |
+| `mapLeft(L2 Function(L))` | callback `L: - x - = +`; returned `R: +` | Safe |
+| `flatMap(Either<L, R2> Function(R))` | callback input `R: +`; callback-result `L: -` | **Unsafe for `L`** |
+| `bimap(L2 Function(L), R2 Function(R))` | callback `L/R: - x - = +` | Safe |
+| `isLeftAnd(bool Function(L))` | `L: - x - = +` | Safe |
+| `isRightAnd(bool Function(R))` | `R: - x - = +` | Safe |
+| `all(bool Function(R))` | `R: - x - = +` | Safe |
+| `getOrElse(R Function())` | callback-result `R: -`; returned `R: +` | **Unsafe for `R`** |
+| `getOrNull()` | returned `R: +` | Safe |
+| `leftOrNull()` | returned `L: +` | Safe |
+| `getOrHandle(R Function(L))` | callback input `L: +`; callback-result `R: -`; returned `R: +` | **Unsafe for `R`** |
+| `findOrNull(bool Function(R))` | callback `R: +`; returned `R: +` | Safe |
+| `when(T Function(Left<L, R>), T Function(Right<L, R>))` | `L/R: - x - x + = +` | Safe |
+| `handleErrorWith(Either<L2, R> Function(L))` | callback input `L: +`; callback-result `R: -`; returned `R: +` | **Unsafe for `R`** |
+| `handleError(R Function(L))` | callback input `L: +`; callback-result `R: -`; returned `R: +` | **Unsafe for `R`** |
+| `redeem(R2 Function(L), R2 Function(R))` | callback `L/R: - x - = +`; returned `L: +` | Safe |
+| `redeemWith(Either<L2, R2> Function(L), Either<L2, R2> Function(R))` | callback input `L/R: - x - = +`; callback results use only fresh `L2/R2` | Safe |
+
+Deprecated `tapLeft`, `tap`, `exists`, and `orNull` have the same safe shape as
+their canonical targets and only forward to those targets. They remain
+unmarked so the marker identifies canonical operations rather than
+compatibility names.
+
+The generic-extension operations `getOrDefault` and `combine` would be unsafe
+with their current signatures as virtual instance members because their direct
+`R` or `Either<L, R>` inputs are negative. They are safe in this package because
+extension resolution uses the receiver's static type arguments and their
+implementations pattern-match directly. `flatten` and `merge` are specialized
+extensions with widened regression coverage.
 
 "Unsafe" here means unsafe as a virtual instance-member boundary for a
 covariantly widened receiver. It does not mean the operation itself is invalid.
@@ -273,7 +302,7 @@ extension FlattenEitherExtension<L, R> on Either<L, Either<L, R>> {
 }
 ```
 
-## Current PR audit
+## Completed audit evidence
 
 The branch review that introduced this document found and fixed three targets:
 
@@ -287,18 +316,20 @@ The branch review that introduced this document found and fixed three targets:
   so unsafe widening, external construction, and replacement binding behavior
   are rejected before a binding block can execute.
 
-The other APIs added in this PR were audited as covariance-safe instance
-members or extensions: `onLeft`, `onRight`, `getOrNull`, `leftOrNull`,
-`isLeftAnd`, `isRightAnd`, and `merge`.
+The audited implementation primitive and every canonical safe operation
+declared directly on `Either` carry the internal `@covarianceSafe` marker:
 
-The audited implementation primitive and canonical operations carry the
-internal `@covarianceSafe` marker:
+- `_foldInternal`, `fold`, `foldLeft`, `swap`, `onLeft`, `onRight`, `map`,
+  `mapLeft`, `bimap`, `isLeftAnd`, `isRightAnd`, `all`, `getOrNull`,
+  `leftOrNull`, `findOrNull`, `when`, `redeem`, and `redeemWith`;
+- generic or specialized extensions covered by widened regression tests:
+  `getOrDefault`, `combine`, `flatten`, and `merge`.
 
-- Proven from their signatures and audited implementations: `_foldInternal`,
-  `fold`, `map`, `onLeft`, `onRight`, `getOrNull`, `leftOrNull`, `isLeftAnd`,
-  and `isRightAnd`.
-- Covered by widened covariance regression tests: `getOrDefault`, `combine`,
-  `flatten`, and `merge`.
+The `isLeft` and `isRight` getters contain no occurrence of `L` or `R` in their
+signatures. They are covered by widened inspection tests but do not need an
+operation marker. The five unsafe instance members are deliberately unmarked:
+`flatMap`, deprecated `getOrElse`, `getOrHandle`, `handleError`, and
+`handleErrorWith`.
 
 The marker records a completed audit; it does not make an operation safe and
 is not enforced by the Dart type system. Apply it only when either:
@@ -310,12 +341,8 @@ is not enforced by the Dart type system. Apply it only when either:
    pattern matching or a proven-safe primitive, with widened regression
    coverage for the relevant paths.
 
-Deprecated naming aliases introduced in this PR intentionally remain unmarked.
-Their compatibility tests verify delegation to the marked canonical operation.
-
-This marker set is intentionally not exhaustive. Other pre-existing APIs must
-still be audited separately before they are reused as implementation primitives
-or changed in a future release.
+Deprecated naming aliases intentionally remain unmarked. Their compatibility
+tests verify delegation to the marked canonical operation.
 
 ## Required regression tests
 

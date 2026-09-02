@@ -89,6 +89,30 @@ void main() {
       right.flatMap((a) => Either.right(a + 10));
   print(flatMap); // Prints Either.Right(20)
 
+  /// Recover a [Left] into a [Right] value.
+  final Either<String, int> handled = left.handleError((error) => error.length);
+  print(handled); // Prints Either.Right(4)
+
+  /// Let a [Left] recovery choose either output channel.
+  final Either<String, int> handledWith = left.handleErrorWith(
+    (error) => Either<String, int>.right(error.length),
+  );
+  print(handledWith); // Prints Either.Right(4)
+
+  /// Map either input channel into a [Right] value.
+  final Either<String, int> redeemed = left.redeem(
+    leftOperation: (error) => error.length,
+    rightOperation: (value) => value * 2,
+  );
+  print(redeemed); // Prints Either.Right(4)
+
+  /// Let either input channel choose a new output channel.
+  final Either<bool, String> redeemedWith = right.redeemWith(
+    leftOperation: (error) => Right<bool, String>(error),
+    rightOperation: (value) => Left<bool, String>(value.isEven),
+  );
+  print(redeemedWith); // Prints Either.Left(true)
+
   /// Combine two Either values
   final Either<String, int> combined = right.combine(
     Either<String, int>.right(5),

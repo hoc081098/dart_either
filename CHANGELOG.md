@@ -23,6 +23,16 @@
   - Deprecated `futureBinding` in favor of `bindingAsync`; the alias retains
     its existing behavior throughout `2.x`.
 
+- **API type clarity**
+  - Standardized `Either` method type parameters: `L2` and `R2` identify
+    transformed channels, while `T` identifies results outside `Either`.
+    Renaming these type parameters does not change call syntax or runtime
+    behavior.
+  - Clarified the channel and callback semantics of `handleErrorWith`,
+    `handleError`, `redeem`, and `redeemWith`.
+  - `handleError` now preserves the original `Right` instance, matching its
+    existing "returns this" contract.
+
 ## 2.2.0 - Aug 27, 2026
 
 ### `Either`
