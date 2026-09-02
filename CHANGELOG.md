@@ -1,37 +1,34 @@
 ## Unreleased
 
-### `Either`
+- Added `isLeftAnd`, which evaluates a predicate for `Left` values and returns
+  `false` for `Right` values.
 
-- **Left-side predicate**
-  - Added `isLeftAnd` to match a `Left` value with a predicate.
+- Added `tryCatch` and `tryCatchAsync` as the canonical synchronous and
+  asynchronous error-capture APIs. Both use required named `action` and
+  `errorMapper` parameters. `tryCatchAsync` captures errors thrown before a
+  future is returned as well as errors that complete the future.
+  - Deprecated `catchError` in favor of `tryCatch`.
+  - Deprecated `catchFutureError` in favor of `tryCatchAsync`.
+  - Deprecated `catchStreamError` in favor of `Stream.toEitherStream`.
+  - The deprecated aliases retain their existing call syntax throughout `2.x`.
 
-- **Error capture**
-  - Added `tryCatch` and `tryCatchAsync` with required named `action` and `errorMapper` parameters.
-  - Deprecated
-    - `catchError` in favor of `tryCatch`.
-    - `catchFutureError` in favor of `tryCatchAsync`.
-    - `catchStreamError` in favor of `Stream.toEitherStream`.
-    - All three deprecated aliases remain available in `2.x`.
+- Added `registerFatalError<T>()` to exclude a registered error type and its
+  subtypes from conversion to `Left`. Registered errors retain their original
+  error and stack trace across `tryCatch`, `tryCatchAsync`,
+  `Future.toEitherFuture`, and `Stream.toEitherStream`.
+  Registration is per isolate, additive, and idempotent; spawned isolates must
+  register their own fatal types.
 
-  - Added `registerFatalError<T>()`. Errors of a registered type or subtype
-    remain errors instead of being converted to `Left`.
-    Fatal-error registration is per isolate, additive, and idempotent. Spawned
-    isolates must register the types they need separately.
+- Added `bindingAsync` as the canonical asynchronous counterpart to `binding`.
+  Deprecated `futureBinding` in favor of `bindingAsync`; the alias retains its
+  existing call syntax and behavior throughout `2.x`.
 
-- **Async binding**
-  - Added `bindingAsync` as the canonical asynchronous counterpart to `binding`.
-  - Deprecated `futureBinding` in favor of `bindingAsync`; the alias retains
-    its existing behavior throughout `2.x`.
+- Fixed `handleError` to preserve the original `Right` instance instead of
+  creating an equivalent one. Callback invocation and `Left` recovery behavior
+  are unchanged.
 
-- **API type clarity**
-  - Standardized `Either` method type parameters: `L2` and `R2` identify
-    transformed channels, while `T` identifies results outside `Either`.
-    Renaming these type parameters does not change call syntax or runtime
-    behavior.
-  - Clarified the channel and callback semantics of `handleErrorWith`,
-    `handleError`, `redeem`, and `redeemWith`.
-  - `handleError` now preserves the original `Right` instance, matching its
-    existing "returns this" contract.
+- Clarified the channel and callback semantics of `handleErrorWith`,
+  `handleError`, `redeem`, and `redeemWith`.
 
 ## 2.2.0 - Aug 27, 2026
 
