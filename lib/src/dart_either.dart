@@ -11,7 +11,7 @@ import 'internal.dart';
 import 'to_either_stream.dart';
 import 'utils/semaphore.dart';
 
-part 'utils/par_sequenceN_executor.dart';
+part 'utils/par_sequence_n_executor.dart';
 
 /// Map [error] and [stackTrace] to a [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
@@ -596,7 +596,11 @@ sealed class Either<L, R> {
   /// then runs these functions in parallel with concurrency limit [maxConcurrent].
   ///
   /// If [maxConcurrent] is `null`, all functions run concurrently without limit.
-  /// If any function returns a [Left], the operation short-circuits and returns that [Left].
+  /// If any function returns a [Left], the operation short-circuits and returns
+  /// the first [Left] observed by completion order. With a finite concurrency
+  /// limit, functions still waiting for a permit are not invoked after that
+  /// [Left] is observed. Functions already running are not cancelled and may
+  /// still complete their side effects.
   /// Otherwise, collects all [Right] values into a [BuiltList].
   ///
   /// This is a shorthand for `Either.parSequenceN<L, R>(functions: values.map(mapper), maxConcurrent: maxConcurrent)`.
@@ -617,7 +621,8 @@ sealed class Either<L, R> {
   /// - [maxConcurrent]: Maximum number of concurrent executions. If `null`, no limit.
   ///
   /// ### Returns
-  /// A [Future] containing either the first [Left] encountered, or a [Right] with all collected values.
+  /// A [Future] containing either the first [Left] observed by completion
+  /// order, or a [Right] with all collected values.
   @useResult
   static Future<Either<L, BuiltList<R>>> parTraverseN<L, R, T>({
     required Iterable<T> values,
@@ -634,7 +639,12 @@ sealed class Either<L, R> {
   /// Runs the functions in parallel, but limits the number of concurrent executions to [maxConcurrent].
   /// If [maxConcurrent] is `null`, all functions run concurrently without limit.
   ///
-  /// If any function returns a [Left], the operation short-circuits and returns that [Left].
+  /// If any function returns a [Left], the operation short-circuits and returns
+  /// the first [Left] observed by completion order. With a finite concurrency
+  /// limit, functions still waiting for a permit are not invoked after that
+  /// [Left] is observed. Functions already running are not cancelled and may
+  /// still complete their side effects. When [maxConcurrent] is `null`, every
+  /// function is invoked before an asynchronous [Left] can be observed.
   /// Otherwise, collects all [Right] values into a [BuiltList].
   ///
   /// The concurrency is controlled using a semaphore to prevent overwhelming the system.
@@ -658,13 +668,14 @@ sealed class Either<L, R> {
   /// - [maxConcurrent]: Maximum number of concurrent executions. If `null`, no limit.
   ///
   /// ### Returns
-  /// A [Future] containing either the first [Left] encountered, or a [Right] with all collected values.
+  /// A [Future] containing either the first [Left] observed by completion
+  /// order, or a [Right] with all collected values.
   @useResult
   static Future<Either<L, BuiltList<R>>> parSequenceN<L, R>({
     required Iterable<Future<Either<L, R>> Function()> functions,
     required int? maxConcurrent,
   }) async =>
-      ParSequenceNExecutor(functions, maxConcurrent).run();
+      _ParSequenceNExecutor(functions, maxConcurrent).run();
 
   // -----------------------------------------------------------------------------
   //

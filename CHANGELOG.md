@@ -1,3 +1,10 @@
+## Unreleased
+
+- Fixed `Either.parSequenceN` and `Either.parTraverseN` with finite concurrency
+  so functions still waiting for a permit are not invoked after a `Left` is
+  observed. Already-running functions remain non-cancellable and may finish
+  their side effects.
+
 ## 2.3.0 - Sep 02, 2026
 
 - Added `isLeftAnd`, which evaluates a predicate for `Left` values and returns

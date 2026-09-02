@@ -356,6 +356,13 @@ final Either<String, BuiltList<int>> parallelTraverse = await Either.parTraverse
 );
 ```
 
+Parallel operations return the first `Left` observed by completion order. With
+a finite concurrency limit, callbacks still waiting for a permit are not
+invoked after that `Left` is observed. Callbacks already running are not
+cancelled and may still complete their side effects. Passing `null` as
+`maxConcurrent` starts every callback without a concurrency limit, so an
+asynchronous `Left` cannot prevent the other callbacks from starting.
+
 ---
 
 ### 4. Operations on `Either`

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:built_collection/built_collection.dart';
 import 'package:dart_either/dart_either.dart';
 import 'package:rxdart_ext/single.dart';
@@ -745,6 +747,77 @@ void main() {
 
           expect(result, Left<String, BuiltList<int>>('error$anchor'));
           expect(values.length, anchor + 1); // Only up to the error
+        });
+
+        test('does not invoke queued functions after Left', () async {
+          final invoked = <int>[];
+          final first = Completer<Either<String, int>>();
+
+          final resultFuture = Either.parSequenceN<String, int>(
+            functions: List.generate(
+              4,
+              (index) => () {
+                invoked.add(index);
+                return index == 0
+                    ? first.future
+                    : Future.value(Either<String, int>.right(index));
+              },
+            ),
+            maxConcurrent: 1,
+          );
+
+          await pumpEventQueue();
+          expect(invoked, [0]);
+
+          first.complete(Either<String, int>.left('error'));
+
+          expect(
+            await resultFuture,
+            Left<String, BuiltList<int>>('error'),
+          );
+          await pumpEventQueue();
+          expect(invoked, [0]);
+        });
+
+        test('rejects queued functions when Left follows an earlier error',
+            () async {
+          final invoked = <int>[];
+          final left = Completer<Either<String, int>>();
+          final running = Completer<Either<String, int>>();
+
+          final resultFuture = Either.parSequenceN<String, int>(
+            functions: [
+              () async {
+                invoked.add(0);
+                throw StateError('first error');
+              },
+              () {
+                invoked.add(1);
+                return left.future;
+              },
+              () {
+                invoked.add(2);
+                return running.future;
+              },
+              () async {
+                invoked.add(3);
+                return Either<String, int>.right(3);
+              },
+            ],
+            maxConcurrent: 2,
+          );
+          final errorExpectation = expectLater(resultFuture, throwsStateError);
+
+          await pumpEventQueue();
+          expect(invoked, [0, 1, 2]);
+
+          left.complete(Either<String, int>.left('left'));
+          await pumpEventQueue();
+
+          expect(invoked, [0, 1, 2]);
+
+          running.complete(Either<String, int>.right(2));
+          await errorExpectation;
         });
 
         test('concurrency actually limited', () async {
