@@ -45,7 +45,8 @@
 library;
 
 export 'src/binding.dart';
-export 'src/dart_either.dart' hide monadComprehensions, throwIfFatal;
+export 'src/dart_either.dart'
+    hide monadComprehensions, throwIfFatal, ParSequenceNExecutor;
 export 'src/either_extensions.dart';
 export 'src/extensions.dart';
 export 'src/to_either_stream.dart';

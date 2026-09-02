@@ -11,6 +11,8 @@ import 'internal.dart';
 import 'to_either_stream.dart';
 import 'utils/semaphore.dart';
 
+part 'utils/par_sequenceN_executor.dart';
+
 /// Map [error] and [stackTrace] to a [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 
@@ -661,32 +663,8 @@ sealed class Either<L, R> {
   static Future<Either<L, BuiltList<R>>> parSequenceN<L, R>({
     required Iterable<Future<Either<L, R>> Function()> functions,
     required int? maxConcurrent,
-  }) async {
-    final futureFunctions = functions.toList(growable: false);
-    final semaphore = maxConcurrent != null ? Semaphore(maxConcurrent) : null;
-    final token = _Token();
-
-    Future<R> Function() run(Future<Either<L, R>> Function() f) {
-      return () => Future.sync(f).then(
-            (e) => e.getOrHandle((l) => throw ControlError<L>._(l, token)),
-          );
-    }
-
-    Future<R> runWithPermit(Future<Either<L, R>> Function() f) {
-      final action = run(f);
-      return semaphore?.withPermit(action) ?? action();
-    }
-
-    return Future.wait(
-      futureFunctions.map(runWithPermit),
-      eagerError: true,
-    )
-        .then((values) => Either<L, BuiltList<R>>.right(values.build()))
-        .onError<ControlError<L>>(
-          (e, s) => Left(e._value),
-          test: (e) => identical(e._token, token),
-        );
-  }
+  }) async =>
+      ParSequenceNExecutor(functions, maxConcurrent).run();
 
   // -----------------------------------------------------------------------------
   //
