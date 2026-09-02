@@ -1,4 +1,4 @@
-## Unreleased
+## 2.3.0 - Sep 02, 2026
 
 - Added `isLeftAnd`, which evaluates a predicate for `Left` values and returns
   `false` for `Right` values.

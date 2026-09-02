@@ -4,9 +4,9 @@ This document tracks naming decisions that move `dart_either` closer to
 Arrow/Kotlin where that also produces an idiomatic and type-safe Dart API.
 Arrow is a reference, not a one-to-one compatibility contract.
 
-Statuses describe the current repository state. Released migrations are
-assigned to `2.2.0` in `CHANGELOG.md`; new work remains under `Unreleased`
-until the next version is prepared.
+Statuses describe the current repository state. Changes prepared for `2.3.0`
+are assigned to that version in `CHANGELOG.md`; verify the registry before
+describing `2.3.0` as published.
 
 ## Upstream evidence and decision boundary
 
@@ -109,16 +109,16 @@ Dart decision.
 | `tap` | `onRight` | Implemented in 2.2.0 | PR #2830 directly renamed `tap` to `onRight`; current Arrow keeps `onRight` | Safe `Either` member; `tap` remains a deprecated member alias |
 | `orNull` | `getOrNull` | Implemented in 2.2.0 | PR #2830 directly renamed `orNull` to `getOrNull`; current Arrow keeps `getOrNull` | Safe `Either` member; `orNull` remains a deprecated member alias |
 | `exists` | `isRightAnd` | Implemented in 2.2.0 | PR #2830 removed `exists`; Arrow PR #2927 later added predicate overloads of `isRight` | Dart already exposes `isRight` as a getter and has no overloads, so `isRightAnd` is the Dart adaptation; `exists` remains deprecated |
-| No previous Dart API | `isLeftAnd` | Unreleased | Arrow PR #2927 added a predicate overload of `isLeft` | Dart already exposes `isLeft` as a getter and has no overloads, so `isLeftAnd` is the Dart adaptation; no deprecated alias is needed |
+| No previous Dart API | `isLeftAnd` | Implemented in 2.3.0 | Arrow PR #2927 added a predicate overload of `isLeft` | Dart already exposes `isLeft` as a getter and has no overloads, so `isLeftAnd` is the Dart adaptation; no deprecated alias is needed |
 | `getOrElse(R Function())` | `getOrDefault(R)` or `getOrHandle(R Function(L))` | Implemented 2.x migration | Current Arrow's `getOrElse` is lazy and receives the `Left` value; Arrow has no eager `getOrDefault` on `Either` | `getOrDefault` is a Dart-specific safe extension; `getOrHandle` remains the temporary left-aware member; legacy `getOrElse` remains deprecated with its original lazy, zero-argument behavior |
 | `getOrHandle(R Function(L))` | `getOrElse(R Function(L))` | Planned for 3.0.0 only | PR #2830 called `getOrHandle` a duplicate of `getOrElse`; current Arrow exposes only left-aware `getOrElse` | Remove both 2.x fallback members in 3.0.0 and introduce the final `getOrElse` as a generic extension |
 | `handleError(R Function(L))` | No direct rename | Reviewed; retain in 2.x | PR #2830 initially replaced it through `recover`, but [Arrow's later final deprecation](https://github.com/arrow-kt/arrow/commit/b6a00df2a234131f62c95812958bad406641b13f) was `getOrElse(f).right()` and current Arrow has no `handleError` | Arrow `recover` is a richer Raise-DSL operation, not a compatibility alias. Treat any deprecation/removal and variance hardening as separate work |
 | `handleErrorWith(Either<L2, R> Function(L))` | `handleErrorWith` | Reviewed; retain the name | PR #2830 proposed replacement through `recover`, but PR #3456 restored `handleErrorWith` and current Arrow exposes it | No rename. Its unsafe legacy instance placement may be handled separately from naming |
 | Proposed `recoverWith` | No Arrow target | Rejected as Arrow alignment | Current Arrow exposes `handleErrorWith` and richer `recover`, but no `recoverWith` | Remove it from the rename candidates; reconsider only as an explicitly Dart/Cats-style API proposal |
-| `futureBinding` | `bindingAsync` | Unreleased | No direct Arrow equivalent; Arrow's [typed-errors guide](https://arrow-kt.io/learn/typed-errors/working-with-typed-errors/) uses the same `either { }` builder from synchronous and suspending functions | The async suffix keeps the family grouped with `binding` and matches `tryCatchAsync`; `futureBinding` remains a deprecated static alias with identical `FutureOr` callback and scope semantics |
-| `catchError` | `tryCatch` | Unreleased | The closest Arrow API is companion `Either.catch`, but it returns `Either<Throwable, R>` and does not take Dart's mapper plus `StackTrace` | `catch` is a reserved Dart keyword. `tryCatch` keeps the synchronous factory shape while using required named parameters; `catchError` remains a deprecated positional alias |
-| `catchFutureError` | `tryCatchAsync` | Unreleased | No direct Arrow `Either` equivalent | The async suffix keeps the family grouped with `tryCatch`; `catchFutureError` remains a deprecated positional static alias |
-| `catchStreamError` | `Stream.toEitherStream` | Unreleased | No direct Arrow `Either` equivalent | A `Stream` is a multi-event foreign receiver rather than a one-shot computation. The existing receiver adapter is canonical; `catchStreamError` remains a deprecated positional static alias |
+| `futureBinding` | `bindingAsync` | Implemented in 2.3.0 | No direct Arrow equivalent; Arrow's [typed-errors guide](https://arrow-kt.io/learn/typed-errors/working-with-typed-errors/) uses the same `either { }` builder from synchronous and suspending functions | The async suffix keeps the family grouped with `binding` and matches `tryCatchAsync`; `futureBinding` remains a deprecated static alias with identical `FutureOr` callback and scope semantics |
+| `catchError` | `tryCatch` | Implemented in 2.3.0 | The closest Arrow API is companion `Either.catch`, but it returns `Either<Throwable, R>` and does not take Dart's mapper plus `StackTrace` | `catch` is a reserved Dart keyword. `tryCatch` keeps the synchronous factory shape while using required named parameters; `catchError` remains a deprecated positional alias |
+| `catchFutureError` | `tryCatchAsync` | Implemented in 2.3.0 | No direct Arrow `Either` equivalent | The async suffix keeps the family grouped with `tryCatch`; `catchFutureError` remains a deprecated positional static alias |
+| `catchStreamError` | `Stream.toEitherStream` | Implemented in 2.3.0 | No direct Arrow `Either` equivalent | A `Stream` is a multi-event foreign receiver rather than a one-shot computation. The existing receiver adapter is canonical; `catchStreamError` remains a deprecated positional static alias |
 
 `registerFatalError<T>()` is a Dart-specific error-capture policy rather than
 an Arrow naming migration. It lets an application declare that values of `T`,
@@ -213,7 +213,7 @@ not missing rename targets.
 | `flatten` | `FlattenEitherExtension` | Implemented; flatten `Either<L, Either<L, R>>` to `Either<L, R>` |
 | `merge` | `MergeEitherExtension` | Implemented; extract the value from `Either<T, T>` |
 | `EitherEffect.raise` | `RaiseEitherEffectExtension` | Implemented; short-circuit directly with a left value |
-| `isLeftAnd` | Safe `Either` member | Implemented but unreleased; adapts Arrow's predicate overload of `isLeft` because Dart already uses an `isLeft` getter |
+| `isLeftAnd` | Safe `Either` member | Implemented in 2.3.0; adapts Arrow's predicate overload of `isLeft` because Dart already uses an `isLeft` getter |
 | Arrow-style `recover` | Generic extension plus scoped `Raise` capability | Deferred new API, not a rename; it must support returning a success value or raising a new left value and must not be introduced as a weaker alias of `handleError` or `handleErrorWith` |
 
 Deferred or rejected names must not appear in usage examples as available

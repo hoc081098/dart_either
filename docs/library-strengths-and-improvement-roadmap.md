@@ -5,9 +5,9 @@ This note distills an earlier discussion about the value proposition of
 transcript or marketing copy. Every technical statement below was last
 reconciled with the repository state on 2026-09-01.
 
-The package currently declares version `2.2.0`, which has been released. Newer
-source changes remain under [Unreleased](../CHANGELOG.md) until the next
-version is prepared.
+The package currently declares version `2.3.0`. This repository state is
+prepared for release; verify the registry before describing `2.3.0` as
+published.
 
 ## Executive summary
 
