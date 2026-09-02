@@ -85,9 +85,9 @@ sealed class Either<L, R> {
   @pragma('vm:always-consider-inlining')
   @pragma('vm:prefer-inline')
   @pragma('dart2js:tryInline')
-  C _foldInternal<C>({
-    required C Function(L value) ifLeft,
-    required C Function(R value) ifRight,
+  T _foldInternal<T>({
+    required T Function(L value) ifLeft,
+    required T Function(R value) ifRight,
   }) =>
       switch (this) {
         Left(value: final l) => ifLeft(l),
@@ -722,9 +722,9 @@ sealed class Either<L, R> {
   /// );
   /// ```
   @covarianceSafe
-  C fold<C>({
-    required C Function(L value) ifLeft,
-    required C Function(R value) ifRight,
+  T fold<T>({
+    required T Function(L value) ifLeft,
+    required T Function(R value) ifRight,
   }) =>
       _foldInternal(ifLeft: ifLeft, ifRight: ifRight);
 
@@ -740,7 +740,7 @@ sealed class Either<L, R> {
   /// result.foldLeft<String>(initial, combine); // Result: 'dart_either hoc081098'
   /// ```
   @covarianceSafe
-  C foldLeft<C>(C initial, C Function(C acc, R element) rightOperation) =>
+  T foldLeft<T>(T initial, T Function(T acc, R element) rightOperation) =>
       _foldInternal(
         ifLeft: _const(initial),
         ifRight: (r) => rightOperation(initial, r),
@@ -821,9 +821,9 @@ sealed class Either<L, R> {
   /// ```
   @covarianceSafe
   @useResult
-  Either<L, C> map<C>(C Function(R value) f) => _foldInternal(
-        ifLeft: (l) => Either<L, C>.left(l),
-        ifRight: (r) => Either<L, C>.right(f(r)),
+  Either<L, R2> map<R2>(R2 Function(R value) f) => _foldInternal(
+        ifLeft: (l) => Either<L, R2>.left(l),
+        ifRight: (r) => Either<L, R2>.right(f(r)),
       );
 
   /// The given function is applied if this is a `Left`.
@@ -835,9 +835,9 @@ sealed class Either<L, R> {
   /// ```
   @covarianceSafe
   @useResult
-  Either<C, R> mapLeft<C>(C Function(L value) f) => _foldInternal(
-        ifLeft: (l) => Either<C, R>.left(f(l)),
-        ifRight: (r) => Either<C, R>.right(r),
+  Either<L2, R> mapLeft<L2>(L2 Function(L value) f) => _foldInternal(
+        ifLeft: (l) => Either<L2, R>.left(f(l)),
+        ifRight: (r) => Either<L2, R>.right(r),
       );
 
   /// Binds the given function across [Right].
@@ -856,8 +856,8 @@ sealed class Either<L, R> {
   /// Left<String, int>('12').flatMap((v) => Left<String, String>('flower $v'));  // Result: Left('12')
   /// ```
   @useResult
-  Either<L, C> flatMap<C>(Either<L, C> Function(R value) f) => _foldInternal(
-        ifLeft: (l) => Either<L, C>.left(l),
+  Either<L, R2> flatMap<R2>(Either<L, R2> Function(R value) f) => _foldInternal(
+        ifLeft: (l) => Either<L, R2>.left(l),
         ifRight: (r) => f(r),
       );
 
@@ -885,9 +885,9 @@ sealed class Either<L, R> {
   /// ```
   @covarianceSafe
   @useResult
-  Either<C, D> bimap<C, D>({
-    required C Function(L value) leftOperation,
-    required D Function(R value) rightOperation,
+  Either<L2, R2> bimap<L2, R2>({
+    required L2 Function(L value) leftOperation,
+    required R2 Function(R value) rightOperation,
   }) =>
       _foldInternal(
         ifLeft: (l) => Either.left(leftOperation(l)),
@@ -1058,18 +1058,30 @@ sealed class Either<L, R> {
   /// );
   /// ```
   @covarianceSafe
-  C when<C>({
-    required C Function(Left<L, R> left) ifLeft,
-    required C Function(Right<L, R> right) ifRight,
+  T when<T>({
+    required T Function(Left<L, R> left) ifLeft,
+    required T Function(Right<L, R> right) ifRight,
   }) {
     final self = this;
     return switch (self) { Left() => ifLeft(self), Right() => ifRight(self) };
   }
 
-  /// Handle any error, potentially recovering from it, by mapping it to an [Either] value.
+  /// Handles a [Left] with [f], which returns a new [Either].
   ///
-  /// Applies the given function [f] if this is a [Left], otherwise returns this if this is a [Right].
-  /// This is like [flatMap] for the exception.
+  /// - If this is a [Left], invokes [f] exactly once and returns its result
+  ///   directly. The result may be either a [Left] or a [Right].
+  /// - If this is a [Right], does not invoke [f] and returns an equivalent
+  ///   [Right] containing the unchanged value. Because the returned [Either]
+  ///   has the new left type [L2], it is not guaranteed to be identical to this
+  ///   instance.
+  ///
+  /// Semantically, this is the left-side counterpart of [flatMap]: [flatMap]
+  /// lets a [Right] callback choose the next channel, while [handleErrorWith]
+  /// gives that choice to a [Left] callback.
+  ///
+  /// In some libraries or languages, this operation is also known as
+  /// `recoverWith` or `flatMapError`.
+  /// Exceptions thrown by [f] are not caught.
   ///
   /// ### Example
   /// ```dart
@@ -1079,30 +1091,58 @@ sealed class Either<L, R> {
   /// Left<int, int>(12).handleErrorWith((v) => (v + 1).toString().left());  // Left('13')
   /// ```
   @useResult
-  Either<C, R> handleErrorWith<C>(Either<C, R> Function(L value) f) =>
+  Either<L2, R> handleErrorWith<L2>(Either<L2, R> Function(L value) f) =>
       _foldInternal(
         ifLeft: f,
-        ifRight: (v) => v.right<C>(),
+        ifRight: (v) => v.right<L2>(),
       );
 
-  /// Handle any error, potentially recovering from it, by mapping it to an [Either] value.
+  /// Recovers from a [Left] by mapping its value to a [Right] value.
   ///
-  /// Applies the given function [f] if this is a [Left] and return the result wrapped in a [Right],
-  /// otherwise returns this if this is a [Right].
+  /// - If this is a [Left], invokes [f] exactly once and wraps its result in a
+  ///   [Right].
+  /// - If this is a [Right], does not invoke [f] and returns this instance.
+  ///
+  /// On normal completion, both paths therefore produce a [Right], although
+  /// the declared return type remains `Either<L, R>`.
+  ///
+  /// Ignoring [Right] instance identity, this can be understood as the
+  /// semantics of `handleErrorWith<L>((value) => f(value).right<L>())`.
+  ///
+  /// In some libraries or languages, this operation is also known as `recover`.
+  /// Exceptions thrown by [f] are not caught.
+  ///
+  /// ### Example
+  ///
+  /// ```dart
+  /// final Either<String, int> recovered =
+  ///     Left<String, int>('missing').handleError((error) => error.length);
+  /// // recovered: Either.Right(7)
+  ///
+  /// final Either<String, int> sameRight =
+  ///     Right<String, int>(21).handleError((error) => error.length);
+  /// // sameRight: Either.Right(21)
+  /// ```
   @useResult
-  Either<L, R> handleError(R Function(L value) f) => _foldInternal(
-        ifLeft: (v) => f(v).right(),
-        ifRight: (v) => v.right(),
-      );
+  Either<L, R> handleError(R Function(L value) f) => switch (this) {
+        Left(value: final value) => f(value).right<L>(),
+        Right() => this,
+      };
 
-  /// Redeem an [Either] to an [Either] by resolving the error **or** mapping the value [R] to [C].
+  /// Transforms either branch into a new [Right] value.
   ///
-  /// [redeem] is derived from [map] and [handleError].
-  /// This is functionally equivalent to `map(rightOperation).handleError(leftOperation)`.
+  /// - If this is a [Left], invokes [leftOperation] exactly once.
+  /// - If this is a [Right], invokes [rightOperation] exactly once.
   ///
-  /// On successful completion, both branches are represented by a [Right]:
-  /// [leftOperation] recovers the left side, while [rightOperation] maps the
-  /// right side.
+  /// The selected callback maps its branch to an [R2], which is then wrapped in
+  /// a [Right]. On normal completion, the runtime result is therefore always a
+  /// [Right]. The declared return type remains `Either<L, R2>`, retaining the
+  /// existing left type [L].
+  ///
+  /// Semantically, [redeem] can be understood as combining
+  /// `map(rightOperation)` with `handleError(leftOperation)`: it maps a success
+  /// or recovers an error, depending on the original channel.
+  /// Exceptions thrown by the selected callback are not caught.
   ///
   /// ### Example
   ///
@@ -1121,27 +1161,51 @@ sealed class Either<L, R> {
   /// ```
   @covarianceSafe
   @useResult
-  Either<L, C> redeem<C>({
-    required C Function(L value) leftOperation,
-    required C Function(R value) rightOperation,
+  Either<L, R2> redeem<R2>({
+    required R2 Function(L value) leftOperation,
+    required R2 Function(R value) rightOperation,
   }) =>
-      Right<L, C>(
-        _foldInternal(
-          ifLeft: leftOperation,
-          ifRight: rightOperation,
-        ),
-      );
+      _foldInternal(ifLeft: leftOperation, ifRight: rightOperation).right<L>();
 
-  /// Redeem an [Either] to an [Either] by resolving the error
-  /// **or** mapping the value [R] to [C] **with** an [Either].
+  /// Transforms either branch with an operation that returns a new [Either].
   ///
-  /// [redeemWith] is derived from [flatMap] and [handleErrorWith].
-  /// This is functionally equivalent to `flatMap(rightOperation).handleErrorWith(leftOperation)`.
+  /// - If this is a [Left], invokes [leftOperation] exactly once.
+  /// - If this is a [Right], invokes [rightOperation] exactly once.
+  ///
+  /// The selected callback's `Either<L2, R2>` is returned directly, so it may
+  /// choose either the new [Left] channel or the new [Right] channel.
+  ///
+  /// Semantically, [redeemWith] combines the right-side role of [flatMap] with
+  /// the left-side role of [handleErrorWith]. This is not a literal sequential
+  /// call to those methods: exactly one callback runs, and a [Left] returned by
+  /// either callback is not processed again.
+  ///
+  /// Operationally, it is equivalent to
+  /// `fold(ifLeft: leftOperation, ifRight: rightOperation)`.
+  /// Exceptions thrown by the selected callback are not caught.
+  ///
+  /// ### Example
+  ///
+  /// ```dart
+  /// final Either<bool, String> recovered =
+  ///     Left<String, int>('missing').redeemWith(
+  ///   leftOperation: (error) => Right<bool, String>(error.toUpperCase()),
+  ///   rightOperation: (value) => Left<bool, String>(value.isEven),
+  /// );
+  /// // recovered: Either.Right(MISSING)
+  ///
+  /// final Either<bool, String> remapped =
+  ///     Right<String, int>(21).redeemWith(
+  ///   leftOperation: (error) => Right<bool, String>(error.toUpperCase()),
+  ///   rightOperation: (value) => Left<bool, String>(value.isEven),
+  /// );
+  /// // remapped: Either.Left(false)
+  /// ```
   @covarianceSafe
   @useResult
-  Either<C, D> redeemWith<C, D>({
-    required Either<C, D> Function(L value) leftOperation,
-    required Either<C, D> Function(R value) rightOperation,
+  Either<L2, R2> redeemWith<L2, R2>({
+    required Either<L2, R2> Function(L value) leftOperation,
+    required Either<L2, R2> Function(R value) rightOperation,
   }) =>
       _foldInternal(
         ifLeft: leftOperation,

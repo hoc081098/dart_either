@@ -62,7 +62,7 @@ docs/
   - Do **NOT** use `@useResult` on:
     - ❌ Methods returning `Future<Either<...>>` (Future just needs `await`, no need to warn about assignment).
     - ❌ Fire-and-forget side-effect helpers that intentionally support ignored results (e.g., `onLeft`, `onRight`).
-    - ❌ Methods returning generic `C` that can be `void` (`fold`, `when` - often used for side effects).
+    - ❌ Methods returning generic `T` that can be `void` (`fold`, `when` - often used for side effects).
   - Use `@monadComprehensions` on bind-related methods.
   - Use `@experimental` for unstable APIs.
 - **Documentation**: Every public member MUST have a doc comment with `///`. Include `### Example` code blocks in doc comments. This is enforced by the `public_member_api_docs` lint rule.
@@ -156,7 +156,7 @@ This repo uses a single-context domain documentation layout. See `docs/agents/do
    - ❌ **DON'T** use on:
      - `Future<Either<...>>` returns (e.g., `toEitherFuture`, `bindingAsync`) — just `await` is enough
      - Fire-and-forget side-effect helpers that intentionally support ignored results (e.g., `onLeft`, `onRight`)
-     - Generic `C` that can be `void` (e.g., `fold<C>`, `when<C>`) — often used for side effects
+     - Generic `T` that can be `void` (e.g., `fold<T>`, `when<T>`) — often used for side effects
 4. **Use Dart 3 patterns** — prefer `switch` expressions and sealed class pattern matching over `is` type checks.
 5. **Keep the library lightweight** — avoid adding unnecessary dependencies.
 6. **Run `dart analyze` and `dart test`** after any change to verify correctness.

@@ -395,11 +395,25 @@ final Either<String, BuiltList<int>> parallelTraverse = await Either.parTraverse
 | [`getOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrNull.html)                      | Extracts `Right` or returns `null`            |
 | [`leftOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/leftOrNull.html)                    | Extracts `Left` or returns `null`             |
 | [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrHandle.html)                  | Extracts `Right` or maps `Left` to a value    |
-| [`handleErrorWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleErrorWith.html)          | Recovers from `Left` with a new `Either`      |
-| [`handleError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleError.html)                  | Recovers from `Left` with a new `Right` value |
-| [`redeem`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeem.html)                            | Maps both sides to the same type              |
-| [`redeemWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeemWith.html)                    | Maps both sides to a new `Either`             |
+| [`handleErrorWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleErrorWith.html)          | Lets `Left` choose a new `Either` channel     |
+| [`handleError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleError.html)                  | Recovers `Left` into `Right`                  |
+| [`redeem`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeem.html)                            | Maps either side into a new `Right` value     |
+| [`redeemWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeemWith.html)                    | Lets either side choose a new `Either` channel |
 | [`getOrThrow`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrThrowEitherExtension/getOrThrow.html) | Extracts `Right` or throws the `Left` value   |
+
+The recovery family differs by which input channel it handles and whether the
+selected callback may choose the output channel:
+
+| Operation | `Left` input | `Right` input |
+|---|---|---|
+| `handleErrorWith` | Callback returns `Left` or `Right` | Value stays in `Right`; callback is skipped |
+| `handleError` | Callback value is wrapped in `Right` | Original `Right` is returned; callback is skipped |
+| `redeem` | Callback value is wrapped in `Right` | Callback value is wrapped in `Right` |
+| `redeemWith` | Callback returns `Left` or `Right` | Callback returns `Left` or `Right` |
+
+Each operation invokes at most one callback. Exceptions thrown by the selected
+callback propagate unchanged. `redeem` always produces a runtime `Right` on
+normal completion, while its declared return type remains `Either<L, R2>`.
 
 #### Side effects and conversion
 
@@ -434,6 +448,14 @@ Either<String, Either<String, int>>.right(ok).flatten(); // Right(10)
 // Recovery
 err.handleError((l) => l.length); // Right(4)
 err.handleErrorWith((l) => Either<String, int>.right(l.length)); // Right(4)
+err.redeem(
+  leftOperation: (l) => l.length,
+  rightOperation: (r) => r * 2,
+); // Right(4)
+ok.redeemWith(
+  leftOperation: (l) => Right<bool, String>(l),
+  rightOperation: (r) => Left<bool, String>(r.isEven),
+); // Left(true)
 
 // Extractions
 ok.getOrDefault(0); // 10

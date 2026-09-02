@@ -1594,19 +1594,33 @@ void main() {
     });
 
     test('handleErrorWith', () {
+      var calls = 0;
+
       expect(
-        leftOf1.handleErrorWith<String>((value) => value.right()),
+        leftOf1.handleErrorWith<String>((value) {
+          calls += 1;
+          return value.right();
+        }),
         Right<String, int>(1),
       );
+      expect(calls, 1);
+
+      calls = 0;
       expect(
         leftOf1.handleErrorWith<String>((value) => value.toString().left()),
         Left<String, int>('1'),
       );
 
+      final handledRight = rightOf1.handleErrorWith<String>((value) {
+        calls += 1;
+        return value.right();
+      });
       expect(
-        rightOf1.handleErrorWith<String>((value) => value.right()),
+        handledRight,
         rightOf1,
       );
+      expect(calls, 0);
+
       expect(
         rightOf1.handleErrorWith<String>((value) => value.toString().left()),
         rightOf1,
@@ -1614,7 +1628,10 @@ void main() {
     });
 
     test('handleError', () {
-      expect(rightOf1.handleError((value) => throw value), rightOf1);
+      final handledRight = rightOf1.handleError((value) => throw value);
+
+      expect(handledRight, rightOf1);
+      expect(identical(handledRight, rightOf1), isTrue);
       expect(leftOf1.handleError((value) => value + 1), Right<int, int>(2));
     });
 
@@ -1681,6 +1698,33 @@ void main() {
           rightOperation: (v) => throw v,
         ),
         Left<String, String>('1'),
+      );
+    });
+
+    test('recovery operations do not catch selected callback exceptions', () {
+      final error = StateError('callback failed');
+
+      expect(
+        () => leftOf1.handleErrorWith<String>((_) => throw error),
+        throwsA(same(error)),
+      );
+      expect(
+        () => leftOf1.handleError((_) => throw error),
+        throwsA(same(error)),
+      );
+      expect(
+        () => rightOf1.redeem<String>(
+          leftOperation: (value) => value.toString(),
+          rightOperation: (_) => throw error,
+        ),
+        throwsA(same(error)),
+      );
+      expect(
+        () => rightOf1.redeemWith<String, String>(
+          leftOperation: (value) => value.toString().left<String>(),
+          rightOperation: (_) => throw error,
+        ),
+        throwsA(same(error)),
       );
     });
 

@@ -83,11 +83,11 @@ different design.
 Consider:
 
 ```dart
-Either<L, C> map<C>(C Function(R value) transform);
+Either<L, R2> map<R2>(R2 Function(R value) transform);
 ```
 
-As a standalone function type, `C Function(R)` is contravariant in `R` and
-covariant in `C`: its parameter is `in R` and its result is `out C`.
+As a standalone function type, `R2 Function(R)` is contravariant in `R` and
+covariant in `R2`: its parameter is `in R` and its result is `out R2`.
 
 However, `transform` is itself an input parameter of `map`. The path to `R`
 therefore crosses two input positions:
@@ -135,7 +135,7 @@ such as a `double`, even if the `Right` branch would never invoke that callback.
 Consider:
 
 ```dart
-Either<L, C> flatMap<C>(Either<L, C> Function(R value) transform);
+Either<L, R2> flatMap<R2>(Either<L, R2> Function(R value) transform);
 ```
 
 `R` is positive overall:
@@ -170,15 +170,15 @@ and `Right` do not consume `L` or `R` in their signatures.
 | Member | Position of class type parameter | Instance-member result |
 |---|---|---|
 | `isLeft`, `isRight` | No `L` or `R` occurrence | Safe |
-| `fold(C Function(L), C Function(R))` | `L/R: - x - = +` | Safe |
-| `foldLeft(C, C Function(C, R))` | `R: - x - = +` | Safe |
+| `fold(T Function(L), T Function(R))` | `L/R: - x - = +` | Safe |
+| `foldLeft(T, T Function(T, R))` | `R: - x - = +` | Safe |
 | `swap()` | `L/R: +` in the returned `Either<R, L>` | Safe |
 | `onLeft(void Function(L))` | callback `L: - x - = +`; returned `L/R: +` | Safe |
 | `onRight(void Function(R))` | callback `R: - x - = +`; returned `L/R: +` | Safe |
-| `map(C Function(R))` | callback `R: - x - = +`; returned `L: +` | Safe |
-| `mapLeft(C Function(L))` | callback `L: - x - = +`; returned `R: +` | Safe |
-| `flatMap(Either<L, C> Function(R))` | callback input `R: +`; callback-result `L: -` | **Unsafe for `L`** |
-| `bimap(C Function(L), D Function(R))` | callback `L/R: - x - = +` | Safe |
+| `map(R2 Function(R))` | callback `R: - x - = +`; returned `L: +` | Safe |
+| `mapLeft(L2 Function(L))` | callback `L: - x - = +`; returned `R: +` | Safe |
+| `flatMap(Either<L, R2> Function(R))` | callback input `R: +`; callback-result `L: -` | **Unsafe for `L`** |
+| `bimap(L2 Function(L), R2 Function(R))` | callback `L/R: - x - = +` | Safe |
 | `isLeftAnd(bool Function(L))` | `L: - x - = +` | Safe |
 | `isRightAnd(bool Function(R))` | `R: - x - = +` | Safe |
 | `all(bool Function(R))` | `R: - x - = +` | Safe |
@@ -187,11 +187,11 @@ and `Right` do not consume `L` or `R` in their signatures.
 | `leftOrNull()` | returned `L: +` | Safe |
 | `getOrHandle(R Function(L))` | callback input `L: +`; callback-result `R: -`; returned `R: +` | **Unsafe for `R`** |
 | `findOrNull(bool Function(R))` | callback `R: +`; returned `R: +` | Safe |
-| `when(C Function(Left<L, R>), C Function(Right<L, R>))` | `L/R: - x - x + = +` | Safe |
-| `handleErrorWith(Either<C, R> Function(L))` | callback input `L: +`; callback-result `R: -`; returned `R: +` | **Unsafe for `R`** |
+| `when(T Function(Left<L, R>), T Function(Right<L, R>))` | `L/R: - x - x + = +` | Safe |
+| `handleErrorWith(Either<L2, R> Function(L))` | callback input `L: +`; callback-result `R: -`; returned `R: +` | **Unsafe for `R`** |
 | `handleError(R Function(L))` | callback input `L: +`; callback-result `R: -`; returned `R: +` | **Unsafe for `R`** |
-| `redeem(C Function(L), C Function(R))` | callback `L/R: - x - = +`; returned `L: +` | Safe |
-| `redeemWith(Either<C, D> Function(L), Either<C, D> Function(R))` | callback input `L/R: - x - = +`; callback results use only fresh `C/D` | Safe |
+| `redeem(R2 Function(L), R2 Function(R))` | callback `L/R: - x - = +`; returned `L: +` | Safe |
+| `redeemWith(Either<L2, R2> Function(L), Either<L2, R2> Function(R))` | callback input `L/R: - x - = +`; callback results use only fresh `L2/R2` | Safe |
 
 Deprecated `tapLeft`, `tap`, `exists`, and `orNull` have the same safe shape as
 their canonical targets and only forward to those targets. They remain
