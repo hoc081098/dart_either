@@ -10,14 +10,32 @@ class ParSequenceNExecutor<L, R> {
   Future<Either<L, BuiltList<R>>> run() {
     final mx = maxConcurrent;
 
+    ControlError<L>? leftRaised;
+
     final futureFunctions = functions.toList(growable: false);
     final semaphore = mx != null ? Semaphore(mx) : null;
     final token = _Token();
 
     Future<R> Function() run(Future<Either<L, R>> Function() f) {
-      return () => Future.sync(f).then(
-            (e) => e.getOrHandle((l) => throw ControlError<L>._(l, token)),
-          );
+      return () {
+        // Check before execution of f.
+        if (leftRaised != null) {
+          throw leftRaised!;
+        }
+        return Future.sync(f).then(
+          (e) {
+            // Check after then the f is completed.
+            if (leftRaised != null) {
+              throw leftRaised!;
+            }
+
+            return e.fold(
+              ifLeft: (l) => throw ControlError<L>._(l, token),
+              ifRight: identity,
+            );
+          },
+        );
+      };
     }
 
     Future<R> runWithPermit(Future<Either<L, R>> Function() f) {
@@ -31,8 +49,11 @@ class ParSequenceNExecutor<L, R> {
     )
         .then((values) => Either<L, BuiltList<R>>.right(values.build()))
         .onError<ControlError<L>>(
-          (e, s) => Left(e._value),
-          test: (e) => identical(e._token, token),
-        );
+      (e, s) {
+        leftRaised = e;
+        return Left(e._value);
+      },
+      test: (e) => identical(e._token, token),
+    );
   }
 }
