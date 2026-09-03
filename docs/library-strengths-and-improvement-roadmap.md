@@ -269,6 +269,14 @@ the first terminal failure before releasing the task's semaphore permit. With
 a finite concurrency limit, callbacks still waiting for a permit are then
 rejected without invoking the supplied function.
 
+The concurrency parameter has three cases:
+
+- `maxConcurrent <= 0` is invalid and completes the returned future with an
+  `ArgumentError` before the input is traversed or callbacks are invoked;
+- `maxConcurrent: null` invokes every callback without a concurrency limit; and
+- a positive `maxConcurrent` holds a semaphore permit for each callback until
+  its future settles.
+
 This short-circuits the **result** and prevents queued supplied functions from
 being invoked; it does not cancel underlying work:
 
@@ -277,8 +285,8 @@ being invoked; it does not cancel underlying work:
 - queued `withPermit` wrappers still acquire and release permits so their
   futures can settle, but they reject with the recorded failure before invoking
   their supplied functions;
-- with `maxConcurrent: null`, every function starts before an asynchronous
-  terminal failure can be observed; and
+- with `maxConcurrent: null`, every function starts before any produced
+  `Left`, synchronous throw, or failed future can be observed; and
 - failure precedence follows completion order: a `Left` observed first becomes
   the result, while an ordinary error observed first is propagated with its
   stack trace.

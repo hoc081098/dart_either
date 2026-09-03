@@ -356,16 +356,36 @@ final Either<String, BuiltList<int>> parallelTraverse = await Either.parTraverse
 );
 ```
 
-Parallel operations are fail-fast on the first terminal failure observed by
-completion order. A `Left` observed first completes the returned future with
-that `Left`. If a callback throws or its future completes with an error first,
-the returned future propagates that error with its stack trace instead.
+#### Parallel execution semantics
 
-With a finite concurrency limit, callbacks still waiting for a permit are not
-invoked after the first terminal failure. Callbacks already running are not
-cancelled and may still complete their side effects. Passing `null` as
-`maxConcurrent` starts every callback without a concurrency limit, so an
-asynchronous terminal failure cannot prevent the other callbacks from starting.
+`parSequenceN` runs the supplied callbacks. `parTraverseN` first maps every
+input value to a callback, then runs those callbacks with the same semantics.
+The `parTraverseN` mapper itself is not concurrency-limited.
+
+`maxConcurrent` controls when callbacks may start:
+
+- A value less than or equal to zero is invalid. The returned future completes
+  with an `ArgumentError` before the input is traversed or callbacks are
+  invoked.
+- `null` means unlimited concurrency. Every callback is invoked before any
+  produced `Left`, synchronous throw, or failed future can be observed.
+- A positive value limits the number of running callbacks. After a callback
+  completes with `Right`, the next waiting callback may start.
+
+Both methods are fail-fast. The first terminal failure is selected by
+completion order, not input order:
+
+- A `Left` observed first becomes the returned `Either` value.
+- A synchronous throw or failed future observed first completes the returned
+  future with the original error and stack trace; it is not converted to
+  `Left`.
+
+Callbacks that already completed are not rolled back. Callbacks still running
+are not cancelled, and their later outcomes do not replace the first failure.
+With a positive concurrency limit, callbacks still waiting for a permit are
+rejected without being invoked; with `null`, all callbacks have already been
+invoked. If every callback returns `Right`, values are collected in input order
+regardless of completion order.
 
 ---
 
