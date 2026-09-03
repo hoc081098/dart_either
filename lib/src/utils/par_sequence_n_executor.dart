@@ -6,38 +6,44 @@ final class _ParSequenceNExecutor<L, R> {
 
   _ParSequenceNExecutor(this._functions, this._maxConcurrent);
 
+  @pragma('vm:prefer-inline')
+  static Never throwFailure(AsyncError failure) =>
+      Error.throwWithStackTrace(failure.error, failure.stackTrace);
+
   Future<Either<L, BuiltList<R>>> run() {
     final mx = _maxConcurrent;
-
-    ControlError<L>? leftRaised;
 
     final futureFunctions = _functions.toList(growable: false);
     final semaphore = mx != null ? Semaphore(mx) : null;
     final token = _Token();
 
+    AsyncError? firstFailure;
+
     Future<R> Function() run(Future<Either<L, R>> Function() f) {
       return () {
         // Reject a queued function before invoking it.
-        if (leftRaised != null) {
-          throw leftRaised!;
+        final observedFailure = firstFailure;
+        if (observedFailure != null) {
+          throwFailure(observedFailure);
         }
+
         return Future.sync(f).then(
           (e) {
-            // Preserve the first Left observed while this function was running.
-            if (leftRaised != null) {
-              throw leftRaised!;
+            // Preserve the first failure observed while this function was running.
+            final observedFailure = firstFailure;
+            if (observedFailure != null) {
+              throwFailure(observedFailure);
             }
 
             return e.fold(
-              ifLeft: (l) {
-                final error = ControlError<L>._(l, token);
-                leftRaised ??= error;
-                throw leftRaised!;
-              },
+              ifLeft: (l) => throw ControlError<L>._(l, token),
               ifRight: identity,
             );
           },
-        );
+        ).onError<Object>((error, stackTrace) {
+          final failure = firstFailure ??= AsyncError(error, stackTrace);
+          throwFailure(failure);
+        });
       };
     }
 

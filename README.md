@@ -356,12 +356,16 @@ final Either<String, BuiltList<int>> parallelTraverse = await Either.parTraverse
 );
 ```
 
-Parallel operations return the first `Left` observed by completion order. With
-a finite concurrency limit, callbacks still waiting for a permit are not
-invoked after that `Left` is observed. Callbacks already running are not
+Parallel operations are fail-fast on the first terminal failure observed by
+completion order. A `Left` observed first completes the returned future with
+that `Left`. If a callback throws or its future completes with an error first,
+the returned future propagates that error with its stack trace instead.
+
+With a finite concurrency limit, callbacks still waiting for a permit are not
+invoked after the first terminal failure. Callbacks already running are not
 cancelled and may still complete their side effects. Passing `null` as
 `maxConcurrent` starts every callback without a concurrency limit, so an
-asynchronous `Left` cannot prevent the other callbacks from starting.
+asynchronous terminal failure cannot prevent the other callbacks from starting.
 
 ---
 

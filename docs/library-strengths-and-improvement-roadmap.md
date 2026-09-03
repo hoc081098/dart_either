@@ -263,37 +263,40 @@ Migrating these five methods is the highest-value correctness work remaining:
 ### Priority 0: make parallel short-circuit semantics exact
 
 `parSequenceN` maps every supplied function into `Future.wait` with
-`eagerError: true`. A `Left` becomes a token-scoped `ControlError`, allowing
-the returned result to complete early. The executor records that signal before
-releasing the task's semaphore permit. With a finite concurrency limit,
-callbacks still waiting for a permit are then rejected without invoking the
-supplied function.
+`eagerError: true`. A `Left` becomes a token-scoped `ControlError`; a thrown
+error or failed future remains in Dart's error channel. The executor records
+the first terminal failure before releasing the task's semaphore permit. With
+a finite concurrency limit, callbacks still waiting for a permit are then
+rejected without invoking the supplied function.
 
 This short-circuits the **result** and prevents queued supplied functions from
 being invoked; it does not cancel underlying work:
 
 - Dart `Future` has no built-in cancellation;
-- already-running tasks continue after the first observed `Left`;
+- already-running tasks continue after the first observed terminal failure;
 - queued `withPermit` wrappers still acquire and release permits so their
-  futures can settle, but they reject with the recorded control signal before
-  invoking their supplied functions;
+  futures can settle, but they reject with the recorded failure before invoking
+  their supplied functions;
 - with `maxConcurrent: null`, every function starts before an asynchronous
-  `Left` can be observed; and
-- "first Left" means the first one observed by completion, not necessarily the
-  first function in input order.
+  terminal failure can be observed; and
+- failure precedence follows completion order: a `Left` observed first becomes
+  the result, while an ordinary error observed first is propagated with its
+  stack trace.
 
 Completed in the current patch slice:
 
 1. The public API and README state the queued-versus-running contract.
 2. Deterministic tests prove that queued functions are not invoked after a
-   `Left`, including when an ordinary future error completed the aggregate
-   result before the `Left` was observed.
+   `Left`, synchronous throw, or failed future. They also cover both precedence
+   directions between a `Left` and an ordinary error.
+3. Callback-error regression coverage preserves the original error identity
+   and stack trace.
 
 Remaining follow-up work:
 
-1. Add explicit tests for result timing, running-task continuation,
-   completion-order failure selection, and input-order result collection.
-2. Consider a worker pool if avoiding the allocation and post-`Left` draining
+1. Add explicit tests for result timing and running-task continuation after the
+   returned future settles.
+2. Consider a worker pool if avoiding the allocation and post-failure draining
    of one wrapper future per input becomes important. This is an efficiency
    change; it is not required to prevent queued supplied functions from being
    invoked.
@@ -458,7 +461,7 @@ technical correctness verdict or quote stale PR counts as evidence.
 | Swallowed short-circuit | Sync and async interception tests | Helper-specific `ControlError` filtering tests |
 | Legacy `Either` variance | Selected safe APIs have widened tests | Full audit and migrations for unsafe methods |
 | Sequential traversal | Success, first `Left`, and large iterable tests | Explicit order laws |
-| Parallel traversal | Concurrency limit, result order, early `Left`, queued functions rejected after `Left` | Explicit running-task continuation and timing laws |
+| Parallel traversal | Concurrency limit, result order, first-failure precedence, error/stack preservation, queued functions rejected after `Left` or callback error | Explicit post-result running-task continuation and timing laws |
 | Dependency bounds | Dart 3.0.0 SDK job | `dart pub downgrade` dependency job |
 | Package health | Analyze, format, full tests, coverage | `dart doc`, dry-run publish, and `pana` |
 | Binding performance | Mechanism is understood | Reproducible benchmark before public claims |

@@ -596,12 +596,18 @@ sealed class Either<L, R> {
   /// then runs these functions in parallel with concurrency limit [maxConcurrent].
   ///
   /// If [maxConcurrent] is `null`, all functions run concurrently without limit.
-  /// If any function returns a [Left], the operation short-circuits and returns
-  /// the first [Left] observed by completion order. With a finite concurrency
-  /// limit, functions still waiting for a permit are not invoked after that
-  /// [Left] is observed. Functions already running are not cancelled and may
-  /// still complete their side effects.
-  /// Otherwise, collects all [Right] values into a [BuiltList].
+  /// The operation is fail-fast on the first terminal failure observed by
+  /// completion order. If a function returns a [Left] first, the returned
+  /// [Future] completes with that [Left]. If [mapper] or a produced function
+  /// throws, or its future completes with an error first, the returned [Future]
+  /// propagates that error with its stack trace.
+  ///
+  /// With a finite concurrency limit, functions still waiting for a permit are
+  /// not invoked after the first terminal failure. Functions already running
+  /// are not cancelled and may still complete their side effects. When
+  /// [maxConcurrent] is `null`, every function is invoked before an asynchronous
+  /// terminal failure can be observed. Otherwise, all [Right] values are
+  /// collected into a [BuiltList] in input order.
   ///
   /// This is a shorthand for `Either.parSequenceN<L, R>(functions: values.map(mapper), maxConcurrent: maxConcurrent)`.
   ///
@@ -621,8 +627,10 @@ sealed class Either<L, R> {
   /// - [maxConcurrent]: Maximum number of concurrent executions. If `null`, no limit.
   ///
   /// ### Returns
-  /// A [Future] containing either the first [Left] observed by completion
-  /// order, or a [Right] with all collected values.
+  /// A [Future] containing either the first observed [Left] or a [Right] with
+  /// all collected values. It completes with an error if [mapper] or a produced
+  /// function throws, or its future completes with an error, before a [Left] is
+  /// observed.
   @useResult
   static Future<Either<L, BuiltList<R>>> parTraverseN<L, R, T>({
     required Iterable<T> values,
@@ -639,13 +647,18 @@ sealed class Either<L, R> {
   /// Runs the functions in parallel, but limits the number of concurrent executions to [maxConcurrent].
   /// If [maxConcurrent] is `null`, all functions run concurrently without limit.
   ///
-  /// If any function returns a [Left], the operation short-circuits and returns
-  /// the first [Left] observed by completion order. With a finite concurrency
-  /// limit, functions still waiting for a permit are not invoked after that
-  /// [Left] is observed. Functions already running are not cancelled and may
-  /// still complete their side effects. When [maxConcurrent] is `null`, every
-  /// function is invoked before an asynchronous [Left] can be observed.
-  /// Otherwise, collects all [Right] values into a [BuiltList].
+  /// The operation is fail-fast on the first terminal failure observed by
+  /// completion order. If a function returns a [Left] first, the returned
+  /// [Future] completes with that [Left]. If a function throws or its future
+  /// completes with an error first, the returned [Future] propagates that error
+  /// with its stack trace.
+  ///
+  /// With a finite concurrency limit, functions still waiting for a permit are
+  /// not invoked after the first terminal failure. Functions already running
+  /// are not cancelled and may still complete their side effects. When
+  /// [maxConcurrent] is `null`, every function is invoked before an asynchronous
+  /// terminal failure can be observed. Otherwise, all [Right] values are
+  /// collected into a [BuiltList] in input order.
   ///
   /// The concurrency is controlled using a semaphore to prevent overwhelming the system.
   ///
@@ -668,8 +681,9 @@ sealed class Either<L, R> {
   /// - [maxConcurrent]: Maximum number of concurrent executions. If `null`, no limit.
   ///
   /// ### Returns
-  /// A [Future] containing either the first [Left] observed by completion
-  /// order, or a [Right] with all collected values.
+  /// A [Future] containing either the first observed [Left] or a [Right] with
+  /// all collected values. It completes with an error if a function throws or
+  /// its future completes with an error before a [Left] is observed.
   @useResult
   static Future<Either<L, BuiltList<R>>> parSequenceN<L, R>({
     required Iterable<Future<Either<L, R>> Function()> functions,

@@ -779,45 +779,121 @@ void main() {
           expect(invoked, [0]);
         });
 
-        test('rejects queued functions when Left follows an earlier error',
+        test('propagates the first error and does not invoke queued functions',
             () async {
           final invoked = <int>[];
-          final left = Completer<Either<String, int>>();
-          final running = Completer<Either<String, int>>();
+          final first = Completer<Either<String, int>>();
+          final alreadyRunning = Completer<Either<String, int>>();
+          final error = StateError('first error');
+          final stackTrace = StackTrace.current;
 
           final resultFuture = Either.parSequenceN<String, int>(
             functions: [
-              () async {
+              () {
                 invoked.add(0);
-                throw StateError('first error');
+                return first.future;
               },
               () {
                 invoked.add(1);
-                return left.future;
+                return alreadyRunning.future;
               },
               () {
                 invoked.add(2);
-                return running.future;
-              },
-              () async {
-                invoked.add(3);
-                return Either<String, int>.right(3);
+                return Future.value(Either<String, int>.right(2));
               },
             ],
             maxConcurrent: 2,
           );
-          final errorExpectation = expectLater(resultFuture, throwsStateError);
+          final errorExpectation = Future.sync(() async {
+            try {
+              await resultFuture;
+              fail('Expected resultFuture to complete with an error.');
+            } on StateError catch (actualError, actualStackTrace) {
+              expect(actualError, same(error));
+              expect(actualStackTrace.toString(), stackTrace.toString());
+            }
+          });
 
           await pumpEventQueue();
-          expect(invoked, [0, 1, 2]);
+          expect(invoked, [0, 1]);
 
-          left.complete(Either<String, int>.left('left'));
-          await pumpEventQueue();
-
-          expect(invoked, [0, 1, 2]);
-
-          running.complete(Either<String, int>.right(2));
+          first.completeError(error, stackTrace);
           await errorExpectation;
+          await pumpEventQueue();
+
+          expect(invoked, [0, 1]);
+
+          alreadyRunning.complete(Either<String, int>.left('later left'));
+          await pumpEventQueue();
+
+          expect(invoked, [0, 1]);
+        });
+
+        test('propagates synchronous errors without invoking queued functions',
+            () async {
+          final invoked = <int>[];
+          final error = StateError('synchronous error');
+
+          final resultFuture = Either.parSequenceN<String, int>(
+            functions: [
+              () {
+                invoked.add(0);
+                throw error;
+              },
+              () async {
+                invoked.add(1);
+                return Either<String, int>.right(1);
+              },
+            ],
+            maxConcurrent: 1,
+          );
+
+          await expectLater(resultFuture, throwsA(same(error)));
+          await pumpEventQueue();
+
+          expect(invoked, [0]);
+        });
+
+        test('keeps the first Left when a running function errors later',
+            () async {
+          final invoked = <int>[];
+          final first = Completer<Either<String, int>>();
+          final alreadyRunning = Completer<Either<String, int>>();
+
+          final resultFuture = Either.parSequenceN<String, int>(
+            functions: [
+              () {
+                invoked.add(0);
+                return first.future;
+              },
+              () {
+                invoked.add(1);
+                return alreadyRunning.future;
+              },
+              () async {
+                invoked.add(2);
+                return Either<String, int>.right(2);
+              },
+            ],
+            maxConcurrent: 2,
+          );
+
+          await pumpEventQueue();
+          expect(invoked, [0, 1]);
+
+          first.complete(Either<String, int>.left('first left'));
+
+          expect(
+            await resultFuture,
+            Left<String, BuiltList<int>>('first left'),
+          );
+          await pumpEventQueue();
+          expect(invoked, [0, 1]);
+
+          alreadyRunning.completeError(StateError('later error'));
+          await pumpEventQueue();
+
+          expect(invoked, [0, 1]);
         });
 
         test('concurrency actually limited', () async {
