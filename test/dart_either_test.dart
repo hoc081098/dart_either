@@ -688,6 +688,16 @@ void main() {
       });
 
       group('Either.parSequenceN', () {
+        test('throw an ArgumentError when maxConcurrent <= 0', () {
+          expect(
+            () => Either.parSequenceN<String, int>(
+              functions: [],
+              maxConcurrent: -1,
+            ),
+            throwsArgumentError,
+          );
+        });
+
         test('right path with concurrency limit', () async {
           final values = <int>[];
           final delays = [100, 50, 200]; // Different delays to test concurrency
