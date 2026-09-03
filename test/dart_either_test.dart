@@ -11,6 +11,22 @@ class _RegisteredFatalException implements Exception {}
 
 final class _RegisteredFatalSubtype extends _RegisteredFatalException {}
 
+final class _EagerMapIterable<T> extends Iterable<T> {
+  _EagerMapIterable(this._values);
+
+  final List<T> _values;
+  var mapCalled = false;
+
+  @override
+  Iterator<T> get iterator => _values.iterator;
+
+  @override
+  Iterable<E> map<E>(E Function(T element) toElement) {
+    mapCalled = true;
+    return _values.map(toElement).toList(growable: false);
+  }
+}
+
 void main() {
   const Either<int, int> leftOf1 = Left(1);
   const Either<int, int> rightOf1 = Right(1);
@@ -688,14 +704,24 @@ void main() {
       });
 
       group('Either.parSequenceN', () {
-        test('throw an ArgumentError when maxConcurrent <= 0', () {
-          expect(
-            () => Either.parSequenceN<String, int>(
-              functions: [],
-              maxConcurrent: -1,
-            ),
-            throwsArgumentError,
-          );
+        test('throws synchronously before traversal when maxConcurrent <= 0',
+            () {
+          for (final maxConcurrent in [0, -1]) {
+            var traversed = false;
+            final functions = Iterable.generate(1, (_) {
+              traversed = true;
+              return () async => Either<String, int>.right(1);
+            });
+
+            expect(
+              () => Either.parSequenceN<String, int>(
+                functions: functions,
+                maxConcurrent: maxConcurrent,
+              ).ignore(),
+              throwsArgumentError,
+            );
+            expect(traversed, isFalse);
+          }
         });
 
         test('right path with concurrency limit', () async {
@@ -933,6 +959,28 @@ void main() {
       });
 
       group('Either.parTraverseN', () {
+        test('throws synchronously before eager map when maxConcurrent <= 0',
+            () {
+          for (final maxConcurrent in [0, -1]) {
+            final values = _EagerMapIterable([1]);
+            var mapperCalled = false;
+
+            expect(
+              () => Either.parTraverseN<String, int, int>(
+                values: values,
+                mapper: (value) {
+                  mapperCalled = true;
+                  return () async => Either<String, int>.right(value);
+                },
+                maxConcurrent: maxConcurrent,
+              ).ignore(),
+              throwsArgumentError,
+            );
+            expect(values.mapCalled, isFalse);
+            expect(mapperCalled, isFalse);
+          }
+        });
+
         test('right path with concurrency limit', () async {
           final values = <int>[];
           final ids = [1, 2, 3];

@@ -271,8 +271,9 @@ rejected without invoking the supplied function.
 
 The concurrency parameter has three cases:
 
-- `maxConcurrent <= 0` is invalid and completes the returned future with an
-  `ArgumentError` before the input is traversed or callbacks are invoked;
+- `maxConcurrent <= 0` is invalid and throws an `ArgumentError` synchronously,
+  before the input is traversed, the `parTraverseN` mapper is called, or any
+  callback is invoked;
 - `maxConcurrent: null` invokes every callback without a concurrency limit; and
 - a positive `maxConcurrent` holds a semaphore permit for each callback until
   its future settles.

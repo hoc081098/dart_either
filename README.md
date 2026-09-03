@@ -364,9 +364,9 @@ The `parTraverseN` mapper itself is not concurrency-limited.
 
 `maxConcurrent` controls when callbacks may start:
 
-- A value less than or equal to zero is invalid. The returned future completes
-  with an `ArgumentError` before the input is traversed or callbacks are
-  invoked.
+- A value less than or equal to zero is invalid. The method throws an
+  `ArgumentError` synchronously, before the input is traversed, the
+  `parTraverseN` mapper is called, or any callback is invoked.
 - `null` means unlimited concurrency. Every callback is invoked before any
   produced `Left`, synchronous throw, or failed future can be observed.
 - A positive value limits the number of running callbacks. After a callback

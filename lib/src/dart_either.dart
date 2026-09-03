@@ -597,11 +597,11 @@ sealed class Either<L, R> {
   /// returning `Future<Either<L, R>>`. The input is materialized before those
   /// functions start. Calling [mapper] is therefore not concurrency-limited;
   /// only the functions it returns are. If [mapper] throws while the input is
-  /// being materialized, no returned function is invoked and the returned
-  /// [Future] completes with that error.
+  /// being materialized, no returned function is invoked and the error is
+  /// thrown synchronously.
   ///
   /// This method is equivalent to calling [parSequenceN] with
-  /// `functions: values.map(mapper)`.
+  /// `functions: values.map(mapper)` after validating [maxConcurrent].
   ///
   /// ### Parameters and concurrency
   ///
@@ -612,8 +612,8 @@ sealed class Either<L, R> {
   ///   the same time. Use `null` for no limit or a positive integer for a
   ///   finite limit.
   ///
-  /// A non-null [maxConcurrent] less than or equal to zero is invalid. The
-  /// returned [Future] completes with an [ArgumentError] before [values] is
+  /// A non-null [maxConcurrent] less than or equal to zero is invalid. This
+  /// method throws an [ArgumentError] synchronously, before [values] is
   /// traversed or [mapper] is called.
   ///
   /// ### Failure selection
@@ -684,11 +684,20 @@ sealed class Either<L, R> {
     required Iterable<T> values,
     required Future<Either<L, R>> Function() Function(T value) mapper,
     required int? maxConcurrent,
-  }) =>
-      parSequenceN<L, R>(
-        functions: values.map(mapper),
-        maxConcurrent: maxConcurrent,
+  }) {
+    if (maxConcurrent != null && maxConcurrent <= 0) {
+      throw ArgumentError.value(
+        maxConcurrent,
+        'maxConcurrent',
+        'Must be greater than 0 or null for no limit.',
       );
+    }
+
+    return parSequenceN<L, R>(
+      functions: values.map(mapper),
+      maxConcurrent: maxConcurrent,
+    );
+  }
 
   /// Runs asynchronous [Either] operations and collects their [Right] values,
   /// with optional concurrency control.
@@ -697,7 +706,7 @@ sealed class Either<L, R> {
   /// `Future<Either<L, R>>`. The iterable is materialized before any function is
   /// invoked. This lets [maxConcurrent] limit execution without creating the
   /// futures in advance. If iterating [functions] throws, no function is invoked
-  /// and the returned [Future] completes with that error.
+  /// and the error is thrown synchronously.
   ///
   /// ### Parameters and concurrency
   ///
@@ -705,8 +714,8 @@ sealed class Either<L, R> {
   /// - [maxConcurrent] controls how many functions may be running at the same
   ///   time. Use `null` for no limit or a positive integer for a finite limit.
   ///
-  /// A non-null [maxConcurrent] less than or equal to zero is invalid. The
-  /// returned [Future] completes with an [ArgumentError] before [functions] is
+  /// A non-null [maxConcurrent] less than or equal to zero is invalid. This
+  /// method throws an [ArgumentError] synchronously, before [functions] is
   /// traversed or any function is invoked.
   ///
   /// ### Failure selection
@@ -780,7 +789,7 @@ sealed class Either<L, R> {
   static Future<Either<L, BuiltList<R>>> parSequenceN<L, R>({
     required Iterable<Future<Either<L, R>> Function()> functions,
     required int? maxConcurrent,
-  }) async {
+  }) {
     if (maxConcurrent != null && maxConcurrent <= 0) {
       throw ArgumentError.value(
         maxConcurrent,
