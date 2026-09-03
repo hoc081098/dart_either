@@ -688,8 +688,16 @@ sealed class Either<L, R> {
   static Future<Either<L, BuiltList<R>>> parSequenceN<L, R>({
     required Iterable<Future<Either<L, R>> Function()> functions,
     required int? maxConcurrent,
-  }) async =>
-      _ParSequenceNExecutor(functions, maxConcurrent).run();
+  }) async {
+    if (maxConcurrent != null && maxConcurrent <= 0) {
+      throw ArgumentError.value(
+        maxConcurrent,
+        'maxConcurrent',
+        'Must be greater than 0 or null for no limit.',
+      );
+    }
+    return _ParSequenceNExecutor(functions, maxConcurrent).run();
+  }
 
   // -----------------------------------------------------------------------------
   //
