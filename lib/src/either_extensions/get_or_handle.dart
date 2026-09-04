@@ -12,8 +12,13 @@ extension GetOrHandleEitherExtension<L, R> on Either<L, R> {
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).getOrHandle((v) => 17);   // Result: 12
-  /// Left<int, int>(12).getOrHandle((v) => v + 5); // Result: 17
+  /// final fromRight = Right<String, int>(12).getOrHandle(
+  ///   (error) => error.length,
+  /// ); // 12; the callback is skipped
+  ///
+  /// final fromLeft = Left<String, int>('missing').getOrHandle(
+  ///   (error) => error.length,
+  /// ); // 7
   /// ```
   @covarianceSafe
   R getOrHandle(R Function(L value) defaultValue) => switch (this) {
