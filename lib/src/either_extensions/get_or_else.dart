@@ -15,8 +15,8 @@ extension GetOrElseEitherExtension<L, R> on Either<L, R> {
   ///
   /// ### Example
   /// ```dart
-  /// Right<int, int>(12).getOrElse(() => 17); // Result: 12
-  /// Left<int, int>(12).getOrElse(() => 17);  // Result: 17
+  /// Right<String, int>(12).getOrElse(() => 17);      // Result: 12
+  /// Left<String, int>('error').getOrElse(() => 17);  // Result: 17
   /// ```
   @covarianceSafe
   @Deprecated(
