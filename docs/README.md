@@ -19,6 +19,9 @@ from the published package through `.pubignore`.
 - [ADR 0001](adr/0001-scope-bound-contravariant-either-effect.md): why
   `EitherEffect` is an opaque, scope-bound, contravariant capability backed by
   a private binding scope.
+- [ADR 0002](adr/0002-relocate-variance-unsafe-either-operations-to-extensions.md):
+  why five variance-unsafe `Either` instance operations move to named generic
+  extensions in `2.4.0`, including the accepted compatibility boundary.
 - [API rename workflow](../.agents/skills/api-rename-flow/SKILL.md): the required
   process for non-breaking public API renames.
 
