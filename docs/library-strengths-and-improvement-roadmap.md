@@ -32,11 +32,9 @@ detected, `raise` is implemented, and the full test suite runs in CI.
 The main remaining technical debt is not a lack of more convenience methods.
 It is semantic precision:
 
-1. migrate the five variance-unsafe legacy instance methods identified by the
-   completed audit;
-2. make nullable and exception conversion more domain-selective;
-3. decide whether `BuiltList` still fits the lightweight positioning; and
-4. strengthen law, lower-bound, documentation, and package validation.
+1. make nullable and exception conversion more domain-selective;
+2. decide whether `BuiltList` still fits the lightweight positioning; and
+3. strengthen law, lower-bound, documentation, and package validation.
 
 ## Why the library is useful
 
@@ -223,14 +221,13 @@ copy. Renovate-only PR activity likewise says little about architecture.
 
 ## Remaining risks and improvement roadmap
 
-### Priority 0: migrate variance-unsafe instance APIs
+### Completed: migrate variance-unsafe instance APIs
 
 [`docs/either-variance-safety.md`](either-variance-safety.md) now classifies
 every public instance member declared directly on `Either<L, R>`. Widened
 regression tests cover the safe operations, and every canonical safe method is
-marked only after its signature and implementation have been audited. The
-following current instance methods still place a covariant class type parameter
-in an unsafe callback-produced position:
+marked only after its signature and implementation have been audited. The five
+operations formerly exposed as unsafe instance members were:
 
 ```dart
 flatMap
@@ -240,23 +237,24 @@ handleError
 handleErrorWith
 ```
 
-A consumer probe against current `master` reproduced `_TypeError` for all five
+A consumer probe against the pre-relocation implementation reproduced
+`_TypeError` for all five
 methods when an analyzer-valid widened `Right<Never, int>` was viewed as
 `Either<String, num>`; `flatMap` was also reproduced with a widened
 `Left<String, Never>`. The failure happens at the virtual method boundary,
 potentially before the branch or method body can protect the call.
 
-Migrating these five methods is the highest-value correctness work remaining:
+The `2.4.0` relocation completed the corrective work:
 
-1. Preserve analyzer-valid widened receiver reproductions for each unsafe
-   shape and use them as regression fixtures for replacement operations.
-2. In `2.x`, introduce safe canonical operations as generic extensions or
-   top-level functions using direct pattern matching; retain old methods as
-   deprecated compatibility paths where Dart name resolution permits it.
-3. Reserve removal or reclamation of conflicting canonical names for the next
-   major version.
-4. Do not "fix" only the method body: runtime argument checks may fail before
-   it executes.
+1. Each operation now lives in a named generic extension and uses direct
+   pattern matching, so no unsafe virtual boundary remains.
+2. Statically typed dot-call syntax, signatures, callback timing, errors,
+   results, and identity behavior are preserved exactly.
+3. Mirrored tests retain the analyzer-valid widened receiver reproductions for
+   `Left<L, Never>`, `Right<Never, R>`, and subtype widening.
+4. Selective imports must include the relevant extension type, and `dynamic`
+   dispatch for these five operations is no longer supported. This is the
+   narrow `2.x` compatibility exception recorded in [ADR 0002](adr/0002-relocate-variance-unsafe-either-operations-to-extensions.md).
 
 ### Completed: make parallel short-circuit semantics exact
 

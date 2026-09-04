@@ -62,6 +62,39 @@ void main() {
       expect(calls, 1);
     });
 
+    test('getOrElse supports widened receivers', () {
+      const Either<String, num> widenedLeft = Left<String, Never>('error');
+      const Either<String, num> widenedRight = Right<Never, int>(1);
+      var calls = 0;
+
+      expect(
+        widenedLeft.getOrElse(() {
+          calls++;
+          return 2.5;
+        }),
+        2.5,
+      );
+      expect(calls, 1);
+
+      expect(
+        widenedRight.getOrElse(() {
+          calls++;
+          return 2.5;
+        }),
+        1,
+      );
+      expect(calls, 1);
+    });
+
+    test('getOrElse propagates fallback errors', () {
+      final error = StateError('fallback error');
+
+      expect(
+        () => const Left<String, int>('error').getOrElse(() => throw error),
+        throwsA(same(error)),
+      );
+    });
+
     test('orNull delegates to getOrNull', () {
       expect(rightOf1.orNull(), 1);
       expect(leftOf1.orNull(), isNull);

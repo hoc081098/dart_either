@@ -177,19 +177,14 @@ and `Right` do not consume `L` or `R` in their signatures.
 | `onRight(void Function(R))` | callback `R: - x - = +`; returned `L/R: +` | Safe |
 | `map(R2 Function(R))` | callback `R: - x - = +`; returned `L: +` | Safe |
 | `mapLeft(L2 Function(L))` | callback `L: - x - = +`; returned `R: +` | Safe |
-| `flatMap(Either<L, R2> Function(R))` | callback input `R: +`; callback-result `L: -` | **Unsafe for `L`** |
 | `bimap(L2 Function(L), R2 Function(R))` | callback `L/R: - x - = +` | Safe |
 | `isLeftAnd(bool Function(L))` | `L: - x - = +` | Safe |
 | `isRightAnd(bool Function(R))` | `R: - x - = +` | Safe |
 | `all(bool Function(R))` | `R: - x - = +` | Safe |
-| `getOrElse(R Function())` | callback-result `R: -`; returned `R: +` | **Unsafe for `R`** |
 | `getOrNull()` | returned `R: +` | Safe |
 | `leftOrNull()` | returned `L: +` | Safe |
-| `getOrHandle(R Function(L))` | callback input `L: +`; callback-result `R: -`; returned `R: +` | **Unsafe for `R`** |
 | `findOrNull(bool Function(R))` | callback `R: +`; returned `R: +` | Safe |
 | `when(T Function(Left<L, R>), T Function(Right<L, R>))` | `L/R: - x - x + = +` | Safe |
-| `handleErrorWith(Either<L2, R> Function(L))` | callback input `L: +`; callback-result `R: -`; returned `R: +` | **Unsafe for `R`** |
-| `handleError(R Function(L))` | callback input `L: +`; callback-result `R: -`; returned `R: +` | **Unsafe for `R`** |
 | `redeem(R2 Function(L), R2 Function(R))` | callback `L/R: - x - = +`; returned `L: +` | Safe |
 | `redeemWith(Either<L2, R2> Function(L), Either<L2, R2> Function(R))` | callback input `L/R: - x - = +`; callback results use only fresh `L2/R2` | Safe |
 
@@ -198,12 +193,13 @@ their canonical targets and only forward to those targets. They remain
 unmarked so the marker identifies canonical operations rather than
 compatibility names.
 
-The generic-extension operations `getOrDefault` and `combine` would be unsafe
+The generic-extension operations `flatMap`, `getOrElse`, `getOrHandle`,
+`getOrDefault`, `handleError`, `handleErrorWith`, and `combine` would be unsafe
 with their current signatures as virtual instance members because their direct
-`R` or `Either<L, R>` inputs are negative. They are safe in this package because
-extension resolution uses the receiver's static type arguments and their
-implementations pattern-match directly. `flatten` and `merge` are specialized
-extensions with widened regression coverage.
+callback-produced or direct inputs are negative. They are safe in this package
+because extension resolution uses the receiver's static type arguments and
+their implementations pattern-match directly. `flatten` and `merge` are
+specialized extensions with widened regression coverage.
 
 "Unsafe" here means unsafe as a virtual instance-member boundary for a
 covariantly widened receiver. It does not mean the operation itself is invalid.
@@ -304,7 +300,7 @@ extension FlattenEitherExtension<L, R> on Either<L, Either<L, R>> {
 
 ## Completed audit evidence
 
-The branch review that introduced this document found and fixed three targets:
+The completed audit and subsequent relocation fixed these targets:
 
 - `getOrDefault` now uses `GetOrDefaultEitherExtension`, so its `R` input does
   not cross an instance-method boundary.
@@ -312,6 +308,10 @@ The branch review that introduced this document found and fixed three targets:
   combiner results are checked against the call site's static type arguments.
 - `flatten` remains an extension but now uses direct sealed-class pattern
   matching instead of delegating to `flatMap`.
+- `flatMap`, deprecated `getOrElse`, `getOrHandle`, `handleError`, and
+  `handleErrorWith` moved from unsafe virtual members to generic extensions in
+  `2.4.0`. Their implementations pattern-match directly and their widened
+  regression tests cover both `Left` and `Right` paths.
 - `EitherEffect` uses a private final scope with a contravariant phantom marker,
   so unsafe widening, external construction, and replacement binding behavior
   are rejected before a binding block can execute.
@@ -323,13 +323,14 @@ declared directly on `Either` carry the internal `@covarianceSafe` marker:
   `mapLeft`, `bimap`, `isLeftAnd`, `isRightAnd`, `all`, `getOrNull`,
   `leftOrNull`, `findOrNull`, `when`, `redeem`, and `redeemWith`;
 - generic or specialized extensions covered by widened regression tests:
-  `getOrDefault`, `combine`, `flatten`, and `merge`.
+  `flatMap`, `getOrElse`, `getOrHandle`, `getOrDefault`, `handleError`,
+  `handleErrorWith`, `combine`, `flatten`, `merge`, `getOrThrow`, and
+  `toFuture`.
 
 The `isLeft` and `isRight` getters contain no occurrence of `L` or `R` in their
 signatures. They are covered by widened inspection tests but do not need an
-operation marker. The five unsafe instance members are deliberately unmarked:
-`flatMap`, deprecated `getOrElse`, `getOrHandle`, `handleError`, and
-`handleErrorWith`.
+operation marker. No public instance member identified by the completed audit
+remains variance-unsafe after the `2.4.0` relocation.
 
 The marker records a completed audit; it does not make an operation safe and
 is not enforced by the Dart type system. Apply it only when either:
@@ -341,8 +342,11 @@ is not enforced by the Dart type system. Apply it only when either:
    pattern matching or a proven-safe primitive, with widened regression
    coverage for the relevant paths.
 
-Deprecated naming aliases intentionally remain unmarked. Their compatibility
-tests verify delegation to the marked canonical operation.
+Deprecated forwarding naming aliases intentionally remain unmarked. Their
+compatibility tests verify delegation to the marked canonical operation. The
+deprecated `getOrElse` is different: ADR 0002 relocates the operation itself,
+so its generic extension is directly implemented, covered by widened tests,
+and marked `@covarianceSafe`.
 
 ## Required regression tests
 

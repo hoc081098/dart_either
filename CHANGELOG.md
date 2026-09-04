@@ -1,5 +1,15 @@
 ## Unreleased
 
+- Relocated `flatMap`, deprecated `getOrElse`, `getOrHandle`, `handleError`,
+  and `handleErrorWith` from `Either` instance members to exported generic
+  extensions. Statically typed dot-call syntax and behavior are unchanged,
+  while analyzer-valid widened receivers no longer fail at a covariant virtual
+  method boundary. Selective imports must include the relevant extension type,
+  and `dynamic` receivers no longer dispatch to these operations.
+- Split every value-operation extension exported by `either_extensions.dart`
+  into a method-named source file, with mirrored tests under
+  `test/either_extensions/`.
+
 - Fixed `Either.parSequenceN` and `Either.parTraverseN` with finite concurrency
   so functions still waiting for a permit are not invoked after the first
   observed `Left`, thrown error, or failed future. A `Left` is returned when it

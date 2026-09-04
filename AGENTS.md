@@ -18,7 +18,8 @@ lib/
     dart_either.dart            # Core Either sealed class (Left, Right), constructors, instance methods, static methods, EitherEffect (monad comprehension), ControlError
     extensions.dart             # Extension methods: toEitherFuture, thenFlatMapEither, thenMapEither, .left(), .right()
     to_either_stream.dart       # Stream.toEitherStream error-capture adapter
-    either_extensions.dart      # Extension methods: toFuture, getOrThrow, getOrDefault, combine, flatten, merge
+    either_extensions.dart      # Public aggregator for Either value-operation extensions
+    either_extensions/          # One method-named source file per aggregated extension
     binding.dart                # Monad comprehension extensions: ensure, ensureNotNull, bindFuture, bind on Either, bind on Future<Either>
     internal.dart               # Shared internal helpers and @covarianceSafe marker
     utils/
@@ -26,6 +27,7 @@ lib/
 test/
   dart_either_test.dart         # Main test file (comprehensive unit tests)
   deprecated_aliases_test.dart  # Compatibility tests for deprecated API aliases
+  either_extensions/            # Tests mirroring the aggregated extension sources
   semaphore_test.dart           # Tests for Semaphore utility
 example/
   lib/

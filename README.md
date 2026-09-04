@@ -411,7 +411,7 @@ regardless of completion order.
 |----------------------------------------------------------------------------------------------------------------|----------------------------------------------|
 | [`map`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/map.html)                                  | Transforms the `Right` value                  |
 | [`mapLeft`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/mapLeft.html)                          | Transforms the `Left` value                   |
-| [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/flatMap.html)                          | Chains computations                           |
+| [`flatMap`](https://pub.dev/documentation/dart_either/latest/dart_either/FlatMapEitherExtension/flatMap.html)        | Chains computations                           |
 | [`bimap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/bimap.html)                              | Transforms both sides                         |
 | [`swap`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/swap.html)                                | Swaps `Left` and `Right`                      |
 | [`combine`](https://pub.dev/documentation/dart_either/latest/dart_either/CombineEitherExtension/combine.html)         | Combines two `Either` values                  |
@@ -425,9 +425,9 @@ regardless of completion order.
 | [`getOrDefault`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrDefaultEitherExtension/getOrDefault.html) | Extracts `Right` or falls back to an eager default value |
 | [`getOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrNull.html)                      | Extracts `Right` or returns `null`            |
 | [`leftOrNull`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/leftOrNull.html)                    | Extracts `Left` or returns `null`             |
-| [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/getOrHandle.html)                  | Extracts `Right` or maps `Left` to a value    |
-| [`handleErrorWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleErrorWith.html)          | Lets `Left` choose a new `Either` channel     |
-| [`handleError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/handleError.html)                  | Recovers `Left` into `Right`                  |
+| [`getOrHandle`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrHandleEitherExtension/getOrHandle.html) | Extracts `Right` or maps `Left` to a value    |
+| [`handleErrorWith`](https://pub.dev/documentation/dart_either/latest/dart_either/HandleErrorWithEitherExtension/handleErrorWith.html) | Lets `Left` choose a new `Either` channel     |
+| [`handleError`](https://pub.dev/documentation/dart_either/latest/dart_either/HandleErrorEitherExtension/handleError.html) | Recovers `Left` into `Right`                  |
 | [`redeem`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeem.html)                            | Maps either side into a new `Right` value     |
 | [`redeemWith`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/redeemWith.html)                    | Lets either side choose a new `Either` channel |
 | [`getOrThrow`](https://pub.dev/documentation/dart_either/latest/dart_either/GetOrThrowEitherExtension/getOrThrow.html) | Extracts `Right` or throws the `Left` value   |

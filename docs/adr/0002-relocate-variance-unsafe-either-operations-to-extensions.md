@@ -52,11 +52,13 @@ left-aware `getOrElse(R Function(L))` generic extension.
 
 ## Source and test organization
 
-Every public extension on an `Either` receiver lives in its own method-named
-file under `lib/src/either_extensions/`, including the extensions that existed
-before this relocation. `lib/src/either_extensions.dart` remains an aggregator
-that exports those files, and the package barrel continues to export only that
-aggregator.
+Every public value-operation extension already exported by
+`lib/src/either_extensions.dart`, together with the five operations relocated
+by this decision, lives in its own method-named file under
+`lib/src/either_extensions/`. `lib/src/either_extensions.dart` remains an
+aggregator that exports those files, and the package barrel continues to export
+only that aggregator. Binding-syntax extensions remain in
+`lib/src/binding.dart`; they are outside this source-layout change.
 
 Tests mirror the source layout under `test/either_extensions/`. Each operation
 is covered through its public interface for normal semantics, callback
