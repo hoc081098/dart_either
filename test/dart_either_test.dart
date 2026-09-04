@@ -815,11 +815,13 @@ void main() {
           expect(invoked, [0]);
         });
 
-        test('propagates the first error and does not invoke queued functions',
-            () async {
+        test(
+            'propagates the first error before a running function completes '
+            'and does not invoke queued functions', () async {
           final invoked = <int>[];
           final first = Completer<Either<String, int>>();
-          final alreadyRunning = Completer<Either<String, int>>();
+          final finishAlreadyRunning = Completer<void>();
+          final alreadyRunningCompleted = Completer<void>();
           final error = StateError('first error');
           final stackTrace = StackTrace.current;
 
@@ -829,9 +831,11 @@ void main() {
                 invoked.add(0);
                 return first.future;
               },
-              () {
+              () async {
                 invoked.add(1);
-                return alreadyRunning.future;
+                await finishAlreadyRunning.future;
+                alreadyRunningCompleted.complete();
+                return Either<String, int>.left('later left');
               },
               () {
                 invoked.add(2);
@@ -858,11 +862,14 @@ void main() {
           await pumpEventQueue();
 
           expect(invoked, [0, 1]);
+          expect(alreadyRunningCompleted.isCompleted, isFalse);
 
-          alreadyRunning.complete(Either<String, int>.left('later left'));
+          finishAlreadyRunning.complete();
+          await alreadyRunningCompleted.future;
           await pumpEventQueue();
 
           expect(invoked, [0, 1]);
+          expect(alreadyRunningCompleted.isCompleted, isTrue);
         });
 
         test('propagates synchronous errors without invoking queued functions',
@@ -890,11 +897,13 @@ void main() {
           expect(invoked, [0]);
         });
 
-        test('keeps the first Left when a running function errors later',
-            () async {
+        test(
+            'returns the first Left before a running function errors later '
+            'and does not invoke queued functions', () async {
           final invoked = <int>[];
           final first = Completer<Either<String, int>>();
-          final alreadyRunning = Completer<Either<String, int>>();
+          final finishAlreadyRunning = Completer<void>();
+          final alreadyRunningCompleted = Completer<void>();
 
           final resultFuture = Either.parSequenceN<String, int>(
             functions: [
@@ -902,9 +911,11 @@ void main() {
                 invoked.add(0);
                 return first.future;
               },
-              () {
+              () async {
                 invoked.add(1);
-                return alreadyRunning.future;
+                await finishAlreadyRunning.future;
+                alreadyRunningCompleted.complete();
+                throw StateError('later error');
               },
               () async {
                 invoked.add(2);
@@ -925,11 +936,14 @@ void main() {
           );
           await pumpEventQueue();
           expect(invoked, [0, 1]);
+          expect(alreadyRunningCompleted.isCompleted, isFalse);
 
-          alreadyRunning.completeError(StateError('later error'));
+          finishAlreadyRunning.complete();
+          await alreadyRunningCompleted.future;
           await pumpEventQueue();
 
           expect(invoked, [0, 1]);
+          expect(alreadyRunningCompleted.isCompleted, isTrue);
         });
 
         test('concurrency actually limited', () async {
@@ -1023,6 +1037,59 @@ void main() {
 
           expect(result, Left<String, BuiltList<int>>('error$anchor'));
           expect(values.length, anchor); // Only up to the error
+        });
+
+        test(
+            'returns the first Left before a running mapped function completes '
+            'and does not invoke queued functions', () async {
+          final mapped = <int>[];
+          final invoked = <int>[];
+
+          final first = Completer<Either<String, int>>();
+          final finishAlreadyRunning = Completer<void>();
+          final alreadyRunningCompleted = Completer<void>();
+
+          final resultFuture = Either.parTraverseN<String, int, int>(
+            values: [0, 1, 2],
+            mapper: (value) {
+              mapped.add(value);
+
+              return () async {
+                invoked.add(value);
+
+                if (value == 0) {
+                  return first.future;
+                }
+
+                if (value == 1) {
+                  await finishAlreadyRunning.future;
+                  alreadyRunningCompleted.complete();
+                }
+                return Either<String, int>.right(value);
+              };
+            },
+            maxConcurrent: 2,
+          );
+
+          await pumpEventQueue();
+          expect(mapped, [0, 1, 2]);
+          expect(invoked, [0, 1]);
+
+          first.complete(Either<String, int>.left('first left'));
+
+          expect(
+            await resultFuture,
+            Left<String, BuiltList<int>>('first left'),
+          );
+          expect(alreadyRunningCompleted.isCompleted, isFalse);
+          expect(invoked, [0, 1]);
+
+          finishAlreadyRunning.complete();
+          await alreadyRunningCompleted.future;
+          await pumpEventQueue();
+
+          expect(alreadyRunningCompleted.isCompleted, isTrue);
+          expect(invoked, [0, 1]);
         });
       });
     });

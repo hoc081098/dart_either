@@ -3,7 +3,7 @@
 This note distills an earlier discussion about the value proposition of
 `dart_either` and the improvements that could make it more robust. It is not a
 transcript or marketing copy. Every technical statement below was last
-reconciled with the repository state on 2026-09-02.
+reconciled with the repository state on 2026-09-04.
 
 The package currently declares version `2.3.0`. This repository state is
 prepared for release; verify the registry before describing `2.3.0` as
@@ -34,11 +34,9 @@ It is semantic precision:
 
 1. migrate the five variance-unsafe legacy instance methods identified by the
    completed audit;
-2. finish the remaining timing and running-work coverage for the now-defined
-   parallel short-circuit contract;
-3. make nullable and exception conversion more domain-selective;
-4. decide whether `BuiltList` still fits the lightweight positioning; and
-5. strengthen law, lower-bound, documentation, and package validation.
+2. make nullable and exception conversion more domain-selective;
+3. decide whether `BuiltList` still fits the lightweight positioning; and
+4. strengthen law, lower-bound, documentation, and package validation.
 
 ## Why the library is useful
 
@@ -260,7 +258,7 @@ Migrating these five methods is the highest-value correctness work remaining:
 4. Do not "fix" only the method body: runtime argument checks may fail before
    it executes.
 
-### Priority 0: make parallel short-circuit semantics exact
+### Completed: make parallel short-circuit semantics exact
 
 `parSequenceN` maps every supplied function into `Future.wait` with
 `eagerError: true`. A `Left` becomes a token-scoped `ControlError`; a thrown
@@ -292,7 +290,7 @@ being invoked; it does not cancel underlying work:
   the result, while an ordinary error observed first is propagated with its
   stack trace.
 
-Completed in the current patch slice:
+Completed contract and coverage work:
 
 1. The public API and README state the queued-versus-running contract.
 2. Deterministic tests prove that queued functions are not invoked after a
@@ -300,16 +298,18 @@ Completed in the current patch slice:
    directions between a `Left` and an ordinary error.
 3. Callback-error regression coverage preserves the original error identity
    and stack trace.
+4. Deterministic tests prove that the returned future settles before an
+   already-running function completes, and that the function continues to its
+   post-settlement side effect. Both `Left`-first and ordinary-error-first
+   outcomes are covered.
 
-Remaining follow-up work:
+Optional future work:
 
-1. Add explicit tests for result timing and running-task continuation after the
-   returned future settles.
-2. Consider a worker pool if avoiding the allocation and post-failure draining
+1. Consider a worker pool if avoiding the allocation and post-failure draining
    of one wrapper future per input becomes important. This is an efficiency
    change; it is not required to prevent queued supplied functions from being
    invoked.
-3. Treat true cancellation as a separate cooperative capability; do not imply
+2. Treat true cancellation as a separate cooperative capability; do not imply
    that an early `Either` result cancels an HTTP request or arbitrary future.
 
 ### Priority 1: add typed nullable construction
@@ -470,7 +470,7 @@ technical correctness verdict or quote stale PR counts as evidence.
 | Swallowed short-circuit | Sync and async interception tests | Helper-specific `ControlError` filtering tests |
 | Legacy `Either` variance | Selected safe APIs have widened tests | Full audit and migrations for unsafe methods |
 | Sequential traversal | Success, first `Left`, and large iterable tests | Explicit order laws |
-| Parallel traversal | Concurrency limit, result order, first-failure precedence, error/stack preservation, queued functions rejected after `Left` or callback error | Explicit post-result running-task continuation and timing laws |
+| Parallel traversal | Concurrency limit, result order, first-failure precedence, error/stack preservation, queued functions rejected after `Left` or callback error, and post-result continuation of already-running functions | No known gap in the current fail-fast contract |
 | Dependency bounds | Dart 3.0.0 SDK job | `dart pub downgrade` dependency job |
 | Package health | Analyze, format, full tests, coverage | `dart doc`, dry-run publish, and `pana` |
 | Binding performance | Mechanism is understood | Reproducible benchmark before public claims |
@@ -482,9 +482,7 @@ Continue with one variance-migration slice, not another convenience API:
 1. capture analyzer-valid runtime failures for the five classified unsafe
    methods as replacement regression fixtures;
 2. propose additive safe names and a `2.x` deprecation path using the
-   repository's API-rename workflow; and
-3. keep the remaining parallel timing and running-work tests as the next
-   independent slice.
+   repository's API-rename workflow.
 
 This follows the maturity level the library has reached. The question is no
 longer whether `Left` and `Right` work. It is whether every public type boundary
