@@ -11,6 +11,8 @@ import 'internal.dart';
 import 'to_either_stream.dart';
 import 'utils/semaphore.dart';
 
+part 'utils/par_sequence_n_executor.dart';
+
 /// Map [error] and [stackTrace] to a [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 
@@ -588,16 +590,77 @@ sealed class Either<L, R> {
     return Right(result.build());
   }
 
-  /// Traverses the [values] iterable and runs [mapper] on each element with concurrency control.
+  /// Maps [values] to asynchronous [Either] operations and runs them with
+  /// optional concurrency control.
   ///
-  /// For each value in [values], applies [mapper] to get a function that returns `Future<Either<L, R>>`,
-  /// then runs these functions in parallel with concurrency limit [maxConcurrent].
+  /// [mapper] is called for each input value to create a zero-argument function
+  /// returning `Future<Either<L, R>>`. The input is materialized before those
+  /// functions start. Calling [mapper] is therefore not concurrency-limited;
+  /// only the functions it returns are. If [mapper] throws while the input is
+  /// being materialized, no returned function is invoked and the error is
+  /// thrown synchronously.
   ///
-  /// If [maxConcurrent] is `null`, all functions run concurrently without limit.
-  /// If any function returns a [Left], the operation short-circuits and returns that [Left].
-  /// Otherwise, collects all [Right] values into a [BuiltList].
+  /// This method is equivalent to calling [parSequenceN] with
+  /// `functions: values.map(mapper)` after validating [maxConcurrent].
   ///
-  /// This is a shorthand for `Either.parSequenceN<L, R>(functions: values.map(mapper), maxConcurrent: maxConcurrent)`.
+  /// ### Parameters and concurrency
+  ///
+  /// - [values] supplies the input values in result order.
+  /// - [mapper] converts each input value into an asynchronous [Either]
+  ///   operation.
+  /// - [maxConcurrent] controls how many returned functions may be running at
+  ///   the same time. Use `null` for no limit or a positive integer for a
+  ///   finite limit.
+  ///
+  /// A non-null [maxConcurrent] less than or equal to zero is invalid. This
+  /// method throws an [ArgumentError] synchronously, before [values] is
+  /// traversed or [mapper] is called.
+  ///
+  /// ### Failure selection
+  ///
+  /// This operation is fail-fast. Its first terminal failure is selected by
+  /// completion order, not input order:
+  ///
+  /// - If a returned function produces a [Left] first, the returned [Future]
+  ///   completes successfully with that [Left].
+  /// - If a returned function throws, or its future completes with an error
+  ///   first, the returned [Future] completes with that error and its original
+  ///   stack trace. The error is not converted to a [Left].
+  ///
+  /// After the first terminal failure is selected:
+  ///
+  /// - Functions that already completed stay completed. Their side effects are
+  ///   not rolled back, and any collected [Right] values are discarded.
+  /// - Functions that were invoked but have not completed keep running. They
+  ///   are not cancelled, and their later values or errors cannot replace the
+  ///   selected failure.
+  /// - With a positive concurrency limit, functions still waiting for a permit
+  ///   are rejected without being invoked. With no limit, every function has
+  ///   already been invoked by the time a failure is observed.
+  ///
+  /// ### When `maxConcurrent` is `null`
+  ///
+  /// Every returned function is invoked without waiting for a permit. Because
+  /// failures are observed through future completion, all functions are invoked
+  /// before any produced [Left], synchronous throw, or failed future can stop
+  /// them from starting. After the returned [Future] settles, unfinished
+  /// functions continue running and their outcomes are ignored.
+  ///
+  /// ### When `maxConcurrent` is positive
+  ///
+  /// At most [maxConcurrent] returned functions are running at once. Each
+  /// function holds its permit until its future settles. When a function
+  /// succeeds with a [Right], the next waiting function may start.
+  ///
+  /// Once the first [Left] or error is observed, functions still waiting for a
+  /// permit are rejected without being invoked. Functions that were already
+  /// invoked continue running as described above.
+  ///
+  /// ### Successful completion
+  ///
+  /// If every function produces a [Right], the returned [Right] contains all
+  /// values in input order, regardless of completion order. An empty [values]
+  /// iterable produces a [Right] containing an empty [BuiltList].
   ///
   /// ### Example
   /// ```dart
@@ -609,33 +672,97 @@ sealed class Either<L, R> {
   /// );
   /// ```
   ///
-  /// ### Parameters
-  /// - [values]: The values to traverse.
-  /// - [mapper]: Function that takes a value and returns a function returning `Future<Either<L, R>>`.
-  /// - [maxConcurrent]: Maximum number of concurrent executions. If `null`, no limit.
-  ///
   /// ### Returns
-  /// A [Future] containing either the first [Left] encountered, or a [Right] with all collected values.
+  /// A [Future] that either:
+  ///
+  /// - completes successfully with the first observed [Left];
+  /// - completes successfully with a [Right] containing every result in input
+  ///   order; or
+  /// - completes with the first observed Dart error.
   @useResult
   static Future<Either<L, BuiltList<R>>> parTraverseN<L, R, T>({
     required Iterable<T> values,
     required Future<Either<L, R>> Function() Function(T value) mapper,
     required int? maxConcurrent,
-  }) =>
-      parSequenceN<L, R>(
-        functions: values.map(mapper),
-        maxConcurrent: maxConcurrent,
+  }) {
+    if (maxConcurrent != null && maxConcurrent <= 0) {
+      throw ArgumentError.value(
+        maxConcurrent,
+        'maxConcurrent',
+        'Must be greater than 0 or null for no limit.',
       );
+    }
 
-  /// Sequences all [Future<Either<L, R>>] functions with concurrency control.
+    return parSequenceN<L, R>(
+      functions: values.map(mapper),
+      maxConcurrent: maxConcurrent,
+    );
+  }
+
+  /// Runs asynchronous [Either] operations and collects their [Right] values,
+  /// with optional concurrency control.
   ///
-  /// Runs the functions in parallel, but limits the number of concurrent executions to [maxConcurrent].
-  /// If [maxConcurrent] is `null`, all functions run concurrently without limit.
+  /// [functions] contains zero-argument functions returning
+  /// `Future<Either<L, R>>`. The iterable is materialized before any function is
+  /// invoked. This lets [maxConcurrent] limit execution without creating the
+  /// futures in advance. If iterating [functions] throws, no function is invoked
+  /// and the error is thrown synchronously.
   ///
-  /// If any function returns a [Left], the operation short-circuits and returns that [Left].
-  /// Otherwise, collects all [Right] values into a [BuiltList].
+  /// ### Parameters and concurrency
   ///
-  /// The concurrency is controlled using a semaphore to prevent overwhelming the system.
+  /// - [functions] supplies the asynchronous operations in result order.
+  /// - [maxConcurrent] controls how many functions may be running at the same
+  ///   time. Use `null` for no limit or a positive integer for a finite limit.
+  ///
+  /// A non-null [maxConcurrent] less than or equal to zero is invalid. This
+  /// method throws an [ArgumentError] synchronously, before [functions] is
+  /// traversed or any function is invoked.
+  ///
+  /// ### Failure selection
+  ///
+  /// This operation is fail-fast. Its first terminal failure is selected by
+  /// completion order, not input order:
+  ///
+  /// - If a function produces a [Left] first, the returned [Future] completes
+  ///   successfully with that [Left].
+  /// - If a function throws, or its future completes with an error first, the
+  ///   returned [Future] completes with that error and its original stack trace.
+  ///   The error is not converted to a [Left].
+  ///
+  /// After the first terminal failure is selected:
+  ///
+  /// - Functions that already completed stay completed. Their side effects are
+  ///   not rolled back, and any collected [Right] values are discarded.
+  /// - Functions that were invoked but have not completed keep running. They
+  ///   are not cancelled, and their later values or errors cannot replace the
+  ///   selected failure.
+  /// - With a positive concurrency limit, functions still waiting for a permit
+  ///   are rejected without being invoked. With no limit, every function has
+  ///   already been invoked by the time a failure is observed.
+  ///
+  /// ### When `maxConcurrent` is `null`
+  ///
+  /// Every function is invoked without waiting for a permit. Because failures
+  /// are observed through future completion, all functions are invoked before
+  /// any produced [Left], synchronous throw, or failed future can stop them
+  /// from starting. After the returned [Future] settles, unfinished functions
+  /// continue running and their outcomes are ignored.
+  ///
+  /// ### When `maxConcurrent` is positive
+  ///
+  /// At most [maxConcurrent] functions are running at once. Each function holds
+  /// its permit until its future settles. When a function succeeds with a
+  /// [Right], the next waiting function may start.
+  ///
+  /// Once the first [Left] or error is observed, functions still waiting for a
+  /// permit are rejected without being invoked. Functions that were already
+  /// invoked continue running as described above.
+  ///
+  /// ### Successful completion
+  ///
+  /// If every function produces a [Right], the returned [Right] contains all
+  /// values in input order, regardless of completion order. An empty
+  /// [functions] iterable produces a [Right] containing an empty [BuiltList].
   ///
   /// ### Example
   /// ```dart
@@ -651,41 +778,26 @@ sealed class Either<L, R> {
   /// );
   /// ```
   ///
-  /// ### Parameters
-  /// - [functions]: An iterable of functions that return `Future<Either<L, R>>`.
-  /// - [maxConcurrent]: Maximum number of concurrent executions. If `null`, no limit.
-  ///
   /// ### Returns
-  /// A [Future] containing either the first [Left] encountered, or a [Right] with all collected values.
+  /// A [Future] that either:
+  ///
+  /// - completes successfully with the first observed [Left];
+  /// - completes successfully with a [Right] containing every result in input
+  ///   order; or
+  /// - completes with the first observed Dart error.
   @useResult
   static Future<Either<L, BuiltList<R>>> parSequenceN<L, R>({
     required Iterable<Future<Either<L, R>> Function()> functions,
     required int? maxConcurrent,
-  }) async {
-    final futureFunctions = functions.toList(growable: false);
-    final semaphore = maxConcurrent != null ? Semaphore(maxConcurrent) : null;
-    final token = _Token();
-
-    Future<R> Function() run(Future<Either<L, R>> Function() f) {
-      return () => Future.sync(f).then(
-            (e) => e.getOrHandle((l) => throw ControlError<L>._(l, token)),
-          );
+  }) {
+    if (maxConcurrent != null && maxConcurrent <= 0) {
+      throw ArgumentError.value(
+        maxConcurrent,
+        'maxConcurrent',
+        'Must be greater than 0 or null for no limit.',
+      );
     }
-
-    Future<R> runWithPermit(Future<Either<L, R>> Function() f) {
-      final action = run(f);
-      return semaphore?.withPermit(action) ?? action();
-    }
-
-    return Future.wait(
-      futureFunctions.map(runWithPermit),
-      eagerError: true,
-    )
-        .then((values) => Either<L, BuiltList<R>>.right(values.build()))
-        .onError<ControlError<L>>(
-          (e, s) => Left(e._value),
-          test: (e) => identical(e._token, token),
-        );
+    return _ParSequenceNExecutor(functions, maxConcurrent).run();
   }
 
   // -----------------------------------------------------------------------------

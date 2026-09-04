@@ -3,7 +3,7 @@
 This note distills an earlier discussion about the value proposition of
 `dart_either` and the improvements that could make it more robust. It is not a
 transcript or marketing copy. Every technical statement below was last
-reconciled with the repository state on 2026-09-01.
+reconciled with the repository state on 2026-09-02.
 
 The package currently declares version `2.3.0`. This repository state is
 prepared for release; verify the registry before describing `2.3.0` as
@@ -34,8 +34,8 @@ It is semantic precision:
 
 1. migrate the five variance-unsafe legacy instance methods identified by the
    completed audit;
-2. define and test what parallel "short-circuit" does to still-running and
-   queued work;
+2. finish the remaining timing and running-work coverage for the now-defined
+   parallel short-circuit contract;
 3. make nullable and exception conversion more domain-selective;
 4. decide whether `BuiltList` still fits the lightweight positioning; and
 5. strengthen law, lower-bound, documentation, and package validation.
@@ -262,36 +262,54 @@ Migrating these five methods is the highest-value correctness work remaining:
 
 ### Priority 0: make parallel short-circuit semantics exact
 
-`parSequenceN` currently maps every supplied function into `Future.wait` with
-`eagerError: true`. A `Left` becomes a token-scoped `ControlError`, allowing
-the returned result to complete early. This short-circuits the **result**, not
-the underlying work:
+`parSequenceN` maps every supplied function into `Future.wait` with
+`eagerError: true`. A `Left` becomes a token-scoped `ControlError`; a thrown
+error or failed future remains in Dart's error channel. The executor records
+the first terminal failure before releasing the task's semaphore permit. With
+a finite concurrency limit, callbacks still waiting for a permit are then
+rejected without invoking the supplied function.
+
+The concurrency parameter has three cases:
+
+- `maxConcurrent <= 0` is invalid and throws an `ArgumentError` synchronously,
+  before the input is traversed, the `parTraverseN` mapper is called, or any
+  callback is invoked;
+- `maxConcurrent: null` invokes every callback without a concurrency limit; and
+- a positive `maxConcurrent` holds a semaphore permit for each callback until
+  its future settles.
+
+This short-circuits the **result** and prevents queued supplied functions from
+being invoked; it does not cancel underlying work:
 
 - Dart `Future` has no built-in cancellation;
-- already-running tasks continue after the first observed `Left`;
-- with the current semaphore, queued `withPermit` calls remain queued and can
-  start after a permit is released, even after the result has completed; and
-- "first Left" means the first one observed by completion, not necessarily the
-  first function in input order.
+- already-running tasks continue after the first observed terminal failure;
+- queued `withPermit` wrappers still acquire and release permits so their
+  futures can settle, but they reject with the recorded failure before invoking
+  their supplied functions;
+- with `maxConcurrent: null`, every function starts before any produced
+  `Left`, synchronous throw, or failed future can be observed; and
+- failure precedence follows completion order: a `Left` observed first becomes
+  the result, while an ordinary error observed first is propagated with its
+  stack trace.
 
-The existing docs say the operation short-circuits but do not state these
-side-effect semantics. The existing tests assert the early result but do not
-wait afterward to prove what happens to queued or running work.
+Completed in the current patch slice:
 
-Recommended sequence:
+1. The public API and README state the queued-versus-running contract.
+2. Deterministic tests prove that queued functions are not invoked after a
+   `Left`, synchronous throw, or failed future. They also cover both precedence
+   directions between a `Left` and an ordinary error.
+3. Callback-error regression coverage preserves the original error identity
+   and stack trace.
 
-1. Document the current contract explicitly: result completion is early;
-   running work is not cancelled; queued work may still start.
-2. Add deterministic tests for result timing, input-order result collection,
-   completion-order failure, running-task continuation, and queued-task start
-   after failure.
-3. Replace the eager `Future.wait` scheduling with a worker pool if the desired
-   contract is "do not dequeue new work after the first observed `Left`".
-   Running tasks still cannot be cancelled without cooperation.
-4. If both behaviors are valuable, use an explicit option such as
-   `startNewTasksAfterLeft: false` or a separately named API rather than
-   overloading the word "short-circuit".
-5. Treat true cancellation as a separate cooperative capability; do not imply
+Remaining follow-up work:
+
+1. Add explicit tests for result timing and running-task continuation after the
+   returned future settles.
+2. Consider a worker pool if avoiding the allocation and post-failure draining
+   of one wrapper future per input becomes important. This is an efficiency
+   change; it is not required to prevent queued supplied functions from being
+   invoked.
+3. Treat true cancellation as a separate cooperative capability; do not imply
    that an early `Either` result cancels an HTTP request or arbitrary future.
 
 ### Priority 1: add typed nullable construction
@@ -452,7 +470,7 @@ technical correctness verdict or quote stale PR counts as evidence.
 | Swallowed short-circuit | Sync and async interception tests | Helper-specific `ControlError` filtering tests |
 | Legacy `Either` variance | Selected safe APIs have widened tests | Full audit and migrations for unsafe methods |
 | Sequential traversal | Success, first `Left`, and large iterable tests | Explicit order laws |
-| Parallel traversal | Concurrency limit, result order, early `Left` | Running/queued work after early result |
+| Parallel traversal | Concurrency limit, result order, first-failure precedence, error/stack preservation, queued functions rejected after `Left` or callback error | Explicit post-result running-task continuation and timing laws |
 | Dependency bounds | Dart 3.0.0 SDK job | `dart pub downgrade` dependency job |
 | Package health | Analyze, format, full tests, coverage | `dart doc`, dry-run publish, and `pana` |
 | Binding performance | Mechanism is understood | Reproducible benchmark before public claims |
@@ -465,7 +483,8 @@ Continue with one variance-migration slice, not another convenience API:
    methods as replacement regression fixtures;
 2. propose additive safe names and a `2.x` deprecation path using the
    repository's API-rename workflow; and
-3. keep the parallel-semantics clarification as the next independent slice.
+3. keep the remaining parallel timing and running-work tests as the next
+   independent slice.
 
 This follows the maturity level the library has reached. The question is no
 longer whether `Left` and `Right` work. It is whether every public type boundary

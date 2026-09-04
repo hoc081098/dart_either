@@ -356,6 +356,37 @@ final Either<String, BuiltList<int>> parallelTraverse = await Either.parTraverse
 );
 ```
 
+#### Parallel execution semantics
+
+`parSequenceN` runs the supplied callbacks. `parTraverseN` first maps every
+input value to a callback, then runs those callbacks with the same semantics.
+The `parTraverseN` mapper itself is not concurrency-limited.
+
+`maxConcurrent` controls when callbacks may start:
+
+- A value less than or equal to zero is invalid. The method throws an
+  `ArgumentError` synchronously, before the input is traversed, the
+  `parTraverseN` mapper is called, or any callback is invoked.
+- `null` means unlimited concurrency. Every callback is invoked before any
+  produced `Left`, synchronous throw, or failed future can be observed.
+- A positive value limits the number of running callbacks. After a callback
+  completes with `Right`, the next waiting callback may start.
+
+Both methods are fail-fast. The first terminal failure is selected by
+completion order, not input order:
+
+- A `Left` observed first becomes the returned `Either` value.
+- A synchronous throw or failed future observed first completes the returned
+  future with the original error and stack trace; it is not converted to
+  `Left`.
+
+Callbacks that already completed are not rolled back. Callbacks still running
+are not cancelled, and their later outcomes do not replace the first failure.
+With a positive concurrency limit, callbacks still waiting for a permit are
+rejected without being invoked; with `null`, all callbacks have already been
+invoked. If every callback returns `Right`, values are collected in input order
+regardless of completion order.
+
 ---
 
 ### 4. Operations on `Either`

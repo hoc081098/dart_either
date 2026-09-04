@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:built_collection/built_collection.dart';
 import 'package:dart_either/dart_either.dart';
 import 'package:rxdart_ext/single.dart';
@@ -8,6 +10,22 @@ Object takeOnlyError(Object error, StackTrace stackTrace) => error;
 class _RegisteredFatalException implements Exception {}
 
 final class _RegisteredFatalSubtype extends _RegisteredFatalException {}
+
+final class _EagerMapIterable<T> extends Iterable<T> {
+  _EagerMapIterable(this._values);
+
+  final List<T> _values;
+  var mapCalled = false;
+
+  @override
+  Iterator<T> get iterator => _values.iterator;
+
+  @override
+  Iterable<E> map<E>(E Function(T element) toElement) {
+    mapCalled = true;
+    return _values.map(toElement).toList(growable: false);
+  }
+}
 
 void main() {
   const Either<int, int> leftOf1 = Left(1);
@@ -686,6 +704,26 @@ void main() {
       });
 
       group('Either.parSequenceN', () {
+        test('throws synchronously before traversal when maxConcurrent <= 0',
+            () {
+          for (final maxConcurrent in [0, -1]) {
+            var traversed = false;
+            final functions = Iterable.generate(1, (_) {
+              traversed = true;
+              return () async => Either<String, int>.right(1);
+            });
+
+            expect(
+              () => Either.parSequenceN<String, int>(
+                functions: functions,
+                maxConcurrent: maxConcurrent,
+              ).ignore(),
+              throwsArgumentError,
+            );
+            expect(traversed, isFalse);
+          }
+        });
+
         test('right path with concurrency limit', () async {
           final values = <int>[];
           final delays = [100, 50, 200]; // Different delays to test concurrency
@@ -747,6 +785,153 @@ void main() {
           expect(values.length, anchor + 1); // Only up to the error
         });
 
+        test('does not invoke queued functions after Left', () async {
+          final invoked = <int>[];
+          final first = Completer<Either<String, int>>();
+
+          final resultFuture = Either.parSequenceN<String, int>(
+            functions: List.generate(
+              4,
+              (index) => () {
+                invoked.add(index);
+                return index == 0
+                    ? first.future
+                    : Future.value(Either<String, int>.right(index));
+              },
+            ),
+            maxConcurrent: 1,
+          );
+
+          await pumpEventQueue();
+          expect(invoked, [0]);
+
+          first.complete(Either<String, int>.left('error'));
+
+          expect(
+            await resultFuture,
+            Left<String, BuiltList<int>>('error'),
+          );
+          await pumpEventQueue();
+          expect(invoked, [0]);
+        });
+
+        test('propagates the first error and does not invoke queued functions',
+            () async {
+          final invoked = <int>[];
+          final first = Completer<Either<String, int>>();
+          final alreadyRunning = Completer<Either<String, int>>();
+          final error = StateError('first error');
+          final stackTrace = StackTrace.current;
+
+          final resultFuture = Either.parSequenceN<String, int>(
+            functions: [
+              () {
+                invoked.add(0);
+                return first.future;
+              },
+              () {
+                invoked.add(1);
+                return alreadyRunning.future;
+              },
+              () {
+                invoked.add(2);
+                return Future.value(Either<String, int>.right(2));
+              },
+            ],
+            maxConcurrent: 2,
+          );
+          final errorExpectation = Future.sync(() async {
+            try {
+              await resultFuture;
+              fail('Expected resultFuture to complete with an error.');
+            } on StateError catch (actualError, actualStackTrace) {
+              expect(actualError, same(error));
+              expect(actualStackTrace.toString(), stackTrace.toString());
+            }
+          });
+
+          await pumpEventQueue();
+          expect(invoked, [0, 1]);
+
+          first.completeError(error, stackTrace);
+          await errorExpectation;
+          await pumpEventQueue();
+
+          expect(invoked, [0, 1]);
+
+          alreadyRunning.complete(Either<String, int>.left('later left'));
+          await pumpEventQueue();
+
+          expect(invoked, [0, 1]);
+        });
+
+        test('propagates synchronous errors without invoking queued functions',
+            () async {
+          final invoked = <int>[];
+          final error = StateError('synchronous error');
+
+          final resultFuture = Either.parSequenceN<String, int>(
+            functions: [
+              () {
+                invoked.add(0);
+                throw error;
+              },
+              () async {
+                invoked.add(1);
+                return Either<String, int>.right(1);
+              },
+            ],
+            maxConcurrent: 1,
+          );
+
+          await expectLater(resultFuture, throwsA(same(error)));
+          await pumpEventQueue();
+
+          expect(invoked, [0]);
+        });
+
+        test('keeps the first Left when a running function errors later',
+            () async {
+          final invoked = <int>[];
+          final first = Completer<Either<String, int>>();
+          final alreadyRunning = Completer<Either<String, int>>();
+
+          final resultFuture = Either.parSequenceN<String, int>(
+            functions: [
+              () {
+                invoked.add(0);
+                return first.future;
+              },
+              () {
+                invoked.add(1);
+                return alreadyRunning.future;
+              },
+              () async {
+                invoked.add(2);
+                return Either<String, int>.right(2);
+              },
+            ],
+            maxConcurrent: 2,
+          );
+
+          await pumpEventQueue();
+          expect(invoked, [0, 1]);
+
+          first.complete(Either<String, int>.left('first left'));
+
+          expect(
+            await resultFuture,
+            Left<String, BuiltList<int>>('first left'),
+          );
+          await pumpEventQueue();
+          expect(invoked, [0, 1]);
+
+          alreadyRunning.completeError(StateError('later error'));
+          await pumpEventQueue();
+
+          expect(invoked, [0, 1]);
+        });
+
         test('concurrency actually limited', () async {
           final activeCount = <int>[];
           final delays = [200, 200, 200]; // Same delay to test concurrency
@@ -774,6 +959,28 @@ void main() {
       });
 
       group('Either.parTraverseN', () {
+        test('throws synchronously before eager map when maxConcurrent <= 0',
+            () {
+          for (final maxConcurrent in [0, -1]) {
+            final values = _EagerMapIterable([1]);
+            var mapperCalled = false;
+
+            expect(
+              () => Either.parTraverseN<String, int, int>(
+                values: values,
+                mapper: (value) {
+                  mapperCalled = true;
+                  return () async => Either<String, int>.right(value);
+                },
+                maxConcurrent: maxConcurrent,
+              ).ignore(),
+              throwsArgumentError,
+            );
+            expect(values.mapCalled, isFalse);
+            expect(mapperCalled, isFalse);
+          }
+        });
+
         test('right path with concurrency limit', () async {
           final values = <int>[];
           final ids = [1, 2, 3];
