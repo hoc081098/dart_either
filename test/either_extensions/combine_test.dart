@@ -43,24 +43,26 @@ void main() {
           return a + b;
         },
       );
+      expect(leftRight, const Left<String, num>('a'));
+      expect(leftCalls, 0);
+      expect(rightCalls, 0);
+
       final rightLeft = const Right<String, num>(2).combine(
         const Left<String, num>('a'),
         combineLeft: combineLeft,
         combineRight: combineRight,
       );
-
-      expect(leftRight, const Left<String, num>('a'));
       expect(rightLeft, const Left<String, num>('a'));
-      expect(leftCalls, 0);
-      expect(rightCalls, 0);
     });
 
     test('combine supports widened receivers and operands', () {
       const Either<String, num> left = Left<String, Never>('error');
       const Either<String, num> intRight = Right<Never, int>(1);
       const Either<String, num> doubleRight = Right<Never, double>(2.5);
+
       const Either<num, num> intLeft = Left<int, Never>(1);
       const Either<num, num> doubleLeft = Left<double, Never>(2.5);
+
       var leftCalls = 0;
       var rightCalls = 0;
 
