@@ -7,11 +7,16 @@ import '../internal.dart';
 extension FlattenEitherExtension<L, R> on Either<L, Either<L, R>> {
   /// Flattens a nested [Either].
   ///
+  /// If this is a [Right], return the [Right.value],
+  /// Otherwise, return an equivalent [Left].
+  ///
+  /// This is equivalent to `flatMap(identity)`.
+  ///
   /// ### Example
   /// ```dart
-  /// Right<int, Either<int, int>>(Right(12)).flatten(); // Result: Right(12)
-  /// Right<int, Either<int, int>>(Left(12)).flatten();  // Result: Left(12)
-  /// Left<int, Either<int, int>>(12).flatten();         // Result: Left(12)
+  /// final rightOfRight = Right<int, Either<int, int>>(Right(12)).flatten(); // Result: Right(12)
+  /// final rightOfLeft = Right<int, Either<int, int>>(Left(12)).flatten();   // Result: Left(12)
+  /// final left = Left<int, Either<int, int>>(12).flatten();                 // Result: Left(12)
   /// ```
   @covarianceSafe
   @useResult
