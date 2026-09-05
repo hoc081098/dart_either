@@ -25,18 +25,20 @@ void main() {
     });
 
     test('flatten supports widened nested variants', () {
-      const Either<String, Either<String, int>> nestedRight =
+      const Either<String, Either<String, num>> nestedRight =
           Right<Never, Either<Never, int>>(Right<Never, int>(1));
-      const Either<String, Either<String, int>> nestedLeft =
+
+      const Either<String, Either<String, num>> nestedLeft =
           Right<Never, Either<String, Never>>(
         Left<String, Never>('inner'),
       );
-      const Either<String, Either<String, int>> outerLeft =
+
+      const Either<String, Either<String, num>> outerLeft =
           Left<String, Never>('outer');
 
-      expect(nestedRight.flatten(), const Right<String, int>(1));
-      expect(nestedLeft.flatten(), const Left<String, int>('inner'));
-      expect(outerLeft.flatten(), const Left<String, int>('outer'));
+      expect(nestedRight.flatten(), const Right<String, num>(1));
+      expect(nestedLeft.flatten(), const Left<String, num>('inner'));
+      expect(outerLeft.flatten(), const Left<String, num>('outer'));
     });
   });
 }
