@@ -18,7 +18,6 @@
 - Fixed `Either.parSequenceN` and `Either.parTraverseN` with finite concurrency
   so functions still waiting for a permit are not invoked after the first
   observed `Left`, thrown error, or failed future.
-
   - A `Left` is returned when it is observed first;
     an ordinary error observed first is propagated with its stack trace.
   - Already-running functions remain non-cancellable and may finish their side effects.
