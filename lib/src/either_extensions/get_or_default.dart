@@ -10,9 +10,10 @@ extension GetOrDefaultEitherExtension<L, R> on Either<L, R> {
   /// For lazy fallback computation, use `getOrHandle`.
   ///
   /// ### Example
+  ///
   /// ```dart
-  /// Right<int, int>(12).getOrDefault(17); // Result: 12
-  /// Left<int, int>(12).getOrDefault(17);  // Result: 17
+  /// Right<String, int>(12).getOrDefault(17);      // Result: 12
+  /// Left<String, int>('error').getOrDefault(17);  // Result: 17
   /// ```
   @covarianceSafe
   R getOrDefault(R defaultValue) => switch (this) {
