@@ -1,16 +1,17 @@
 import '../dart_either.dart';
 import '../internal.dart';
 
-/// Provide [getOrThrow] extension on [Either].
+/// Adds [getOrThrow] to [Either].
 extension GetOrThrowEitherExtension<L extends Object, R> on Either<L, R> {
-  /// Returns the [Right.value] if this [Either] is [Right], otherwise throws
-  /// the [Left.value].
-  /// This is functionally equivalent to `getOrHandle((value) => throw value)`.
+  /// Returns [Right.value] if this is a [Right]. If this is a [Left], throws
+  /// [Left.value].
+  ///
+  /// This is equivalent to `getOrHandle((value) => throw value)`.
   ///
   /// ### Example
   ///
   /// ```dart
-  /// Right<StateError, int>(12).getOrThrow(); // Result: 12
+  /// final int value = Right<StateError, int>(12).getOrThrow(); // 12
   ///
   /// Left<StateError, int>(StateError('missing')).getOrThrow();
   /// // Throws StateError('missing')

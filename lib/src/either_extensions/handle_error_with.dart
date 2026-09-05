@@ -3,10 +3,10 @@ import 'package:meta/meta.dart';
 import '../dart_either.dart';
 import '../internal.dart';
 
-/// Provides [handleErrorWith] on [Either] without crossing a covariant
-/// instance-method boundary.
+/// Adds [handleErrorWith] to [Either].
 extension HandleErrorWithEitherExtension<L, R> on Either<L, R> {
-  /// Handles a [Left] with [f], which returns a new [Either].
+  /// Handles a [Left] by passing its value to [f], which returns the new
+  /// [Either].
   ///
   /// - If this is a [Left], invokes [f] exactly once and returns its result
   ///   directly. The result may be either a [Left] or a [Right].
@@ -15,31 +15,32 @@ extension HandleErrorWithEitherExtension<L, R> on Either<L, R> {
   ///   has the new left type [L2], it is not guaranteed to be identical to
   ///   this instance.
   ///
-  /// This is the left-side counterpart of `flatMap`:
-  /// `flatMap` lets a [Right] callback choose the next channel,
-  /// while `handleErrorWith` gives that choice to a [Left] callback.
+  /// This is the left-side counterpart of `flatMap`. While `flatMap` lets a
+  /// [Right] callback choose the next side, `handleErrorWith` gives that choice
+  /// to a [Left] callback.
   ///
   /// In some libraries or languages, this operation is also known as
   /// `recoverWith` or `flatMapError`.
   /// Exceptions thrown by [f] are not caught.
   ///
   /// ### Example
+  ///
   /// ```dart
-  /// final rightSkippingRight = Right<int, int>(12).handleErrorWith(
-  ///   (value) => Right<String, int>(value + 1),
-  /// ); // Right(12); the callback is skipped
+  /// final Either<String, int> rightSkippingRight = Right<int, int>(12)
+  ///     .handleErrorWith((value) => Right<String, int>(value + 1));
+  /// // Right(12); the callback is skipped
   ///
-  /// final rightSkippingLeft = Right<int, int>(12).handleErrorWith(
-  ///   (value) => Left<String, int>('error: $value'),
-  /// ); // Right(12); the callback is skipped
+  /// final Either<String, int> rightSkippingLeft = Right<int, int>(12)
+  ///     .handleErrorWith((value) => Left<String, int>('error: $value'));
+  /// // Right(12); the callback is skipped
   ///
-  /// final leftToRight = Left<int, int>(12).handleErrorWith(
-  ///   (value) => Right<String, int>(value + 1),
-  /// ); // Right(13)
+  /// final Either<String, int> leftToRight = Left<int, int>(12)
+  ///     .handleErrorWith((value) => Right<String, int>(value + 1));
+  /// // Right(13)
   ///
-  /// final leftToLeft = Left<int, int>(12).handleErrorWith(
-  ///   (value) => Left<String, int>('error: $value'),
-  /// ); // Left('error: 12')
+  /// final Either<String, int> leftToLeft = Left<int, int>(12)
+  ///     .handleErrorWith((value) => Left<String, int>('error: $value'));
+  /// // Left('error: 12')
   /// ```
   @covarianceSafe
   @useResult

@@ -3,35 +3,36 @@ import 'package:meta/meta.dart';
 import '../dart_either.dart';
 import '../internal.dart';
 
-/// Provides [flatMap] on [Either] without crossing a covariant instance-method
-/// boundary.
+/// Adds [flatMap] to [Either].
 extension FlatMapEitherExtension<L, R> on Either<L, R> {
-  /// Binds the given function across [Right].
+  /// Chains an [Either]-producing computation using the [Right] value.
   ///
-  /// If this is a [Right], returns the result of applying [f] to this
-  /// [Right.value]. Otherwise, returns an equivalent [Left].
+  /// If this is a [Right], invokes [f] exactly once with [Right.value] and
+  /// returns the result. If this is a [Left], skips [f] and returns an
+  /// equivalent [Left].
   ///
-  /// Slightly different from [Either.map] in that [f] is expected to return an
-  /// [Either], which may be a [Left]. Exceptions thrown by [f] are not caught.
+  /// Unlike [Either.map], [f] returns an [Either] and can therefore produce
+  /// either a [Left] or a [Right]. Exceptions thrown by [f] are not caught.
   ///
   /// ### Example
-  /// ```dart
-  /// final rightToRight = Right<String, int>(12).flatMap(
-  ///   (value) => Right<String, String>('flower $value'),
-  /// ); // Right('flower 12')
   ///
-  /// final rightToLeft = Right<String, int>(12).flatMap(
-  ///   (value) => Left<String, String>('invalid: $value'),
-  /// ); // Left('invalid: 12')
+  /// ```dart
+  /// final Either<String, int> rightToRight =
+  ///     Right<String, int>(1).flatMap((value) => Right(value + 1));
+  /// // Right(2)
+  ///
+  /// final Either<String, int> rightToLeft =
+  ///     Right<String, int>(1).flatMap((_) => Left('error'));
+  /// // Left('error')
   ///
   /// // For either Left input, the callback is not invoked.
-  /// final leftSkippingRight = Left<String, int>('missing').flatMap(
-  ///   (value) => Right<String, String>('flower $value'),
-  /// ); // Left('missing')
+  /// final Either<String, int> leftSkippingRight =
+  ///     Left<String, int>('error').flatMap((value) => Right(value + 1));
+  /// // Left('error')
   ///
-  /// final leftSkippingLeft = Left<String, int>('missing').flatMap(
-  ///   (value) => Left<String, String>('invalid: $value'),
-  /// ); // Left('missing')
+  /// final Either<String, int> leftSkippingLeft =
+  ///     Left<String, int>('error').flatMap((_) => Left('new error'));
+  /// // Left('error')
   /// ```
   @covarianceSafe
   @useResult

@@ -3,8 +3,7 @@ import 'package:meta/meta.dart';
 import '../dart_either.dart';
 import '../internal.dart';
 
-/// Provides [handleError] on [Either] without crossing a covariant
-/// instance-method boundary.
+/// Adds [handleError] to [Either].
 extension HandleErrorEitherExtension<L, R> on Either<L, R> {
   /// Recovers from a [Left] by mapping its value to a [Right] value.
   ///
@@ -15,22 +14,23 @@ extension HandleErrorEitherExtension<L, R> on Either<L, R> {
   /// On normal completion, both paths therefore produce a [Right], although
   /// the declared return type remains `Either<L, R>`.
   ///
-  /// Ignoring [Right] instance identity, this can be understood as the
-  /// semantics of `handleErrorWith<L>((value) => f(value).right<L>())`.
+  /// Except for preserving the original [Right] instance, this is equivalent
+  /// to `handleErrorWith<L>((value) => f(value).right<L>())`.
   ///
   /// In some libraries or languages, this operation is also known as
   /// `recover`. Exceptions thrown by [f] are not caught.
   ///
   /// ### Example
-  /// ```dart
-  /// final recovered = Left<String, int>('missing').handleError(
-  ///   (error) => error.length,
-  /// ); // Right(7)
   ///
-  /// final right = Right<String, int>(21);
-  /// final sameRight = right.handleError(
-  ///   (error) => error.length,
-  /// ); // Right(21); the callback is skipped
+  /// ```dart
+  /// final Either<String, int> recovered =
+  ///     Left<String, int>('missing').handleError((error) => error.length);
+  /// // Right(7)
+  ///
+  /// final Either<String, int> right = Right(21);
+  /// final Either<String, int> sameRight =
+  ///     right.handleError((error) => error.length);
+  /// // Right(21); the callback is skipped
   ///
   /// identical(sameRight, right); // true
   /// ```

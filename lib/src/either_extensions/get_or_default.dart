@@ -1,10 +1,10 @@
 import '../dart_either.dart';
 import '../internal.dart';
 
-/// Provide [getOrDefault] on [Either] without crossing a covariant instance
-/// method boundary.
+/// Adds [getOrDefault] to [Either].
 extension GetOrDefaultEitherExtension<L, R> on Either<L, R> {
-  /// Returns the value from this [Right] or [defaultValue] if this is a [Left].
+  /// Returns [Right.value] if this is a [Right]. Otherwise, returns
+  /// [defaultValue].
   ///
   /// [defaultValue] is eager, so it is evaluated before the call.
   /// For lazy fallback computation, use `getOrHandle`.
@@ -12,8 +12,8 @@ extension GetOrDefaultEitherExtension<L, R> on Either<L, R> {
   /// ### Example
   ///
   /// ```dart
-  /// Right<String, int>(12).getOrDefault(17);      // Result: 12
-  /// Left<String, int>('error').getOrDefault(17);  // Result: 17
+  /// final int fromRight = Right<String, int>(12).getOrDefault(17);    // 12
+  /// final int fromLeft = Left<String, int>('error').getOrDefault(17); // 17
   /// ```
   @covarianceSafe
   R getOrDefault(R defaultValue) => switch (this) {

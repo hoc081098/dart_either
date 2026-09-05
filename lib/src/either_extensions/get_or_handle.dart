@@ -1,24 +1,24 @@
 import '../dart_either.dart';
 import '../internal.dart';
 
-/// Provides [getOrHandle] on [Either] without crossing a covariant
-/// instance-method boundary.
+/// Adds [getOrHandle] to [Either].
 extension GetOrHandleEitherExtension<L, R> on Either<L, R> {
-  /// Returns the [Right.value], or allows [defaultValue] to transform the
-  /// [Left.value] into the final result.
+  /// Returns [Right.value] if this is a [Right]. If this is a [Left], invokes
+  /// [defaultValue] with [Left.value] and returns the callback result.
   ///
-  /// [defaultValue] is invoked exactly once only when this is a [Left].
-  /// Exceptions thrown by [defaultValue] are not caught.
+  /// [defaultValue] is invoked exactly once for a [Left] and is not invoked for
+  /// a [Right]. Exceptions thrown by [defaultValue] are not caught.
   ///
   /// ### Example
-  /// ```dart
-  /// final fromRight = Right<String, int>(12).getOrHandle(
-  ///   (error) => error.length,
-  /// ); // 12; the callback is skipped
   ///
-  /// final fromLeft = Left<String, int>('missing').getOrHandle(
-  ///   (error) => error.length,
-  /// ); // 7
+  /// ```dart
+  /// final int fromRight =
+  ///     Right<String, int>(12).getOrHandle((error) => error.length);
+  /// // 12; the callback is skipped
+  ///
+  /// final int fromLeft =
+  ///     Left<String, int>('missing').getOrHandle((error) => error.length);
+  /// // 7
   /// ```
   @covarianceSafe
   R getOrHandle(R Function(L value) defaultValue) => switch (this) {
