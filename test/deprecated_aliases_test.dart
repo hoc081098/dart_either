@@ -76,6 +76,7 @@ void main() {
       );
       expect(calls, 1);
 
+      calls = 0;
       expect(
         widenedRight.getOrElse(() {
           calls++;
@@ -83,7 +84,7 @@ void main() {
         }),
         1,
       );
-      expect(calls, 1);
+      expect(calls, 0);
     });
 
     test('getOrElse propagates fallback errors', () {
