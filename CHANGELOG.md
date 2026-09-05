@@ -1,11 +1,27 @@
 ## Unreleased
 
+### Either operations
+
+- Relocated `flatMap`, `getOrElse`, `getOrHandle`, `handleError`,
+  and `handleErrorWith` from `Either` instance members to exported generic extensions.
+  - Statically typed dot-call syntax and behavior are unchanged,
+    while analyzer-valid widened receivers no longer fail at a covariant virtual
+    method boundary.
+  - Selective imports must include the relevant extension type,
+    and `dynamic` receivers no longer dispatch to these operations.
+
+- Split every value-operation extension exported by `either_extensions.dart`
+  into a method-named source file.
+
+### `Either.parSequenceN` and `Either.parTraverseN`
+
 - Fixed `Either.parSequenceN` and `Either.parTraverseN` with finite concurrency
   so functions still waiting for a permit are not invoked after the first
-  observed `Left`, thrown error, or failed future. A `Left` is returned when it
-  is observed first; an ordinary error observed first is propagated with its
-  stack trace. Already-running functions remain non-cancellable and may finish
-  their side effects.
+  observed `Left`, thrown error, or failed future.
+  - A `Left` is returned when it is observed first;
+    an ordinary error observed first is propagated with its stack trace.
+  - Already-running functions remain non-cancellable and may finish their side effects.
+
 - A non-null `maxConcurrent` less than or equal to zero now throws an
   `ArgumentError` synchronously, before inputs are traversed, the
   `parTraverseN` mapper is called, or callbacks are invoked.

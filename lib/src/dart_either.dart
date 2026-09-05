@@ -184,8 +184,9 @@ sealed class Either<L, R> {
 
   /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).
   /// [Syntactic sugar do-notation](https://en.wikipedia.org/wiki/Monad_(functional_programming)#Syntactic_sugar_do-notation).
-  /// Although using [flatMap] openly often makes sense, many programmers prefer a syntax
-  /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`,
+  /// Although using [FlatMapEitherExtension.flatMap] openly often makes sense,
+  /// many programmers prefer a syntax that mimics imperative statements (called
+  /// `do-notation` in `Haskell`, `perform-notation` in `OCaml`,
   /// `computation expressions` in `F#`, and `for comprehension` in `Scala`).
   /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
   ///
@@ -292,8 +293,9 @@ sealed class Either<L, R> {
 
   /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).
   /// [Syntactic sugar do-notation](https://en.wikipedia.org/wiki/Monad_(functional_programming)#Syntactic_sugar_do-notation).
-  /// Although using [flatMap] openly often makes sense, many programmers prefer a syntax
-  /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`,
+  /// Although using [FlatMapEitherExtension.flatMap] openly often makes sense,
+  /// many programmers prefer a syntax that mimics imperative statements (called
+  /// `do-notation` in `Haskell`, `perform-notation` in `OCaml`,
   /// `computation expressions` in `F#`, and `for comprehension` in `Scala`).
   /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
   ///
@@ -952,27 +954,6 @@ sealed class Either<L, R> {
         ifRight: (r) => Either<L2, R>.right(r),
       );
 
-  /// Binds the given function across [Right].
-  ///
-  /// If this is a [Right], returns the result of applying [f] to this [Right.value].
-  /// Otherwise, returns itself.
-  ///
-  /// Slightly different from [map] in that [f] is expected to
-  /// return an [Either] (which could be a [Left]).
-  ///
-  /// ### Example
-  /// ```dart
-  /// Right<String, int>(12).flatMap((v) => Right<String, String>('flower $v'));  // Result: Right('flower 12')
-  /// Right<String, int>(12).flatMap((v) => Left<String, String>('flower $v'));   // Result: Left('flower 12')
-  /// Left<String, int>('12').flatMap((v) => Right<String, String>('flower $v')); // Result: Left('12')
-  /// Left<String, int>('12').flatMap((v) => Left<String, String>('flower $v'));  // Result: Left('12')
-  /// ```
-  @useResult
-  Either<L, R2> flatMap<R2>(Either<L, R2> Function(R value) f) => _foldInternal(
-        ifLeft: (l) => Either<L, R2>.left(l),
-        ifRight: (r) => f(r),
-      );
-
   /// Map over Left and Right of this Either
   ///
   /// ### Example
@@ -1071,26 +1052,6 @@ sealed class Either<L, R> {
         ifRight: predicate,
       );
 
-  /// Deprecated lazy fallback helper.
-  ///
-  /// This preserves the historical lazy behavior (`defaultValue` is evaluated only
-  /// when this is [Left]), so it is **not** equivalent to `getOrDefault`, which is eager.
-  ///
-  /// Prefer:
-  /// - [GetOrDefaultEitherExtension.getOrDefault] for eager fallback values.
-  /// - [getOrHandle] for lazy fallback computation.
-  ///
-  /// ### Example
-  /// ```dart
-  /// Right<int, int>(12).getOrElse(() => 17); // Result: 12
-  /// Left<int, int>(12).getOrElse(() => 17);  // Result: 17
-  /// ```
-  @Deprecated(
-    'Use getOrDefault(value) for eager fallback, or getOrHandle for lazy fallback. '
-    'It will be removed in v3.',
-  )
-  R getOrElse(R Function() defaultValue) => getOrHandle((_) => defaultValue());
-
   /// Returns the [Right]'s value if it exists, otherwise `null`.
   ///
   /// ### Example
@@ -1126,19 +1087,6 @@ sealed class Either<L, R> {
   /// ```
   @Deprecated('Use getOrNull instead. It will be removed in v3.')
   R? orNull() => getOrNull();
-
-  /// Returns the value from this [Right]
-  /// or allows clients to transform the value of [Left] to the final result.
-  ///
-  /// ### Example
-  /// ```dart
-  /// Right<int, int>(12).getOrHandle((v) => 17);   // Result: 12
-  /// Left<int, int>(12).getOrHandle((v) => v + 5); // Result: 17
-  /// ```
-  R getOrHandle(R Function(L value) defaultValue) => _foldInternal(
-        ifLeft: defaultValue,
-        ifRight: identity,
-      );
 
   /// Returns the [Right.value] matching the given [predicate],
   /// or `null` if this is a [Left] or [Right.value] does not match.
@@ -1177,69 +1125,6 @@ sealed class Either<L, R> {
     final self = this;
     return switch (self) { Left() => ifLeft(self), Right() => ifRight(self) };
   }
-
-  /// Handles a [Left] with [f], which returns a new [Either].
-  ///
-  /// - If this is a [Left], invokes [f] exactly once and returns its result
-  ///   directly. The result may be either a [Left] or a [Right].
-  /// - If this is a [Right], does not invoke [f] and returns an equivalent
-  ///   [Right] containing the unchanged value. Because the returned [Either]
-  ///   has the new left type [L2], it is not guaranteed to be identical to this
-  ///   instance.
-  ///
-  /// Semantically, this is the left-side counterpart of [flatMap]: [flatMap]
-  /// lets a [Right] callback choose the next channel, while [handleErrorWith]
-  /// gives that choice to a [Left] callback.
-  ///
-  /// In some libraries or languages, this operation is also known as
-  /// `recoverWith` or `flatMapError`.
-  /// Exceptions thrown by [f] are not caught.
-  ///
-  /// ### Example
-  /// ```dart
-  /// Right<int, int>(12).handleErrorWith((v) => (v + 1).right<String>());   // Right(12)
-  /// Right<int, int>(12).handleErrorWith((v) => (v + 1).toString().left()); // Right(12)
-  /// Left<int, int>(12).handleErrorWith((v) => (v + 1).right<String>());    // Right(13)
-  /// Left<int, int>(12).handleErrorWith((v) => (v + 1).toString().left());  // Left('13')
-  /// ```
-  @useResult
-  Either<L2, R> handleErrorWith<L2>(Either<L2, R> Function(L value) f) =>
-      _foldInternal(
-        ifLeft: f,
-        ifRight: (v) => v.right<L2>(),
-      );
-
-  /// Recovers from a [Left] by mapping its value to a [Right] value.
-  ///
-  /// - If this is a [Left], invokes [f] exactly once and wraps its result in a
-  ///   [Right].
-  /// - If this is a [Right], does not invoke [f] and returns this instance.
-  ///
-  /// On normal completion, both paths therefore produce a [Right], although
-  /// the declared return type remains `Either<L, R>`.
-  ///
-  /// Ignoring [Right] instance identity, this can be understood as the
-  /// semantics of `handleErrorWith<L>((value) => f(value).right<L>())`.
-  ///
-  /// In some libraries or languages, this operation is also known as `recover`.
-  /// Exceptions thrown by [f] are not caught.
-  ///
-  /// ### Example
-  ///
-  /// ```dart
-  /// final Either<String, int> recovered =
-  ///     Left<String, int>('missing').handleError((error) => error.length);
-  /// // recovered: Either.Right(7)
-  ///
-  /// final Either<String, int> sameRight =
-  ///     Right<String, int>(21).handleError((error) => error.length);
-  /// // sameRight: Either.Right(21)
-  /// ```
-  @useResult
-  Either<L, R> handleError(R Function(L value) f) => switch (this) {
-        Left(value: final value) => f(value).right<L>(),
-        Right() => this,
-      };
 
   /// Transforms either branch into a new [Right] value.
   ///
@@ -1287,10 +1172,11 @@ sealed class Either<L, R> {
   /// The selected callback's `Either<L2, R2>` is returned directly, so it may
   /// choose either the new [Left] channel or the new [Right] channel.
   ///
-  /// Semantically, [redeemWith] combines the right-side role of [flatMap] with
-  /// the left-side role of [handleErrorWith]. This is not a literal sequential
-  /// call to those methods: exactly one callback runs, and a [Left] returned by
-  /// either callback is not processed again.
+  /// Semantically, [redeemWith] combines the right-side role of
+  /// [FlatMapEitherExtension.flatMap] with the left-side role of
+  /// [HandleErrorWithEitherExtension.handleErrorWith]. This is not a literal
+  /// sequential call to those methods: exactly one callback runs, and a [Left]
+  /// returned by either callback is not processed again.
   ///
   /// Operationally, it is equivalent to
   /// `fold(ifLeft: leftOperation, ifRight: rightOperation)`.
