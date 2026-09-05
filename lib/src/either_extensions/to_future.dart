@@ -4,6 +4,7 @@ import '../internal.dart';
 /// Provide [toFuture] extension on [Either].
 extension AsFutureEitherExtension<L extends Object, R> on Either<L, R> {
   /// Convert this [Either] to a [Future].
+  ///
   /// If `this` is [Right], the future completes with [Right.value] as its
   /// value. Otherwise, the future completes with [Left.value] as its error.
   ///
@@ -16,8 +17,6 @@ extension AsFutureEitherExtension<L extends Object, R> on Either<L, R> {
   /// await failed; // Completes with StateError('missing').
   /// ```
   @covarianceSafe
-  Future<R> toFuture() => fold(
-        ifLeft: (e) => Future.error(e),
-        ifRight: (v) => Future.value(v),
-      );
+  Future<R> toFuture() =>
+      fold(ifLeft: Future<R>.error, ifRight: Future<R>.value);
 }
