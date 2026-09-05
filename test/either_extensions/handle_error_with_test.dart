@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('handleErrorWith', () {
-    test('handleErrorWith returns the callback Right for Left', () {
+    test('returns the callback Right for Left', () {
       var calls = 0;
 
       final result =
@@ -16,7 +16,7 @@ void main() {
       expect(calls, 1);
     });
 
-    test('handleErrorWith returns the callback Left for Left', () {
+    test('returns the callback Left for Left', () {
       final result = const Left<String, int>('error').handleErrorWith<num>(
         (value) => Left<num, int>(value.length),
       );
@@ -24,7 +24,7 @@ void main() {
       expect(result, const Left<num, int>(5));
     });
 
-    test('handleErrorWith skips the callback for Right', () {
+    test('skips the callback for Right', () {
       var calls = 0;
 
       final result = const Right<String, int>(1).handleErrorWith<num>((value) {
@@ -36,7 +36,7 @@ void main() {
       expect(calls, 0);
     });
 
-    test('handleErrorWith supports a widened Left receiver', () {
+    test('supports a widened Left receiver', () {
       const Either<String, num> either = Left<String, Never>('error');
 
       expect(
@@ -47,7 +47,7 @@ void main() {
       );
     });
 
-    test('handleErrorWith supports a widened Right receiver', () {
+    test('supports a widened Right receiver', () {
       const Either<String, num> either = Right<Never, int>(1);
       var calls = 0;
 
@@ -60,7 +60,7 @@ void main() {
       expect(calls, 0);
     });
 
-    test('handleErrorWith propagates callback errors', () {
+    test('propagates callback errors', () {
       final error = StateError('callback error');
 
       expect(

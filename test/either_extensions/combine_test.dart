@@ -6,7 +6,7 @@ void main() {
   num combineRight(num a, num b) => a + b;
 
   group('combine', () {
-    test('combine combines two Right values', () {
+    test('combines two Right values', () {
       expect(
         const Right<String, num>(1).combine(
           const Right<String, num>(2),
@@ -17,7 +17,7 @@ void main() {
       );
     });
 
-    test('combine combines two Left values', () {
+    test('combines two Left values', () {
       expect(
         const Left<String, num>('a').combine(
           const Left<String, num>('b'),
@@ -28,7 +28,7 @@ void main() {
       );
     });
 
-    test('combine returns the sole Left without invoking a combiner', () {
+    test('returns the sole Left without invoking a combiner', () {
       var leftCalls = 0;
       var rightCalls = 0;
 
@@ -55,7 +55,7 @@ void main() {
       expect(rightLeft, const Left<String, num>('a'));
     });
 
-    test('combine supports widened receivers and operands', () {
+    test('supports widened receivers and operands', () {
       const Either<String, num> left = Left<String, Never>('error');
       const Either<String, num> intRight = Right<Never, int>(1);
       const Either<String, num> doubleRight = Right<Never, double>(2.5);

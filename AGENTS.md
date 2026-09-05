@@ -125,7 +125,9 @@ dart pub publish --dry-run
 - Changes to `EitherEffect` must retain a consumer compile-fail fixture proving
   that `EitherEffect<L>()` exposes no constructor outside the library.
 - Keep deprecated alias coverage in `test/deprecated_aliases_test.dart` so one file-level lint ignore covers compatibility calls.
-- Test naming pattern: `group('MethodName', () { test('description', () { ... }); });`
+- Test naming pattern: `group('MethodName', () { test('describes behavior', () { ... }); });`.
+  Do not repeat `MethodName` in child test descriptions because the test runner
+  prefixes them with the group name.
 
 ## Repository Skills
 

@@ -3,11 +3,11 @@ import 'package:test/test.dart';
 
 void main() {
   group('getOrThrow', () {
-    test('getOrThrow returns the Right value', () {
+    test('returns the Right value', () {
       expect(const Right<Object, int>(1).getOrThrow(), 1);
     });
 
-    test('getOrThrow throws the identical Left value', () {
+    test('throws the identical Left value', () {
       final error = StateError('error');
 
       expect(
@@ -16,7 +16,7 @@ void main() {
       );
     });
 
-    test('getOrThrow supports widened variants', () {
+    test('supports widened variants', () {
       final error = StateError('error');
       final Either<Object, num> left = Left<StateError, Never>(error);
       const Either<Object, num> right = Right<Never, int>(1);

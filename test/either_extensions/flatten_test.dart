@@ -3,28 +3,28 @@ import 'package:test/test.dart';
 
 void main() {
   group('flatten', () {
-    test('flatten returns an inner Right', () {
+    test('returns an inner Right', () {
       expect(
         const Right<int, Either<int, int>>(Right<int, int>(2)).flatten(),
         const Right<int, int>(2),
       );
     });
 
-    test('flatten returns an inner Left', () {
+    test('returns an inner Left', () {
       expect(
         const Right<int, Either<int, int>>(Left<int, int>(2)).flatten(),
         const Left<int, int>(2),
       );
     });
 
-    test('flatten returns an outer Left', () {
+    test('returns an outer Left', () {
       expect(
         const Left<int, Either<int, int>>(1).flatten(),
         const Left<int, int>(1),
       );
     });
 
-    test('flatten supports widened nested variants', () {
+    test('supports widened nested variants', () {
       const Either<String, Either<String, num>> nestedRight =
           Right<Never, Either<Never, int>>(Right<Never, int>(1));
 

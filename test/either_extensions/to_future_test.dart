@@ -3,21 +3,21 @@ import 'package:test/test.dart';
 
 void main() {
   group('toFuture', () {
-    test('toFuture completes with the Right value', () async {
+    test('completes with the Right value', () async {
       await expectLater(
         const Right<String, int>(1).toFuture(),
         completion(1),
       );
     });
 
-    test('toFuture completes with the Left value as an error', () async {
+    test('completes with the Left value as an error', () async {
       await expectLater(
         const Left<String, int>('error').toFuture(),
         throwsA('error'),
       );
     });
 
-    test('toFuture supports widened variants', () async {
+    test('supports widened variants', () async {
       const Either<Object, num> left = Left<String, Never>('error');
       const Either<Object, num> right = Right<Never, int>(1);
 

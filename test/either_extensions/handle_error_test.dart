@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('handleError', () {
-    test('handleError invokes the callback once for Left', () {
+    test('invokes the callback once for Left', () {
       var calls = 0;
 
       final result = const Left<String, int>('error').handleError((value) {
@@ -15,7 +15,7 @@ void main() {
       expect(calls, 1);
     });
 
-    test('handleError preserves Right identity and skips the callback', () {
+    test('preserves Right identity and skips the callback', () {
       const either = Right<String, int>(1);
       var calls = 0;
 
@@ -28,7 +28,7 @@ void main() {
       expect(calls, 0);
     });
 
-    test('handleError supports a widened Left receiver', () {
+    test('supports a widened Left receiver', () {
       const Either<String, num> either = Left<String, Never>('error');
 
       expect(
@@ -37,7 +37,7 @@ void main() {
       );
     });
 
-    test('handleError supports a widened Right receiver', () {
+    test('supports a widened Right receiver', () {
       const Either<String, num> either = Right<Never, int>(1);
       var calls = 0;
 
@@ -50,7 +50,7 @@ void main() {
       expect(calls, 0);
     });
 
-    test('handleError propagates callback errors', () {
+    test('propagates callback errors', () {
       final error = StateError('callback error');
 
       expect(
