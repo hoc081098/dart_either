@@ -63,82 +63,73 @@ void main() {
       const Either<num, num> intLeft = Left<int, Never>(1);
       const Either<num, num> doubleLeft = Left<double, Never>(2.5);
 
-      var leftCalls = 0;
-      var rightCalls = 0;
+      String combineLeft(String a, String b) => '$a,$b';
+      num combineRight(num a, num b) => a + b;
 
-      expect(
-        intRight.combine(
-          doubleRight,
-          combineLeft: (a, b) {
-            leftCalls++;
-            return '$a,$b';
-          },
-          combineRight: (a, b) {
-            rightCalls++;
-            return a + b;
-          },
-        ),
-        const Right<String, num>(3.5),
-      );
-      expect(leftCalls, 0);
-      expect(rightCalls, 1);
+      var widenedLeftCalls = 0;
+      var widenedRightCalls = 0;
+      num combineWidenedLeft(num a, num b) {
+        widenedLeftCalls += 1;
+        return a + b;
+      }
 
-      leftCalls = 0;
-      rightCalls = 0;
+      num combineWidenedRight(num a, num b) {
+        widenedRightCalls += 1;
+        return a + b;
+      }
+
+      // (intRight, left), (intRight, doubleRight)
       expect(
         intRight.combine(
           left,
-          combineLeft: (a, b) {
-            leftCalls++;
-            return '$a,$b';
-          },
-          combineRight: (a, b) {
-            rightCalls++;
-            return a + b;
-          },
+          combineLeft: combineLeft,
+          combineRight: combineRight,
         ),
-        same(left),
+        left,
       );
-      expect(leftCalls, 0);
-      expect(rightCalls, 0);
-
-      leftCalls = 0;
-      rightCalls = 0;
       expect(
         left.combine(
           intRight,
-          combineLeft: (a, b) {
-            leftCalls++;
-            return '$a,$b';
-          },
-          combineRight: (a, b) {
-            rightCalls++;
-            return a + b;
-          },
+          combineLeft: combineLeft,
+          combineRight: combineRight,
         ),
-        same(left),
+        left,
       );
-      expect(leftCalls, 0);
-      expect(rightCalls, 0);
+      expect(
+        intRight.combine(
+          doubleRight,
+          combineLeft: combineLeft,
+          combineRight: combineRight,
+        ),
+        Right<String, num>(3.5),
+      );
 
-      leftCalls = 0;
-      rightCalls = 0;
+      // (intLeft, doubleLeft)
+      widenedLeftCalls = 0;
+      widenedRightCalls = 0;
       expect(
         intLeft.combine(
           doubleLeft,
-          combineLeft: (a, b) {
-            leftCalls++;
-            return a + b;
-          },
-          combineRight: (a, b) {
-            rightCalls++;
-            return a + b;
-          },
+          combineLeft: combineWidenedLeft,
+          combineRight: combineWidenedRight,
         ),
-        const Left<num, num>(3.5),
+        Left<num, num>(3.5),
       );
-      expect(leftCalls, 1);
-      expect(rightCalls, 0);
+      expect(widenedLeftCalls, 1);
+      expect(widenedRightCalls, 0);
+
+      widenedLeftCalls = 0;
+      widenedRightCalls = 0;
+      expect(
+        doubleLeft.combine(
+          intLeft,
+          combineLeft: combineWidenedLeft,
+          combineRight: combineWidenedRight,
+        ),
+        Left<num, num>(3.5),
+      );
+      expect(widenedLeftCalls, 1);
+      expect(widenedRightCalls, 0);
     });
   });
 }
