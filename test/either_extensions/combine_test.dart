@@ -2,30 +2,49 @@ import 'package:dart_either/dart_either.dart';
 import 'package:test/test.dart';
 
 void main() {
-  String combineLeft(String a, String b) => '$a,$b';
-  num combineRight(num a, num b) => a + b;
-
   group('combine', () {
     test('combines two Right values', () {
+      var leftCalls = 0;
+      var rightCalls = 0;
+
       expect(
         const Right<String, num>(1).combine(
           const Right<String, num>(2),
-          combineLeft: combineLeft,
-          combineRight: combineRight,
+          combineLeft: (a, b) {
+            leftCalls++;
+            return '$a,$b';
+          },
+          combineRight: (a, b) {
+            rightCalls++;
+            return a + b;
+          },
         ),
         const Right<String, num>(3),
       );
+      expect(leftCalls, 0);
+      expect(rightCalls, 1);
     });
 
     test('combines two Left values', () {
+      var leftCalls = 0;
+      var rightCalls = 0;
+
       expect(
         const Left<String, num>('a').combine(
           const Left<String, num>('b'),
-          combineLeft: combineLeft,
-          combineRight: combineRight,
+          combineLeft: (a, b) {
+            leftCalls++;
+            return '$a,$b';
+          },
+          combineRight: (a, b) {
+            rightCalls++;
+            return a + b;
+          },
         ),
         const Left<String, num>('a,b'),
       );
+      expect(leftCalls, 1);
+      expect(rightCalls, 0);
     });
 
     test('returns the sole Left without invoking a combiner', () {
@@ -47,12 +66,21 @@ void main() {
       expect(leftCalls, 0);
       expect(rightCalls, 0);
 
+      leftCalls = rightCalls = 0;
       final rightLeft = const Right<String, num>(2).combine(
         const Left<String, num>('a'),
-        combineLeft: combineLeft,
-        combineRight: combineRight,
+        combineLeft: (a, b) {
+          leftCalls++;
+          return '$a,$b';
+        },
+        combineRight: (a, b) {
+          rightCalls++;
+          return a + b;
+        },
       );
       expect(rightLeft, const Left<String, num>('a'));
+      expect(leftCalls, 0);
+      expect(rightCalls, 0);
     });
 
     test('supports widened receivers and operands', () {
