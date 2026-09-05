@@ -1,6 +1,6 @@
 ## Unreleased
 
-### Either value-operation
+### Either operations
 
 - Relocated `flatMap`, `getOrElse`, `getOrHandle`, `handleError`,
   and `handleErrorWith` from `Either` instance members to exported generic extensions.
