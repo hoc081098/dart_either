@@ -8,8 +8,10 @@ extension GetOrThrowEitherExtension<L extends Object, R> on Either<L, R> {
   /// This is functionally equivalent to `getOrHandle((value) => throw value)`.
   ///
   /// ### Example
+  ///
   /// ```dart
   /// Right<StateError, int>(12).getOrThrow(); // Result: 12
+  ///
   /// Left<StateError, int>(StateError('missing')).getOrThrow();
   /// // Throws StateError('missing')
   /// ```
