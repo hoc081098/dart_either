@@ -23,7 +23,7 @@ void main() {
     });
 
     test('getOrDefault supports widened variants', () {
-      const Either<String, int> left = Left<String, Never>('error');
+      const Either<String, num> left = Left<String, Never>('error');
       const Either<String, num> right = Right<Never, int>(1);
 
       expect(left.getOrDefault(2), 2);
