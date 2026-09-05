@@ -13,6 +13,7 @@ extension CombineEitherExtension<L, R> on Either<L, R> {
   /// Otherwise, returns the sole [Left] value.
   ///
   /// ### Example
+  ///
   /// ```dart
   /// final rr = Right<String, int>(1).combine(
   ///   Right<String, int>(2),
