@@ -21,7 +21,6 @@
 
   - A `Left` is returned when it is observed first;
     an ordinary error observed first is propagated with its stack trace.
-  
   - Already-running functions remain non-cancellable and may finish their side effects.
 
 - A non-null `maxConcurrent` less than or equal to zero now throws an
