@@ -5,7 +5,6 @@ import 'package:meta/meta.dart';
 import 'package:meta/meta_meta.dart';
 
 import 'binding.dart';
-import 'either_extensions.dart';
 import 'extensions.dart';
 import 'internal.dart';
 import 'to_either_stream.dart';
