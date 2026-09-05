@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 import 'package:meta/meta_meta.dart';
 
 import 'binding.dart';
+import 'either_extensions.dart';
 import 'extensions.dart';
 import 'internal.dart';
 import 'to_either_stream.dart';
@@ -183,8 +184,9 @@ sealed class Either<L, R> {
 
   /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).
   /// [Syntactic sugar do-notation](https://en.wikipedia.org/wiki/Monad_(functional_programming)#Syntactic_sugar_do-notation).
-  /// Although using [flatMap] openly often makes sense, many programmers prefer a syntax
-  /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`,
+  /// Although using [FlatMapEitherExtension.flatMap] openly often makes sense,
+  /// many programmers prefer a syntax that mimics imperative statements (called
+  /// `do-notation` in `Haskell`, `perform-notation` in `OCaml`,
   /// `computation expressions` in `F#`, and `for comprehension` in `Scala`).
   /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
   ///
@@ -291,8 +293,9 @@ sealed class Either<L, R> {
 
   /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).
   /// [Syntactic sugar do-notation](https://en.wikipedia.org/wiki/Monad_(functional_programming)#Syntactic_sugar_do-notation).
-  /// Although using [flatMap] openly often makes sense, many programmers prefer a syntax
-  /// that mimics imperative statements (called `do-notation` in `Haskell`, `perform-notation` in `OCaml`,
+  /// Although using [FlatMapEitherExtension.flatMap] openly often makes sense,
+  /// many programmers prefer a syntax that mimics imperative statements (called
+  /// `do-notation` in `Haskell`, `perform-notation` in `OCaml`,
   /// `computation expressions` in `F#`, and `for comprehension` in `Scala`).
   /// This is only syntactic sugar that disguises a monadic pipeline as a code block.
   ///
@@ -1169,10 +1172,11 @@ sealed class Either<L, R> {
   /// The selected callback's `Either<L2, R2>` is returned directly, so it may
   /// choose either the new [Left] channel or the new [Right] channel.
   ///
-  /// Semantically, [redeemWith] combines the right-side role of [flatMap] with
-  /// the left-side role of [handleErrorWith]. This is not a literal sequential
-  /// call to those methods: exactly one callback runs, and a [Left] returned by
-  /// either callback is not processed again.
+  /// Semantically, [redeemWith] combines the right-side role of
+  /// [FlatMapEitherExtension.flatMap] with the left-side role of
+  /// [HandleErrorWithEitherExtension.handleErrorWith]. This is not a literal
+  /// sequential call to those methods: exactly one callback runs, and a [Left]
+  /// returned by either callback is not processed again.
   ///
   /// Operationally, it is equivalent to
   /// `fold(ifLeft: leftOperation, ifRight: rightOperation)`.

@@ -53,7 +53,7 @@ the `Either` class. Declaration placement is determined mechanically:
 | Declaration | Rule | Examples |
 |---|---|---|
 | `Either` instance member | The receiver is unconstrained `Either<L, R>` and every occurrence of `L` and `R` is safe at a covariant virtual-method boundary | `fold`, `map`, `mapLeft`, `swap`, `onLeft`, `onRight`, `getOrNull` |
-| Generic extension on `Either` | An `L` or `R` occurs negatively or invariantly in the operation's signature | `flatMap`, `getOrElse`, `getOrHandle`, `getOrDefault`, `handleError`, `handleErrorWith`, `combine`, and the final left-aware `getOrElse` |
+| Generic extension on `Either` | An `L` or `R` occurs negatively or invariantly in the operation's signature | `flatMap`, deprecated 2.x `getOrElse(R Function())`, `getOrHandle`, `getOrDefault`, `handleError`, `handleErrorWith`, `combine`, and planned 3.x `getOrElse(R Function(L))` |
 | Specialized extension on `Either` | The operation exists only for a constrained or refined receiver shape | `flatten`, `merge`, `toFuture`, `getOrThrow` |
 | `Either` static member | The operation constructs, handles, or combines values without consuming the enclosing class's `L` or `R` | `tryCatch`, `tryCatchAsync`, `binding`, `bindingAsync`, `sequence`, `traverse` |
 | Extension on another receiver | The operation adapts a foreign type into or through `Either` | `Future.toEitherFuture`, `Stream.toEitherStream`, `T.left`, `T.right` |
