@@ -3,10 +3,10 @@
 This note distills an earlier discussion about the value proposition of
 `dart_either` and the improvements that could make it more robust. It is not a
 transcript or marketing copy. Every technical statement below was last
-reconciled with the repository state on 2026-09-04.
+reconciled with the repository state on 2026-09-06.
 
-The package currently declares version `2.3.0`. This repository state is
-prepared for release; verify the registry before describing `2.3.0` as
+The package currently declares version `2.4.0`. This repository state is
+prepared for release; verify the registry before describing `2.4.0` as
 published.
 
 ## Executive summary
@@ -32,9 +32,9 @@ detected, `raise` is implemented, and the full test suite runs in CI.
 The main remaining technical debt is not a lack of more convenience methods.
 It is semantic precision:
 
-1. make nullable and exception conversion more domain-selective;
-2. decide whether `BuiltList` still fits the lightweight positioning; and
-3. strengthen law, lower-bound, documentation, and package validation.
+1. strengthen law, lower-bound, documentation, and package validation;
+2. make nullable and exception conversion more domain-selective; and
+3. decide whether `BuiltList` still fits the lightweight positioning.
 
 ## Why the library is useful
 
@@ -176,15 +176,19 @@ unwinding, and catch. Explicit `flatMap` does not require that control-flow
 exception. This makes binding mechanically more expensive on the
 short-circuit path.
 
-The repository has no benchmark that quantifies the difference, so it would
-be inaccurate to promise that the overhead is negligible. A reasonable usage
-rule is:
+The repository includes a
+[`flatMap` versus synchronous `binding` microbenchmark](../benchmark/flat_map_vs_binding_benchmark.dart)
+for successful pipelines and a late `Left` short-circuit. It supports JIT and
+AOT runs, but does not measure asynchronous or application-level workloads.
+Compare results on the same machine and runtime; the benchmark alone does not
+establish that application overhead is negligible. A reasonable usage rule is:
 
 - prefer `binding` / `bindingAsync` where readability dominates, especially
   I/O-heavy Repository, UseCase, API, and database flows;
 - consider explicit composition in CPU hot loops where `Left` is expected
   frequently as ordinary control flow; and
-- add a benchmark before making performance claims in public documentation.
+- run the benchmark for the target runtime and measure representative
+  application workloads before making public performance claims.
 
 Broad `try`/`catch` inside a binding block remains discouraged. Dart permits
 user code to catch the internal signal even though the library detects the
@@ -310,7 +314,39 @@ Optional future work:
 2. Treat true cancellation as a separate cooperative capability; do not imply
    that an early `Either` result cancels an HTTP request or arbitrary future.
 
-### Priority 1: add typed nullable construction
+### Priority 1: add semantic laws and package gates
+
+High line coverage is useful but does not establish algebraic laws or
+lower-bound compatibility. Add explicit tests for:
+
+- functor identity and composition;
+- monad left identity, right identity, and associativity;
+- `bimap` identity and composition;
+- `swap().swap()` identity;
+- `sequence` and `traverse` order preservation;
+- parallel traversal result-order preservation; and
+- equivalence between binding and an explicit `flatMap` chain for success and
+  the first `Left`.
+
+Retain the completed variance and parallel edge-case regression coverage
+described above.
+
+Automate the manual Dartdoc and publish dry-run checks, and add dependency
+lower-bound and package-quality checks:
+
+```text
+dart pub downgrade
+dart test
+dart pub publish --dry-run
+dart doc --validate-links
+pana .
+```
+
+The current CI already runs the full suite and collects coverage; this work is
+about semantic confidence, lower-bound support, documentation generation, and
+package quality rather than merely increasing a percentage.
+
+### Priority 2: add typed nullable construction
 
 The current `Either.fromNullable<R>` returns `Either<void, R>` and uses
 `Left(null)`. This is convenient but often too weak for a domain boundary,
@@ -329,7 +365,7 @@ Reasonable names from the earlier discussion are `fromNullableOr`,
 `fromNullableWith`, or `fromNullableLeft`. Dart has no overloads, so changing
 the existing signature under the same name is not a `2.x` option.
 
-### Priority 1: make exception capture selective
+### Priority 2: make exception capture selective
 
 `tryCatch`, `tryCatchAsync`, `toEitherFuture`, and `toEitherStream` catch
 `Object`, except that their internal guard rethrows `ControlError` and types
@@ -404,7 +440,7 @@ terminate: cancellation still propagates to its owning lifecycle boundary, and
 a Flutter global error handler ultimately decides how an otherwise unhandled
 error is reported or terminated.
 
-### Priority 2: decide the collection return strategy
+### Priority 3: decide the collection return strategy
 
 `BuiltList` provides immutability and stable collection semantics, but it also
 adds a runtime dependency and exposes a more FP-specific type to consumers.
@@ -419,35 +455,6 @@ Changing existing return types is breaking. Available paths are:
 This is a product-positioning choice, not an automatic cleanup. Measure the
 dependency and migration cost before deciding.
 
-### Priority 2: add semantic laws and package gates
-
-High line coverage is useful but does not establish algebraic laws or
-lower-bound compatibility. Add explicit tests for:
-
-- functor identity and composition;
-- monad left identity, right identity, and associativity;
-- `bimap` identity and composition;
-- `swap().swap()` identity;
-- `sequence` and `traverse` order preservation;
-- parallel traversal result-order preservation;
-- equivalence between binding and an explicit `flatMap` chain for success and
-  the first `Left`; and
-- the variance and parallel edge cases described above.
-
-Add CI or release gates for:
-
-```text
-dart pub downgrade
-dart test
-dart pub publish --dry-run
-dart doc
-pana .
-```
-
-The current CI already runs the full suite and collects coverage; this work is
-about semantic confidence, lower-bound support, documentation generation, and
-package quality rather than merely increasing a percentage.
-
 ### Operational risk: community and bus factor
 
 A small maintainer/community footprint is a legitimate adoption concern, but
@@ -461,27 +468,37 @@ technical correctness verdict or quote stale PR counts as evidence.
 | Area | Existing evidence | Missing confidence |
 |---|---|---|
 | Basic `Either` operations | Broad unit coverage | Explicit law/property suite |
-| Naming migration | Deprecated alias tests and migration docs | Major-version removal plan |
+| Naming migration | Deprecated alias tests, migration docs, and the 3.x fallback plan | Execute the planned major-version cleanup |
 | `EitherEffect` variance | Safe narrowing and compile-fail widening fixtures | No known gap in the new carrier |
 | Scope isolation | Nested sync/async token tests | Stress interleavings if runtime changes |
 | Capability lifetime | Post-scope use throws `StateError` | More async race cases if APIs expand |
 | Swallowed short-circuit | Sync and async interception tests | Helper-specific `ControlError` filtering tests |
-| Legacy `Either` variance | Selected safe APIs have widened tests | Full audit and migrations for unsafe methods |
+| `Either` variance | Complete instance-member audit, five relocated operations, and widened regression tests | No known gap in the audited 2.4.0 surface; audit future API changes |
 | Sequential traversal | Success, first `Left`, and large iterable tests | Explicit order laws |
 | Parallel traversal | Concurrency limit, result order, first-failure precedence, error/stack preservation, queued functions rejected after `Left` or callback error, and post-result continuation of already-running functions | No known gap in the current fail-fast contract |
 | Dependency bounds | Dart 3.0.0 SDK job | `dart pub downgrade` dependency job |
-| Package health | Analyze, format, full tests, coverage | `dart doc`, dry-run publish, and `pana` |
-| Binding performance | Mechanism is understood | Reproducible benchmark before public claims |
+| Package health | CI analysis, format, full tests, coverage, and manual Dartdoc/publish dry-run checks | Automate Dartdoc and dry-run checks; add `pana` |
+| Binding performance | Synchronous `flatMap`/`binding` microbenchmark for success and late `Left` | Target-runtime measurements and representative application workloads before public claims |
 
 ## Recommended next slice
 
-Continue with one variance-migration slice, not another convenience API:
+After releasing `2.4.0`, start with semantic laws and package gates. The
+variance relocation and parallel fail-fast work are complete and do not need
+another migration slice.
 
-1. capture analyzer-valid runtime failures for the five classified unsafe
-   methods as replacement regression fixtures;
-2. propose additive safe names and a `2.x` deprecation path using the
-   repository's API-rename workflow.
+Continue in this order:
 
-This follows the maturity level the library has reached. The question is no
-longer whether `Left` and `Right` work. It is whether every public type boundary
-and async edge case behaves predictably under the hardest valid Dart programs.
+1. add the law suite, dependency lower-bound checks, and automated package
+   validation described above;
+2. add a typed nullable companion without changing `fromNullable`;
+3. design selective exception capture while preserving the unconditional
+   rethrow of `ControlError` and registered fatal types; and
+4. evaluate the collection strategy and richer scoped recovery against
+   concrete consumer needs before expanding the API.
+
+Removing `getOrHandle`, replacing the legacy `getOrElse` signature, and
+changing existing collection return types remain `3.x` work. The fallback
+migration is specified in
+[API naming alignment](api-naming-alignment.md#fallback-migration-details).
+Worker-pool optimization and cooperative cancellation remain separate future
+work, not requirements for `2.4.0`.

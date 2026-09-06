@@ -1,4 +1,4 @@
-## Unreleased
+## 2.4.0 - Sep 06, 2026
 
 ### Either operations
 
@@ -11,7 +11,9 @@
     and `dynamic` receivers no longer dispatch to these operations.
 
 - Split every value-operation extension exported by `either_extensions.dart`
-  into a method-named source file.
+  into a method-named source file. This file split changes only the source
+  layout; public exports, call syntax, and behavior remain unchanged, so no
+  consumer migration is required for the split.
 
 ### `Either.parSequenceN` and `Either.parTraverseN`
 
@@ -25,6 +27,11 @@
 - A non-null `maxConcurrent` less than or equal to zero now throws an
   `ArgumentError` synchronously, before inputs are traversed, the
   `parTraverseN` mapper is called, or callbacks are invoked.
+
+- Errors thrown while iterating the input or invoking the `parTraverseN`
+  mapper now propagate synchronously instead of completing the returned future
+  with an error. No asynchronous operation callback is invoked if this input
+  preparation fails.
 
 ## 2.3.0 - Sep 02, 2026
 
