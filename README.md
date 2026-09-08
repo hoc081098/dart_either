@@ -2,7 +2,7 @@
 
 > **Author:** [Petrus Nguyễn Thái Học](https://github.com/hoc081098)
 
-[![Dart CI](https://github.com/hoc081098/dart_either/workflows/Dart%20CI/badge.svg)](https://github.com/hoc081098/dart_either/actions)
+[![Dart CI](https://github.com/hoc081098/dart_either/actions/workflows/dart.yml/badge.svg?branch=master)](https://github.com/hoc081098/dart_either/actions/workflows/dart.yml)
 [![pub version](https://img.shields.io/pub/v/dart_either)](https://pub.dev/packages/dart_either)
 [![pub prerelease](https://img.shields.io/pub/v/dart_either?include_prereleases)](https://pub.dev/packages/dart_either)
 [![codecov](https://codecov.io/gh/hoc081098/dart_either/branch/master/graph/badge.svg)](https://codecov.io/gh/hoc081098/dart_either)
