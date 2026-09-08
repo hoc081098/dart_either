@@ -22,6 +22,9 @@ from the published package through `.pubignore`.
 - [ADR 0002](adr/0002-relocate-variance-unsafe-either-operations-to-extensions.md):
   why five variance-unsafe `Either` instance operations move to named generic
   extensions in `2.4.0`, including the accepted compatibility boundary.
+- [ADR 0003](adr/0003-adopt-semantic-law-and-api-coherence-tests.md):
+  why algebraic laws and package-specific coherence properties are permanent
+  release gates without claiming type classes the package does not expose.
 - [API rename workflow](../.agents/skills/api-rename-flow/SKILL.md): the required
   process for non-breaking public API renames.
 

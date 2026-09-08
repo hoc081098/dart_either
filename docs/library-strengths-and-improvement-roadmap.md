@@ -328,6 +328,10 @@ lower-bound compatibility. Add explicit tests for:
 - equivalence between binding and an explicit `flatMap` chain for success and
   the first `Left`.
 
+The accepted scope, precedence, and deterministic test strategy for this suite
+are recorded in
+[ADR 0003](adr/0003-adopt-semantic-law-and-api-coherence-tests.md).
+
 Retain the completed variance and parallel edge-case regression coverage
 described above.
 
