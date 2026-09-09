@@ -314,29 +314,25 @@ Optional future work:
 2. Treat true cancellation as a separate cooperative capability; do not imply
    that an early `Either` result cancels an HTTP request or arbitrary future.
 
-### Priority 1: add semantic laws and package gates
+### Priority 1: automate the remaining package gates
 
 High line coverage is useful but does not establish algebraic laws or
-lower-bound compatibility. Add explicit tests for:
-
-- functor identity and composition;
-- monad left identity, right identity, and associativity;
-- `bimap` identity and composition;
-- `swap().swap()` identity;
-- `sequence` and `traverse` order preservation;
-- parallel traversal result-order preservation; and
-- equivalence between binding and an explicit `flatMap` chain for success and
-  the first `Left`.
-
-The accepted scope, precedence, and deterministic test strategy for this suite
-are recorded in
-[ADR 0003](adr/0003-adopt-semantic-law-and-api-coherence-tests.md).
+lower-bound compatibility. The deterministic suite accepted in
+[ADR 0003](adr/0003-adopt-semantic-law-and-api-coherence-tests.md) is now
+implemented under [`test/laws`](../test/laws). It covers the accepted Functor,
+Monad, and Bifunctor laws; coherence among `map`, `flatMap`, `mapLeft`, `bimap`,
+and `swap`; sequential traversal coherence and all-`Right` ordering; and
+equivalence between binding pipelines and their explicit composition forms.
+It also covers binding-capability helpers in both synchronous and asynchronous
+scopes, with real suspension in the asynchronous cases.
 
 Retain the completed variance and parallel edge-case regression coverage
-described above.
+described above. Those focused tests remain authoritative for operational
+contracts such as callback invocation, fail-fast timing, concurrency, and
+cancellation boundaries.
 
-Automate the manual Dartdoc and publish dry-run checks, and add dependency
-lower-bound and package-quality checks:
+The remaining Priority 1 work is to automate the manual Dartdoc and publish
+dry-run checks, and add dependency lower-bound and package-quality checks:
 
 ```text
 dart pub downgrade
@@ -471,14 +467,15 @@ technical correctness verdict or quote stale PR counts as evidence.
 
 | Area | Existing evidence | Missing confidence |
 |---|---|---|
-| Basic `Either` operations | Broad unit coverage | Explicit law/property suite |
+| Basic `Either` operations | Broad unit coverage plus deterministic Functor, Monad, Bifunctor, and API-coherence matrices | No known gap within the accepted pure-law domain; reconsider property generators if the algebra grows |
 | Naming migration | Deprecated alias tests, migration docs, and the 3.x fallback plan | Execute the planned major-version cleanup |
 | `EitherEffect` variance | Safe narrowing and compile-fail widening fixtures | No known gap in the new carrier |
 | Scope isolation | Nested sync/async token tests | Stress interleavings if runtime changes |
 | Capability lifetime | Post-scope use throws `StateError` | More async race cases if APIs expand |
+| Binding composition | Sync/async coherence with explicit pipelines, `bind`/`raise`, `ensure`, and `ensureNotNull` | No known gap in the accepted coherence scope; keep operational behavior in focused tests |
 | Swallowed short-circuit | Sync and async interception tests | Helper-specific `ControlError` filtering tests |
 | `Either` variance | Complete instance-member audit, five relocated operations, and widened regression tests | No known gap in the audited 2.4.0 surface; audit future API changes |
-| Sequential traversal | Success, first `Left`, and large iterable tests | Explicit order laws |
+| Sequential traversal | Success, first `Left`, large iterable, `traverse`/`sequence` coherence, and all-`Right` ordered mapping tests | No known gap in the current sequential semantics |
 | Parallel traversal | Concurrency limit, result order, first-failure precedence, error/stack preservation, queued functions rejected after `Left` or callback error, and post-result continuation of already-running functions | No known gap in the current fail-fast contract |
 | Dependency bounds | Dart 3.0.0 SDK job | `dart pub downgrade` dependency job |
 | Package health | CI analysis, format, full tests, coverage, and manual Dartdoc/publish dry-run checks | Automate Dartdoc and dry-run checks; add `pana` |
@@ -486,14 +483,14 @@ technical correctness verdict or quote stale PR counts as evidence.
 
 ## Recommended next slice
 
-After releasing `2.4.0`, start with semantic laws and package gates. The
-variance relocation and parallel fail-fast work are complete and do not need
-another migration slice.
+After releasing `2.4.0`, the semantic-law slice is complete. Continue with the
+remaining package gates. The variance relocation and parallel fail-fast work
+are also complete and do not need another migration slice.
 
 Continue in this order:
 
-1. add the law suite, dependency lower-bound checks, and automated package
-   validation described above;
+1. add dependency lower-bound checks and the automated package validation
+   described above;
 2. add a typed nullable companion without changing `fromNullable`;
 3. design selective exception capture while preserving the unconditional
    rethrow of `ControlError` and registered fatal types; and

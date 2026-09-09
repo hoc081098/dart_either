@@ -1,3 +1,12 @@
+## Unreleased
+
+### Quality assurance
+
+- Added deterministic semantic-law and API-coherence tests for `map`,
+  `flatMap`, `mapLeft`, `bimap`, and `swap`, plus sequential traversal and
+  synchronous and asynchronous binding scopes. The async coherence cases
+  include real asynchronous suspension.
+
 ## 2.4.0 - Sep 06, 2026
 
 ### Either operations
