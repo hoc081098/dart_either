@@ -5,8 +5,8 @@ workflows. The public API documentation remains in Dart doc comments and the
 root [README](../README.md). This directory is repository-only and excluded
 from the published package through `.pubignore`.
 
-- [Domain language](../CONTEXT.md): canonical terms for binding scopes,
-  binding capabilities, and short-circuiting.
+- [Domain language](../CONTEXT.md): canonical terms for `Either` value
+  equality, binding scopes, binding capabilities, and short-circuiting.
 - [API naming alignment](api-naming-alignment.md): implemented migrations,
   compatibility decisions, the major-version roadmap, and deferred proposals.
 - [Arrow Either reference](arrow-either-reference.md): upstream links and the
@@ -26,6 +26,9 @@ from the published package through `.pubignore`.
   why the implemented [algebraic-law and API-coherence suites](../test/laws)
   are permanent release gates without claiming type classes the package does
   not expose.
+- [ADR 0004](adr/0004-define-either-value-equality-and-branch-aware-hashing.md):
+  why `Either` equality ignores generic type arguments and hashing must combine
+  a branch discriminator with the active payload hash.
 - [API rename workflow](../.agents/skills/api-rename-flow/SKILL.md): the required
   process for non-breaking public API renames.
 
