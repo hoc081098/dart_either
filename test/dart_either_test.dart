@@ -11,6 +11,18 @@ class _RegisteredFatalException implements Exception {}
 
 final class _RegisteredFatalSubtype extends _RegisteredFatalException {}
 
+final class _MutableHashValue {
+  _MutableHashValue(this.hashCodeValue);
+
+  int hashCodeValue;
+
+  @override
+  bool operator ==(Object other) => identical(this, other);
+
+  @override
+  int get hashCode => hashCodeValue;
+}
+
 final class _EagerMapIterable<T> extends Iterable<T> {
   _EagerMapIterable(this._values);
 
@@ -85,6 +97,127 @@ void main() {
         expect('Either.Left(1)', leftOf1.toString());
         expect('Either.Left([1, 2, 3])',
             Left<List<int>, Never>([1, 2, 3]).toString());
+      });
+    });
+
+    group('operator ==', () {
+      test('is reflexive when the payload is not reflexive', () {
+        final left = Left<double, Never>(double.nan);
+        final right = Right<Never, double>(double.nan);
+
+        expect(left == left, isTrue);
+        expect(right == right, isTrue);
+        expect(left == Left<double, Never>(double.nan), isFalse);
+        expect(right == Right<Never, double>(double.nan), isFalse);
+      });
+
+      test('delegates across payload runtime types', () {
+        const leftInt = Left<num, Never>(1);
+        const leftDouble = Left<num, Never>(1.0);
+        const rightInt = Right<Never, num>(1);
+        const rightDouble = Right<Never, num>(1.0);
+
+        expect(leftInt == leftDouble, isTrue);
+        expect(leftDouble == leftInt, isTrue);
+        expect(rightInt == rightDouble, isTrue);
+        expect(rightDouble == rightInt, isTrue);
+      });
+
+      test('ignores generic type arguments symmetrically and transitively', () {
+        const lefts = <Object>[
+          Left<int, Never>(1),
+          Left<num, String>(1),
+          Left<Object, Object?>(1),
+        ];
+        const rights = <Object>[
+          Right<Never, int>(1),
+          Right<String, num>(1),
+          Right<Object?, Object>(1),
+        ];
+
+        for (final values in <List<Object>>[lefts, rights]) {
+          for (final first in values) {
+            for (final second in values) {
+              expect(first == second, isTrue);
+            }
+          }
+        }
+      });
+
+      test('distinguishes branches with equal payloads', () {
+        const Either<Object, Object> left = Left(1);
+        const Either<Object, Object> right = Right(1);
+
+        expect(left == right, isFalse);
+        expect(right == left, isFalse);
+      });
+    });
+
+    group('hashCode', () {
+      test('is computed on read', () {
+        final leftPayload = _MutableHashValue(0);
+        final rightPayload = _MutableHashValue(0);
+        final left = Left<_MutableHashValue, Never>(leftPayload);
+        final right = Right<Never, _MutableHashValue>(rightPayload);
+        final leftHashes = <int>{};
+        final rightHashes = <int>{};
+
+        for (var hashCodeValue = 0; hashCodeValue < 16; hashCodeValue++) {
+          leftPayload.hashCodeValue = hashCodeValue;
+          rightPayload.hashCodeValue = hashCodeValue;
+          leftHashes.add(left.hashCode);
+          rightHashes.add(right.hashCode);
+        }
+
+        expect(leftHashes.length, greaterThan(1));
+        expect(rightHashes.length, greaterThan(1));
+      });
+
+      test('matches for equal values across generic instantiations', () {
+        const leftInt = Left<int, Never>(1);
+        const leftDouble = Left<num, String>(1.0);
+        const rightInt = Right<Never, int>(1);
+        const rightDouble = Right<String, num>(1.0);
+
+        expect(leftInt.hashCode, leftDouble.hashCode);
+        expect(rightInt.hashCode, rightDouble.hashCode);
+      });
+
+      test('does not systematically collide across branches', () {
+        final payloads = <Object?>[null, 0, 1, -1, '', 'value', true];
+
+        final hasDistinctBranchHash = payloads.any(
+          (value) =>
+              Left<Object?, Never>(value).hashCode !=
+              Right<Never, Object?>(value).hashCode,
+        );
+
+        expect(hasDistinctBranchHash, isTrue);
+      });
+
+      test('deduplicates equal values while preserving branches', () {
+        const leftInt = Left<int, Never>(1);
+        const leftNum = Left<num, String>(1);
+        const rightInt = Right<Never, int>(1);
+        const rightNum = Right<String, num>(1);
+
+        final values = <Either<Object?, Object?>>{
+          leftInt,
+          leftNum,
+          rightInt,
+          rightNum,
+        };
+        final labels = <Either<Object?, Object?>, String>{
+          leftInt: 'first left',
+          leftNum: 'second left',
+          rightInt: 'first right',
+          rightNum: 'second right',
+        };
+
+        expect(values.length, 2);
+        expect(labels.length, 2);
+        expect(labels[leftInt], 'second left');
+        expect(labels[rightInt], 'second right');
       });
     });
 

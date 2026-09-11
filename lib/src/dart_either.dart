@@ -1211,6 +1211,9 @@ sealed class Either<L, R> {
       );
 }
 
+const int _leftHashDiscriminator = 0;
+const int _rightHashDiscriminator = 1;
+
 /// The left side of the disjoint union, as opposed to the [Right] side.
 @sealed
 class Left<L, R> extends Either<L, R> {
@@ -1231,7 +1234,7 @@ class Left<L, R> extends Either<L, R> {
       identical(this, other) || (other is Left && value == other.value);
 
   @override
-  int get hashCode => value.hashCode;
+  int get hashCode => Object.hash(_leftHashDiscriminator, value);
 
   @override
   String toString() => 'Either.Left($value)';
@@ -1257,7 +1260,7 @@ class Right<L, R> extends Either<L, R> {
       identical(this, other) || (other is Right && value == other.value);
 
   @override
-  int get hashCode => value.hashCode;
+  int get hashCode => Object.hash(_rightHashDiscriminator, value);
 
   @override
   String toString() => 'Either.Right($value)';

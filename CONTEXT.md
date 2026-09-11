@@ -10,6 +10,12 @@ A value containing either a typed undesired value on the left or a desired
 value on the right.
 _Avoid_: Result, response wrapper
 
+**Either value equality**:
+Two `Either` values are equal when they are identical, or when they occupy the
+same branch and their corresponding contained values compare equal using their
+own `operator ==`. Generic type arguments do not participate.
+_Avoid_: bare equality, runtime-type equality, payload-only equality
+
 **Binding scope**:
 The lifetime of one `Either.binding` or `Either.bindingAsync` computation.
 _Avoid_: Global context, coroutine scope
