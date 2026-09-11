@@ -1,5 +1,12 @@
 ## Unreleased
 
+### Either value equality and hashing
+
+- `Left` and `Right` hash codes now combine a branch-specific discriminator
+  with the active payload hash, avoiding systematic collisions between
+  same-payload values in different branches. Equality is unchanged: it uses
+  identity or same-branch payload equality and ignores generic type arguments.
+
 ### Quality assurance
 
 - Added deterministic semantic-law and API-coherence tests for `map`,
