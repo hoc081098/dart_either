@@ -3,11 +3,10 @@
 This note distills an earlier discussion about the value proposition of
 `dart_either` and the improvements that could make it more robust. It is not a
 transcript or marketing copy. Every technical statement below was last
-reconciled with the repository state on 2026-09-06.
+reconciled with the repository state on 2026-09-21.
 
-The package currently declares version `2.4.0`. This repository state is
-prepared for release; verify the registry before describing `2.4.0` as
-published.
+The package currently declares version `2.4.0`, which is
+[published on pub.dev](https://pub.dev/packages/dart_either).
 
 ## Executive summary
 
@@ -29,12 +28,14 @@ it is now an opaque, scope-bound, contravariant capability backed by a private
 final class. Captured capabilities are revoked, intercepted short-circuits are
 detected, `raise` is implemented, and the full test suite runs in CI.
 
-The main remaining technical debt is not a lack of more convenience methods.
-It is semantic precision:
+The main remaining design work is not a lack of more convenience methods. It is
+semantic precision:
 
-1. strengthen law, lower-bound, documentation, and package validation;
-2. make nullable and exception conversion more domain-selective; and
-3. decide whether `BuiltList` still fits the lightweight positioning.
+1. make nullable and exception conversion more domain-selective; and
+2. decide whether `BuiltList` still fits the lightweight positioning.
+
+Law, lower-bound, documentation, and package validation are covered by CI;
+keep those gates current as the package evolves.
 
 ## Why the library is useful
 
@@ -314,7 +315,7 @@ Optional future work:
 2. Treat true cancellation as a separate cooperative capability; do not imply
    that an early `Either` result cancels an HTTP request or arbitrary future.
 
-### Priority 1: automate the remaining package gates
+### Completed: automate the remaining package gates
 
 High line coverage is useful but does not establish algebraic laws or
 lower-bound compatibility. The deterministic suite accepted in
@@ -331,20 +332,30 @@ described above. Those focused tests remain authoritative for operational
 contracts such as callback invocation, fail-fast timing, concurrency, and
 cancellation boundaries.
 
-The remaining Priority 1 work is to automate the manual Dartdoc and publish
-dry-run checks, and add dependency lower-bound and package-quality checks:
+The stable SDK CI now runs a separate dependency lower-bound job:
 
 ```text
 dart pub downgrade
-dart test
-dart pub publish --dry-run
-dart doc --validate-links
-pana .
+dart analyze
+dart test --chain-stack-traces
 ```
 
-The current CI already runs the full suite and collects coverage; this work is
-about semantic confidence, lower-bound support, documentation generation, and
-package quality rather than merely increasing a percentage.
+A package-validation job runs:
+
+```text
+dart doc --validate-links
+dart pub publish --dry-run
+pana <clean package copy>
+```
+
+`pana` runs on a copy because its analysis can modify package files. Its
+report is visible in CI; no score threshold is enforced until the baseline is
+reviewed. Dartdoc treats broken links and unresolved references as errors,
+and Markdown-only changes also trigger the documentation gate.
+
+The existing CI continues to run the full suite and collect coverage. These
+jobs add lower-bound support, documentation generation, and package validation
+rather than merely increasing a coverage percentage.
 
 ### Priority 2: add typed nullable construction
 
@@ -477,24 +488,21 @@ technical correctness verdict or quote stale PR counts as evidence.
 | `Either` variance | Complete instance-member audit, five relocated operations, and widened regression tests | No known gap in the audited 2.4.0 surface; audit future API changes |
 | Sequential traversal | Success, first `Left`, large iterable, `traverse`/`sequence` coherence, and all-`Right` ordered mapping tests | No known gap in the current sequential semantics |
 | Parallel traversal | Concurrency limit, result order, first-failure precedence, error/stack preservation, queued functions rejected after `Left` or callback error, and post-result continuation of already-running functions | No known gap in the current fail-fast contract |
-| Dependency bounds | Dart 3.0.0 SDK job | `dart pub downgrade` dependency job |
-| Package health | CI analysis, format, full tests, coverage, and manual Dartdoc/publish dry-run checks | Automate Dartdoc and dry-run checks; add `pana` |
+| Dependency bounds | Dart 3.0.0 SDK job and stable SDK downgrade, analysis, and test job | Recheck constraints as dependencies change |
+| Package health | CI analysis, format, full tests, coverage, Dartdoc link validation, publish dry-run, and `pana` report | Review the `pana` baseline before setting a score threshold |
 | Binding performance | Synchronous `flatMap`/`binding` microbenchmark for success and late `Left` | Target-runtime measurements and representative application workloads before public claims |
 
 ## Recommended next slice
 
-After releasing `2.4.0`, the semantic-law slice is complete. Continue with the
-remaining package gates. The variance relocation and parallel fail-fast work
-are also complete and do not need another migration slice.
+With `2.4.0` published, the semantic-law, variance-relocation, parallel
+fail-fast, and package-gate slices are complete.
 
 Continue in this order:
 
-1. add dependency lower-bound checks and the automated package validation
-   described above;
-2. add a typed nullable companion without changing `fromNullable`;
-3. design selective exception capture while preserving the unconditional
+1. add a typed nullable companion without changing `fromNullable`;
+2. design selective exception capture while preserving the unconditional
    rethrow of `ControlError` and registered fatal types; and
-4. evaluate the collection strategy and richer scoped recovery against
+3. evaluate the collection strategy and richer scoped recovery against
    concrete consumer needs before expanding the API.
 
 Removing `getOrHandle`, replacing the legacy `getOrElse` signature, and

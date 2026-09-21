@@ -41,7 +41,6 @@ Many projects import entire FP libraries (dartz, fpdart, …) but only use `Eith
 | Inspired by          | [Λrrow-kt](https://github.com/arrow-kt/arrow), [Scala Cats](https://typelevel.org/cats/typeclasses.html#type-classes-in-cats) |
 | Documentation        | **Fully documented** — every method/function has doc comments and examples                                                    |
 | Test coverage        | **Fully tested**                                                                                                              |
-| Completeness         | **Most complete** `Either` implementation available for Dart/Flutter                                                          |
 | Monad comprehensions | ✅ Both `sync` and `async`                                                                                                     |
 | Async map / flatMap  | ✅ `thenMapEither`, `thenFlatMapEither`                                                                                        |
 | Bundle size          | Very **lightweight** and **simple** (compare to dartz)                                                                        |

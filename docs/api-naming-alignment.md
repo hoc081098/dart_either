@@ -4,8 +4,8 @@ This document tracks naming decisions that move `dart_either` closer to
 Arrow/Kotlin where that also produces an idiomatic and type-safe Dart API.
 Arrow is a reference, not a one-to-one compatibility contract.
 
-Statuses describe the current repository state, prepared for `2.4.0`.
-Verify the registry before describing that version as published.
+Statuses describe the current repository state through the
+[published `2.4.0` release](https://pub.dev/packages/dart_either).
 
 ## Upstream evidence and decision boundary
 

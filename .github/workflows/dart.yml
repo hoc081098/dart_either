@@ -3,10 +3,8 @@ name: Dart CI
 on:
   push:
     branches: [ master ]
-    paths-ignore: [ '**.md' ]
   pull_request:
     branches: [ master ]
-    paths-ignore: [ '**.md' ]
   schedule:
     # Runs at 02:00 UTC on the 1, 4, 7, 10, 13, 16, 19, 22, 25, 28 and 31st of every month.
     - cron: "0 2 */3 * *"
@@ -71,3 +69,56 @@ jobs:
           fail_ci_if_error: true # optional (default = false)
           token: ${{ secrets.CODECOV_TOKEN }} # required
           verbose: true # optional (default = false)
+
+  dependency-bounds:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1.8.1
+        with:
+          sdk: stable
+
+      - name: Resolve minimum dependency versions
+        run: dart pub downgrade
+
+      - name: Analyze with minimum dependencies
+        run: dart analyze
+
+      - name: Test with minimum dependencies
+        run: dart test --chain-stack-traces
+
+  package-validation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1.8.1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        run: dart pub get --no-example
+
+      - name: Validate API documentation links
+        run: dart doc --validate-links
+
+      - name: Validate published package contents
+        run: dart pub publish --dry-run
+
+      - name: Activate pana
+        run: dart pub global activate pana
+
+      - name: Analyze package quality with pana
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Preserve the example's ../../dart_either path dependency in the copy.
+          package_root="$(mktemp -d)/dart_either"
+          mkdir -p "$package_root"
+          git archive HEAD | tar -x -C "$package_root"
+          dart pub global run pana "$package_root"
