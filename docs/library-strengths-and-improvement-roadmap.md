@@ -332,12 +332,21 @@ described above. Those focused tests remain authoritative for operational
 contracts such as callback invocation, fail-fast timing, concurrency, and
 cancellation boundaries.
 
-The stable SDK CI now runs a separate dependency lower-bound job:
+The stable SDK CI now runs a separate dependency lower-bound job. A minimal
+consumer uses the SDK constraint from `pubspec.yaml` and a path dependency on
+`dart_either`. It runs `dart pub downgrade` to resolve the lowest compatible
+published dependencies, then runs a small `Either.sequence` smoke check. Pub
+ignores the package's dev dependencies in this consumer graph.
+
+The stable, beta, and Dart 3.0.0 build jobs continue to run the full test suite
+with compatible test tooling. The consumer check avoids pinning old dev-tool
+versions to future stable SDKs. Its resolved versions come from `pubspec.yaml`
+and pub's solver rather than duplicated CI assertions. Inside the temporary
+consumer, CI runs:
 
 ```text
 dart pub downgrade
-dart analyze
-dart test --chain-stack-traces
+dart run bin/check.dart
 ```
 
 A package-validation job runs:
@@ -348,10 +357,11 @@ dart pub publish --dry-run
 pana <clean package copy>
 ```
 
-`pana` runs on a copy because its analysis can modify package files. Its
-report is visible in CI; no score threshold is enforced until the baseline is
-reviewed. Dartdoc treats broken links and unresolved references as errors,
-and Markdown-only changes also trigger the documentation gate.
+`pana` runs on a copy because its analysis can modify package files. CI prints
+its final points total on success and the log tail on failure. No score
+threshold is enforced until the baseline is reviewed. Dartdoc treats broken
+links and unresolved references as errors, and Markdown-only changes also
+trigger the documentation gate.
 
 The existing CI continues to run the full suite and collect coverage. These
 jobs add lower-bound support, documentation generation, and package validation
@@ -488,8 +498,8 @@ technical correctness verdict or quote stale PR counts as evidence.
 | `Either` variance | Complete instance-member audit, five relocated operations, and widened regression tests | No known gap in the audited 2.4.0 surface; audit future API changes |
 | Sequential traversal | Success, first `Left`, large iterable, `traverse`/`sequence` coherence, and all-`Right` ordered mapping tests | No known gap in the current sequential semantics |
 | Parallel traversal | Concurrency limit, result order, first-failure precedence, error/stack preservation, queued functions rejected after `Left` or callback error, and post-result continuation of already-running functions | No known gap in the current fail-fast contract |
-| Dependency bounds | Dart 3.0.0 SDK job and stable SDK downgrade, analysis, and test job | Recheck constraints as dependencies change |
-| Package health | CI analysis, format, full tests, coverage, Dartdoc link validation, publish dry-run, and `pana` report | Review the `pana` baseline before setting a score threshold |
+| Dependency bounds | Dart 3.0.0 SDK job, stable SDK consumer runtime lower-bound smoke check, and full tests across the SDK matrix | Recheck constraints as dependencies change |
+| Package health | CI analysis, format, full tests, coverage, Dartdoc link validation, publish dry-run, and `pana` score | Review the `pana` baseline before setting a score threshold |
 | Binding performance | Synchronous `flatMap`/`binding` microbenchmark for success and late `Left` | Target-runtime measurements and representative application workloads before public claims |
 
 ## Recommended next slice

@@ -81,14 +81,41 @@ jobs:
         with:
           sdk: stable
 
-      - name: Resolve minimum dependency versions
-        run: dart pub downgrade
+      - name: Verify published dependency lower bounds as a consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          consumer_dir="$(mktemp -d)"
+          mkdir -p "$consumer_dir/bin"
+          sdk_constraint="$(sed -n 's/^  sdk: //p' "$GITHUB_WORKSPACE/pubspec.yaml")"
+          if [[ -z "$sdk_constraint" ]]; then
+            echo 'Could not read the SDK constraint from pubspec.yaml'
+            exit 1
+          fi
+          cat > "$consumer_dir/pubspec.yaml" <<EOF
+          name: dart_either_bounds_consumer
+          environment:
+            sdk: $sdk_constraint
+          dependencies:
+            dart_either:
+              path: "$GITHUB_WORKSPACE"
+          EOF
+          cat > "$consumer_dir/bin/check.dart" <<'DART'
+          import 'package:dart_either/dart_either.dart';
 
-      - name: Analyze with minimum dependencies
-        run: dart analyze
-
-      - name: Test with minimum dependencies
-        run: dart test --chain-stack-traces
+          void main() {
+            final result = Either.sequence<String, int>([
+              const Either<String, int>.right(1),
+              const Either<String, int>.right(2),
+            ]);
+            if (!result.isRight) {
+              throw StateError('Expected a Right result');
+            }
+          }
+          DART
+          cd "$consumer_dir"
+          dart pub downgrade
+          dart run bin/check.dart
 
   package-validation:
     runs-on: ubuntu-latest
@@ -121,4 +148,19 @@ jobs:
           package_root="$(mktemp -d)/dart_either"
           mkdir -p "$package_root"
           git archive HEAD | tar -x -C "$package_root"
-          dart pub global run pana "$package_root"
+          pana_log="$RUNNER_TEMP/pana.log"
+          if dart pub global run pana "$package_root" >"$pana_log" 2>&1; then
+            result="$(sed -n '/^Points: /p' "$pana_log" | tail -n 1)"
+            if [[ -n "$result" ]]; then
+              printf '%s\n' "$result"
+              printf '%s\n' "$result" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo 'pana completed without a points summary. Last 80 log lines:'
+              tail -n 80 "$pana_log"
+              exit 1
+            fi
+          else
+            echo 'pana failed. Last 80 log lines:'
+            tail -n 80 "$pana_log"
+            exit 1
+          fi
