@@ -81,13 +81,43 @@ jobs:
         with:
           sdk: stable
 
-      - name: Resolve minimum dependency versions
-        run: dart pub downgrade
+      - name: Resolve supported lower bounds with compatible test tooling
+        run: |
+          dart pub get --no-example
+          dart pub downgrade --no-example test
+          dart pub downgrade --no-example meta built_collection
 
-      - name: Analyze with minimum dependencies
+      - name: Verify resolved lower bounds
+        run: |
+          dart pub deps --json > "$RUNNER_TEMP/dependency-bounds.json"
+          python3 - "$RUNNER_TEMP/dependency-bounds.json" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding='utf-8') as source:
+              packages = {
+                  package['name']: package['version']
+                  for package in json.load(source)['packages']
+              }
+
+          expected = {
+              'built_collection': '5.1.1',
+              'meta': '1.7.0',
+              'test': '1.25.5',
+          }
+          for name, version in expected.items():
+              actual = packages.get(name)
+              if actual != version:
+                  raise SystemExit(
+                      f'{name}: expected lower bound {version}, resolved {actual}'
+                  )
+              print(f'{name}: {actual}')
+          PY
+
+      - name: Analyze with lower-bound package dependencies
         run: dart analyze
 
-      - name: Test with minimum dependencies
+      - name: Test with lower-bound package dependencies
         run: dart test --chain-stack-traces
 
   package-validation:
@@ -121,4 +151,19 @@ jobs:
           package_root="$(mktemp -d)/dart_either"
           mkdir -p "$package_root"
           git archive HEAD | tar -x -C "$package_root"
-          dart pub global run pana "$package_root"
+          pana_log="$RUNNER_TEMP/pana.log"
+          if dart pub global run pana "$package_root" >"$pana_log" 2>&1; then
+            result="$(sed -n '/^Points: /p' "$pana_log" | tail -n 1)"
+            if [[ -n "$result" ]]; then
+              printf '%s\n' "$result"
+              printf '%s\n' "$result" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo 'pana completed without a points summary. Last 80 log lines:'
+              tail -n 80 "$pana_log"
+              exit 1
+            fi
+          else
+            echo 'pana failed. Last 80 log lines:'
+            tail -n 80 "$pana_log"
+            exit 1
+          fi
