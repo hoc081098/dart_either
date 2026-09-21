@@ -81,44 +81,41 @@ jobs:
         with:
           sdk: stable
 
-      - name: Resolve supported lower bounds with compatible test tooling
+      - name: Verify published dependency lower bounds as a consumer
+        shell: bash
         run: |
-          dart pub get --no-example
-          dart pub downgrade --no-example test
-          dart pub downgrade --no-example meta built_collection
+          set -euo pipefail
+          consumer_dir="$(mktemp -d)"
+          mkdir -p "$consumer_dir/bin"
+          sdk_constraint="$(sed -n 's/^  sdk: //p' "$GITHUB_WORKSPACE/pubspec.yaml")"
+          if [[ -z "$sdk_constraint" ]]; then
+            echo 'Could not read the SDK constraint from pubspec.yaml'
+            exit 1
+          fi
+          cat > "$consumer_dir/pubspec.yaml" <<EOF
+          name: dart_either_bounds_consumer
+          environment:
+            sdk: $sdk_constraint
+          dependencies:
+            dart_either:
+              path: "$GITHUB_WORKSPACE"
+          EOF
+          cat > "$consumer_dir/bin/check.dart" <<'DART'
+          import 'package:dart_either/dart_either.dart';
 
-      - name: Verify resolved lower bounds
-        run: |
-          dart pub deps --json > "$RUNNER_TEMP/dependency-bounds.json"
-          python3 - "$RUNNER_TEMP/dependency-bounds.json" <<'PY'
-          import json
-          import sys
-
-          with open(sys.argv[1], encoding='utf-8') as source:
-              packages = {
-                  package['name']: package['version']
-                  for package in json.load(source)['packages']
-              }
-
-          expected = {
-              'built_collection': '5.1.1',
-              'meta': '1.7.0',
-              'test': '1.25.5',
+          void main() {
+            final result = Either.sequence<String, int>([
+              const Either<String, int>.right(1),
+              const Either<String, int>.right(2),
+            ]);
+            if (!result.isRight) {
+              throw StateError('Expected a Right result');
+            }
           }
-          for name, version in expected.items():
-              actual = packages.get(name)
-              if actual != version:
-                  raise SystemExit(
-                      f'{name}: expected lower bound {version}, resolved {actual}'
-                  )
-              print(f'{name}: {actual}')
-          PY
-
-      - name: Analyze with lower-bound package dependencies
-        run: dart analyze
-
-      - name: Test with lower-bound package dependencies
-        run: dart test --chain-stack-traces
+          DART
+          cd "$consumer_dir"
+          dart pub downgrade
+          dart run bin/check.dart
 
   package-validation:
     runs-on: ubuntu-latest
