@@ -291,6 +291,27 @@ sealed class Either<L, R> {
   static Either<void, R> fromNullable<R extends Object>(R? value) =>
       value == null ? const Either.left(null) : Either.right(value);
 
+  /// Returns a [Right] if [value] is not `null`.
+  /// Otherwise, evaluates [ifNull] once and returns its result in a [Left].
+  ///
+  /// [ifNull] is not evaluated when [value] is non-null. Any error thrown by
+  /// [ifNull] propagates unchanged.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Either.fromNullableOr<String, int>(1, () => 'missing');
+  /// // Result: Right(1)
+  ///
+  /// Either.fromNullableOr<String, int>(null, () => 'missing');
+  /// // Result: Left('missing')
+  /// ```
+  @useResult
+  static Either<L, R> fromNullableOr<L, R extends Object>(
+    R? value,
+    L Function() ifNull,
+  ) =>
+      value == null ? Either.left(ifNull()) : Either.right(value);
+
   /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).
   /// [Syntactic sugar do-notation](https://en.wikipedia.org/wiki/Monad_(functional_programming)#Syntactic_sugar_do-notation).
   /// Although using [FlatMapEitherExtension.flatMap] openly often makes sense,

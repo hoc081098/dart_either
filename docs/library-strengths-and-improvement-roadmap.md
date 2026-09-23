@@ -367,13 +367,13 @@ The existing CI continues to run the full suite and collect coverage. These
 jobs add lower-bound support, documentation generation, and package validation
 rather than merely increasing a coverage percentage.
 
-### Priority 2: add typed nullable construction
+### Completed: add typed nullable construction
 
 The current `Either.fromNullable<R>` returns `Either<void, R>` and uses
 `Left(null)`. This is convenient but often too weak for a domain boundary,
 where a missing value should become a typed failure.
 
-Add a non-breaking companion API, for example:
+The non-breaking companion API is:
 
 ```dart
 static Either<L, R> fromNullableOr<L, R extends Object>(
@@ -382,9 +382,10 @@ static Either<L, R> fromNullableOr<L, R extends Object>(
 )
 ```
 
-Reasonable names from the earlier discussion are `fromNullableOr`,
-`fromNullableWith`, or `fromNullableLeft`. Dart has no overloads, so changing
-the existing signature under the same name is not a `2.x` option.
+`fromNullableOr` returns `Right(value)` without evaluating `ifNull` when the
+value is present. For `null`, it evaluates `ifNull` exactly once and returns
+`Left(ifNull())`; callback errors propagate unchanged. The existing
+`fromNullable` signature and behavior remain unchanged.
 
 ### Priority 2: make exception capture selective
 
@@ -509,10 +510,9 @@ fail-fast, and package-gate slices are complete.
 
 Continue in this order:
 
-1. add a typed nullable companion without changing `fromNullable`;
-2. design selective exception capture while preserving the unconditional
+1. design selective exception capture while preserving the unconditional
    rethrow of `ControlError` and registered fatal types; and
-3. evaluate the collection strategy and richer scoped recovery against
+2. evaluate the collection strategy and richer scoped recovery against
    concrete consumer needs before expanding the API.
 
 Removing `getOrHandle`, replacing the legacy `getOrElse` signature, and

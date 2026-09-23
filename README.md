@@ -211,7 +211,8 @@ print(nullableValue); // 10
 |-------------------------------------------------------------------------------------------------------------------|-----------------------------|
 | [`Either.left`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.left.html)             | Creates a `Left` value      |
 | [`Either.right`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.right.html)           | Creates a `Right` value     |
-| [`Either.fromNullable`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fromNullable.html)    | Converts a nullable value   |
+| [`Either.fromNullable`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fromNullable.html)    | Converts a nullable value with `void` on `Left` |
+| [`Either.fromNullableOr`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fromNullableOr.html) | Lazily maps `null` to a typed `Left` |
 | [`Left`](https://pub.dev/documentation/dart_either/latest/dart_either/Left/Left.html)                             | Direct `Left` constructor   |
 | [`Right`](https://pub.dev/documentation/dart_either/latest/dart_either/Right/Right.html)                          | Direct `Right` constructor  |
 | [`T.left`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/left.html)        | Wraps any value as `Left`   |
@@ -228,6 +229,9 @@ final Either<Object, int> right = Either.right(1);
 // 2) Convert a nullable value
 Either.fromNullable<int>(null); // Either.Left(null)
 Either.fromNullable<int>(1);    // Either.Right(1)
+
+Either.fromNullableOr<String, int>(null, () => 'missing');
+// Either.Left(missing)
 
 // 3) Receiver-style constructors
 final Either<int, String> receiverLeft = 1.left<String>(); // Either.Left(1)

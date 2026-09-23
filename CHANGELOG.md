@@ -1,5 +1,12 @@
 ## Unreleased
 
+### Typed nullable construction
+
+- Added `Either.fromNullableOr`, which converts a non-null value to `Right`
+  and lazily creates a typed `Left` when the value is `null`. The `ifNull`
+  callback runs once only for `null`; errors from it propagate unchanged.
+- Kept `Either.fromNullable` unchanged for existing callers.
+
 ### Either value equality and hashing
 
 - `Left` and `Right` hash codes now combine a branch-specific discriminator

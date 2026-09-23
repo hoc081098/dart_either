@@ -361,6 +361,47 @@ void main() {
         );
       });
 
+      group('Either.fromNullableOr', () {
+        test('returns Right without evaluating ifNull', () {
+          var invocationCount = 0;
+
+          expect(
+            Either.fromNullableOr<String, int>(2, () {
+              invocationCount++;
+              return 'missing';
+            }),
+            Right<Never, int>(2),
+          );
+          expect(invocationCount, isZero);
+        });
+
+        test('evaluates ifNull once and returns Left for null', () {
+          var invocationCount = 0;
+
+          expect(
+            Either.fromNullableOr<String, int>(null, () {
+              invocationCount++;
+              return 'missing';
+            }),
+            Left<String, Never>('missing'),
+          );
+          expect(invocationCount, 1);
+        });
+
+        test('propagates an error from ifNull', () {
+          var invocationCount = 0;
+
+          expect(
+            () => Either.fromNullableOr<String, int>(null, () {
+              invocationCount++;
+              throw exception;
+            }),
+            throwsA(same(exception)),
+          );
+          expect(invocationCount, 1);
+        });
+      });
+
       group('Either.bindingAsync', () {
         test('single return', () async {
           // single return
