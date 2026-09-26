@@ -350,17 +350,6 @@ void main() {
     });
 
     group('static construction', () {
-      test('fromNullable', () {
-        expect(
-          Either.fromNullable<Object>(null),
-          Left<void, Never>(null),
-        );
-        expect(
-          Either.fromNullable(2),
-          Right<Never, int>(2),
-        );
-      });
-
       group('Either.fromNullableOrElse', () {
         test('returns Right without evaluating ifNull', () {
           var invocationCount = 0;

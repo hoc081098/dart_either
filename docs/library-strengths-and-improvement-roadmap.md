@@ -369,9 +369,11 @@ rather than merely increasing a coverage percentage.
 
 ### Completed: add typed nullable construction
 
-The current `Either.fromNullable<R>` returns `Either<void, R>` and uses
-`Left(null)`. This is convenient but often too weak for a domain boundary,
-where a missing value should become a typed failure.
+The deprecated 2.x `Either.fromNullable<R>` returns `Either<void, R>` and uses
+`Left(null)`. Its behavior remains unchanged for existing callers, but it is
+often too weak for a domain boundary where a missing value should become a
+typed failure. Its exact 2.x migration is
+`Either.fromNullableOrElse<void, R>(value, ifNull: () {})`.
 
 The non-breaking companion API is:
 
@@ -384,8 +386,19 @@ static Either<L, R> fromNullableOrElse<L, R extends Object>(
 
 `fromNullableOrElse` returns `Right(value)` without evaluating `ifNull` when
 the value is present. For `null`, it evaluates `ifNull` exactly once and
-returns `Left(ifNull())`; callback errors propagate unchanged. The existing
-`fromNullable` signature and behavior remain unchanged.
+returns `Left(ifNull())`; callback errors propagate unchanged.
+
+In 3.0.0, make this the canonical signature:
+
+```dart
+static Either<L, R> fromNullable<L, R extends Object>(
+  R? value, {
+  required L Function() ifNull,
+})
+```
+
+Keep `fromNullableOrElse` as a deprecated forwarding alias during the 3.x
+migration so callers that adopted the 2.x replacement continue to compile.
 
 ### Priority 2: make exception capture selective
 

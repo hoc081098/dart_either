@@ -8,7 +8,19 @@ void main() {
   const Either<int, int> rightOf1 = Right(1);
   final exception = Exception();
 
-  group('Deprecated aliases', () {
+  group('Deprecated APIs', () {
+    test('fromNullable matches its documented migration', () {
+      for (final value in <int?>[null, 2]) {
+        expect(
+          Either.fromNullable<int>(value),
+          Either.fromNullableOrElse<void, int>(
+            value,
+            ifNull: () {},
+          ),
+        );
+      }
+    });
+
     test('tapLeft delegates to onLeft', () {
       Object? value;
       final rightTapped = rightOf1.tapLeft((v) => value = v);

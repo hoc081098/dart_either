@@ -211,7 +211,7 @@ print(nullableValue); // 10
 |-------------------------------------------------------------------------------------------------------------------|-----------------------------|
 | [`Either.left`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.left.html)             | Creates a `Left` value      |
 | [`Either.right`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.right.html)           | Creates a `Right` value     |
-| [`Either.fromNullable`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fromNullable.html)    | Converts a nullable value with `void` on `Left` |
+| [`Either.fromNullable`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fromNullable.html)    | Deprecated 2.x constructor with `void` on `Left` |
 | [`Either.fromNullableOrElse`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fromNullableOrElse.html) | Lazily maps `null` to a typed `Left` |
 | [`Left`](https://pub.dev/documentation/dart_either/latest/dart_either/Left/Left.html)                             | Direct `Left` constructor   |
 | [`Right`](https://pub.dev/documentation/dart_either/latest/dart_either/Right/Right.html)                          | Direct `Right` constructor  |
@@ -226,10 +226,7 @@ final Either<Object, String> left = Either.left('Left value');
 final Either<Object, int> right = Either.right(1);
 // or: Right<Object, int>(1)
 
-// 2) Convert a nullable value
-Either.fromNullable<int>(null); // Either.Left(null)
-Either.fromNullable<int>(1);    // Either.Right(1)
-
+// 2) Convert a nullable value with a typed, lazy Left
 Either.fromNullableOrElse<String, int>(
   null,
   ifNull: () => 'missing',
@@ -240,6 +237,19 @@ Either.fromNullableOrElse<String, int>(
 final Either<int, String> receiverLeft = 1.left<String>(); // Either.Left(1)
 final Either<String, int> receiverRight = 1.right<String>(); // Either.Right(1)
 ```
+
+`Either.fromNullable(value)` is deprecated in 2.x. To preserve its exact
+`Either<void, R>` and `Left(null)` behavior, migrate with:
+
+```dart
+Either.fromNullableOrElse<void, int>(
+  value,
+  ifNull: () {},
+);
+```
+
+In 3.0.0, the `Either.fromNullable` name will adopt the typed `ifNull`
+signature currently provided by `Either.fromNullableOrElse`.
 
 ---
 
