@@ -48,8 +48,10 @@ void main() {
   print(left); // Prints Either.Left(none)
 
   /// Convert a nullable value and lazily create a typed [Left] when absent.
-  final Either<String, int> nullable =
-      Either.fromNullableOr<String, int>(null, () => 'missing');
+  final Either<String, int> nullable = Either.fromNullableOrElse<String, int>(
+    null,
+    ifNull: () => 'missing',
+  );
   print(nullable); // Prints Either.Left(missing)
 
   /// Map the right value to a [String]

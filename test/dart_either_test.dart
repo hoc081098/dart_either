@@ -361,15 +361,18 @@ void main() {
         );
       });
 
-      group('Either.fromNullableOr', () {
+      group('Either.fromNullableOrElse', () {
         test('returns Right without evaluating ifNull', () {
           var invocationCount = 0;
 
           expect(
-            Either.fromNullableOr<String, int>(2, () {
-              invocationCount++;
-              return 'missing';
-            }),
+            Either.fromNullableOrElse<String, int>(
+              2,
+              ifNull: () {
+                invocationCount++;
+                return 'missing';
+              },
+            ),
             Right<Never, int>(2),
           );
           expect(invocationCount, isZero);
@@ -379,10 +382,13 @@ void main() {
           var invocationCount = 0;
 
           expect(
-            Either.fromNullableOr<String, int>(null, () {
-              invocationCount++;
-              return 'missing';
-            }),
+            Either.fromNullableOrElse<String, int>(
+              null,
+              ifNull: () {
+                invocationCount++;
+                return 'missing';
+              },
+            ),
             Left<String, Never>('missing'),
           );
           expect(invocationCount, 1);
@@ -392,10 +398,13 @@ void main() {
           var invocationCount = 0;
 
           expect(
-            () => Either.fromNullableOr<String, int>(null, () {
-              invocationCount++;
-              throw exception;
-            }),
+            () => Either.fromNullableOrElse<String, int>(
+              null,
+              ifNull: () {
+                invocationCount++;
+                throw exception;
+              },
+            ),
             throwsA(same(exception)),
           );
           expect(invocationCount, 1);

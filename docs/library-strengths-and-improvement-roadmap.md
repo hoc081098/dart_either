@@ -376,15 +376,15 @@ where a missing value should become a typed failure.
 The non-breaking companion API is:
 
 ```dart
-static Either<L, R> fromNullableOr<L, R extends Object>(
-  R? value,
-  L Function() ifNull,
-)
+static Either<L, R> fromNullableOrElse<L, R extends Object>(
+  R? value, {
+  required L Function() ifNull,
+})
 ```
 
-`fromNullableOr` returns `Right(value)` without evaluating `ifNull` when the
-value is present. For `null`, it evaluates `ifNull` exactly once and returns
-`Left(ifNull())`; callback errors propagate unchanged. The existing
+`fromNullableOrElse` returns `Right(value)` without evaluating `ifNull` when
+the value is present. For `null`, it evaluates `ifNull` exactly once and
+returns `Left(ifNull())`; callback errors propagate unchanged. The existing
 `fromNullable` signature and behavior remain unchanged.
 
 ### Priority 2: make exception capture selective

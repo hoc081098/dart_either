@@ -299,17 +299,23 @@ sealed class Either<L, R> {
   ///
   /// ### Example
   /// ```dart
-  /// Either.fromNullableOr<String, int>(1, () => 'missing');
+  /// Either.fromNullableOrElse<String, int>(
+  ///   1,
+  ///   ifNull: () => 'missing',
+  /// );
   /// // Result: Right(1)
   ///
-  /// Either.fromNullableOr<String, int>(null, () => 'missing');
+  /// Either.fromNullableOrElse<String, int>(
+  ///   null,
+  ///   ifNull: () => 'missing',
+  /// );
   /// // Result: Left('missing')
   /// ```
   @useResult
-  static Either<L, R> fromNullableOr<L, R extends Object>(
-    R? value,
-    L Function() ifNull,
-  ) =>
+  static Either<L, R> fromNullableOrElse<L, R extends Object>(
+    R? value, {
+    required L Function() ifNull,
+  }) =>
       value == null ? Either.left(ifNull()) : Either.right(value);
 
   /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).

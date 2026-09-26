@@ -2,7 +2,7 @@
 
 ### Typed nullable construction
 
-- Added `Either.fromNullableOr`, which converts a non-null value to `Right`
+- Added `Either.fromNullableOrElse`, which converts a non-null value to `Right`
   and lazily creates a typed `Left` when the value is `null`. The `ifNull`
   callback runs once only for `null`; errors from it propagate unchanged.
 - Kept `Either.fromNullable` unchanged for existing callers.

@@ -212,7 +212,7 @@ print(nullableValue); // 10
 | [`Either.left`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.left.html)             | Creates a `Left` value      |
 | [`Either.right`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.right.html)           | Creates a `Right` value     |
 | [`Either.fromNullable`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fromNullable.html)    | Converts a nullable value with `void` on `Left` |
-| [`Either.fromNullableOr`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fromNullableOr.html) | Lazily maps `null` to a typed `Left` |
+| [`Either.fromNullableOrElse`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/fromNullableOrElse.html) | Lazily maps `null` to a typed `Left` |
 | [`Left`](https://pub.dev/documentation/dart_either/latest/dart_either/Left/Left.html)                             | Direct `Left` constructor   |
 | [`Right`](https://pub.dev/documentation/dart_either/latest/dart_either/Right/Right.html)                          | Direct `Right` constructor  |
 | [`T.left`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherObjectExtension/left.html)        | Wraps any value as `Left`   |
@@ -230,7 +230,10 @@ final Either<Object, int> right = Either.right(1);
 Either.fromNullable<int>(null); // Either.Left(null)
 Either.fromNullable<int>(1);    // Either.Right(1)
 
-Either.fromNullableOr<String, int>(null, () => 'missing');
+Either.fromNullableOrElse<String, int>(
+  null,
+  ifNull: () => 'missing',
+);
 // Either.Left(missing)
 
 // 3) Receiver-style constructors
