@@ -12,6 +12,15 @@
   `catchOnly` selects one type for an individual mapper. Global exclusion runs
   first; errors from the typed mapper propagate.
 
+```dart
+final Either<String, int> result = Either.tryCatch(
+  action: () => throw const FormatException('invalid integer'),
+  errorMapper: catchOnly(
+    (FormatException error, StackTrace stackTrace) => error.message,
+  ),
+); // Either.Left(invalid integer)
+```
+
 ### Typed nullable construction
 
 - Added `Either.fromNullableOrElse`, which converts a non-null value to `Right`
@@ -21,6 +30,18 @@
   Use `Either.fromNullableOrElse<void, R>(value, ifNull: () {})` to
   preserve `Either<void, R>` and `Left(null)`. In 3.0.0,
   `Either.fromNullable` will adopt the typed, lazy `ifNull` signature.
+
+```dart
+Either.fromNullableOrElse<String, int>(
+  null,
+  ifNull: () => 'missing',
+); // Either.Left(missing)
+
+Either.fromNullableOrElse<String, int>(
+  42,
+  ifNull: () => 'missing',
+); // Either.Right(42)
+```
 
 ### Either value equality and hashing
 
