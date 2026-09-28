@@ -282,14 +282,60 @@ sealed class Either<L, R> {
 
   /// Returns a [Right] if [value] is not `null`, otherwise a [Left] containing `null`.
   ///
+  /// This `Either<void, R>` form keeps its behavior in 2.x but is deprecated.
+  ///
   /// ### Example
+  ///
+  /// To preserve the same `Left(null)` behavior, replace it with:
+  ///
   /// ```dart
-  /// Either.fromNullable<String>(null);        // Result: Left(null)
-  /// Either.fromNullable<String>('hoc081098'); // Result: Right('hoc081098')
+  /// final String? value = null;
+  /// Either.fromNullableOrElse<void, String>(
+  ///   value,
+  ///   ifNull: () {},
+  /// );
   /// ```
+  ///
+  /// In 3.0.0, `Either.fromNullable` will require the `ifNull` callback instead.
+  @Deprecated(
+    'Use Either.fromNullableOrElse<void, R>(value, ifNull: () {}) '
+    'to preserve the 2.x behavior. '
+    'Either.fromNullable will require ifNull in 3.0.0.',
+  )
   @useResult
   static Either<void, R> fromNullable<R extends Object>(R? value) =>
       value == null ? const Either.left(null) : Either.right(value);
+
+  /// Returns a [Right] if [value] is not `null`.
+  /// Otherwise, evaluates [ifNull] once and returns its result in a [Left].
+  ///
+  /// [ifNull] is not evaluated when [value] is non-null. Any error thrown by
+  /// [ifNull] propagates unchanged.
+  ///
+  /// This is the forward-compatible 2.x replacement for
+  /// `Either.fromNullable`.
+  /// In 3.0.0, this signature will move to `Either.fromNullable`.
+  ///
+  /// ### Example
+  /// ```dart
+  /// Either.fromNullableOrElse<String, int>(
+  ///   1,
+  ///   ifNull: () => 'missing',
+  /// );
+  /// // Result: Right(1)
+  ///
+  /// Either.fromNullableOrElse<String, int>(
+  ///   null,
+  ///   ifNull: () => 'missing',
+  /// );
+  /// // Result: Left('missing')
+  /// ```
+  @useResult
+  static Either<L, R> fromNullableOrElse<L, R extends Object>(
+    R? value, {
+    required L Function() ifNull,
+  }) =>
+      value == null ? Either.left(ifNull()) : Either.right(value);
 
   /// [Monad comprehension](https://en.wikipedia.org/wiki/List_comprehension#Monad_comprehension).
   /// [Syntactic sugar do-notation](https://en.wikipedia.org/wiki/Monad_(functional_programming)#Syntactic_sugar_do-notation).

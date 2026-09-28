@@ -1,5 +1,15 @@
 ## Unreleased
 
+### Typed nullable construction
+
+- Added `Either.fromNullableOrElse`, which converts a non-null value to `Right`
+  and lazily creates a typed `Left` when the value is `null`. The `ifNull`
+  callback runs once only for `null`; errors from it propagate unchanged.
+- Deprecated `Either.fromNullable(value)` without changing its 2.x behavior.
+  Use `Either.fromNullableOrElse<void, R>(value, ifNull: () {})` to
+  preserve `Either<void, R>` and `Left(null)`. In 3.0.0,
+  `Either.fromNullable` will adopt the typed, lazy `ifNull` signature.
+
 ### Either value equality and hashing
 
 - `Left` and `Right` hash codes now combine a branch-specific discriminator

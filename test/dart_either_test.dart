@@ -350,15 +350,54 @@ void main() {
     });
 
     group('static construction', () {
-      test('fromNullable', () {
-        expect(
-          Either.fromNullable<Object>(null),
-          Left<void, Never>(null),
-        );
-        expect(
-          Either.fromNullable(2),
-          Right<Never, int>(2),
-        );
+      group('Either.fromNullableOrElse', () {
+        test('returns Right without evaluating ifNull', () {
+          var invocationCount = 0;
+
+          expect(
+            Either.fromNullableOrElse<String, int>(
+              2,
+              ifNull: () {
+                invocationCount++;
+                return 'missing';
+              },
+            ),
+            Right<Never, int>(2),
+          );
+          expect(invocationCount, isZero);
+        });
+
+        test('evaluates ifNull once and returns Left for null', () {
+          var invocationCount = 0;
+
+          expect(
+            Either.fromNullableOrElse<String, int>(
+              null,
+              ifNull: () {
+                invocationCount++;
+                return 'missing';
+              },
+            ),
+            Left<String, Never>('missing'),
+          );
+          expect(invocationCount, 1);
+        });
+
+        test('propagates an error from ifNull', () {
+          var invocationCount = 0;
+
+          expect(
+            () => Either.fromNullableOrElse<String, int>(
+              null,
+              ifNull: () {
+                invocationCount++;
+                throw exception;
+              },
+            ),
+            throwsA(same(exception)),
+          );
+          expect(invocationCount, 1);
+        });
       });
 
       group('Either.bindingAsync', () {

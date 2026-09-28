@@ -183,7 +183,7 @@ API-size decisions, not rename instructions, and must not be smuggled into a
 | `findOrNull` | Replace with Kotlin nullable chaining | Absent from the audited `Either.kt` | No rename; Kotlin's replacement is not a direct Dart API name |
 | `redeem` | Replace with `map` plus `recover` | Absent from the audited `Either.kt` | No rename; retain in 2.x as the single-callback-per-input operation that maps either original channel into a runtime `Right` while keeping `L` in the declared return type |
 | `redeemWith` | Replace with `fold` | Absent from the audited `Either.kt` | No rename; retain in 2.x as the operation that lets either original channel return `Either<L2, R2>` directly; any removal is major-version work |
-| `fromNullable` | Replace with Kotlin nullable syntax or Raise DSL | Absent from the audited `Either.kt` | Retain as a Dart boundary helper; no rename |
+| `fromNullable` | Replace with Kotlin nullable syntax or Raise DSL | Absent from the audited `Either.kt` | Deprecate the `Either<void, R>` signature in 2.x; use `fromNullableOrElse` as the typed migration path. In 3.0.0, move that signature to `fromNullable` and retain `fromNullableOrElse` as a compatibility alias |
 | `combine` | Replace later with accumulating zip behavior | Present as `combine` in the audited source | Keep the existing name |
 | `sequence`, `traverse` | Remove the Either-specific traversal family | Absent from the audited `Either.kt` | Retain Dart's collection helpers; review behavior separately from naming |
 | `when` | Kotlin uses the language `when` expression | No Arrow method | Retain in 2.x; Dart 3 pattern matching is already documented as an alternative |

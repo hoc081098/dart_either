@@ -47,6 +47,13 @@ void main() {
   final Either<String, int> left = Either.left('none');
   print(left); // Prints Either.Left(none)
 
+  /// Convert a nullable value and lazily create a typed [Left] when absent.
+  final Either<String, int> nullable = Either.fromNullableOrElse<String, int>(
+    null,
+    ifNull: () => 'missing',
+  );
+  print(nullable); // Prints Either.Left(missing)
+
   /// Map the right value to a [String]
   final Either<String, String> mapRight = right.map((a) => 'String: $a');
   print(mapRight); // Prints Either.Right(String: 10)
