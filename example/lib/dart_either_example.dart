@@ -74,7 +74,9 @@ void main() {
   // ^
   // )
 
-  /// Map only an expected error type. Other errors remain errors.
+  /// `registerFatalError<T>()` globally excludes a type from every mapper.
+  /// In the complementary direction, `catchOnly<E, L>()` selects one type for
+  /// this mapper. Other error types remain errors, and global exclusions win.
   final Either<String, int> selectiveTryCatchResult = Either.tryCatch(
     action: () => throw const FormatException('invalid integer'),
     errorMapper: catchOnly(

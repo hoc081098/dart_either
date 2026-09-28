@@ -6,8 +6,11 @@
   `ErrorMapper<L>` interface. Matching errors and their subtypes are mapped;
   non-matching errors retain their original object and stack trace.
 - `catchOnly` composes with `Either.tryCatch`, `Either.tryCatchAsync`,
-  `Future.toEitherFuture`, and `Stream.toEitherStream`. Their fatal-error guard
-  runs before type selection, and errors from the typed mapper propagate.
+  `Future.toEitherFuture`, and `Stream.toEitherStream`.
+- `registerFatalError<T>()` and `catchOnly<E, L>()` filter in complementary
+  directions: registration globally excludes a type from every mapper, while
+  `catchOnly` selects one type for an individual mapper. Global exclusion runs
+  first; errors from the typed mapper propagate.
 
 ### Typed nullable construction
 

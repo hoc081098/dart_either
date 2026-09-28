@@ -293,8 +293,18 @@ final Either<String, int> selectivelyParsed = Either.tryCatch(
 ```
 
 The typed mapper also composes with `Either.tryCatchAsync`,
-`Future.toEitherFuture`, and `Stream.toEitherStream`. Each capture operation
-applies the registered fatal-error policy before invoking `catchOnly`.
+`Future.toEitherFuture`, and `Stream.toEitherStream`.
+
+Think of `registerFatalError` and `catchOnly` as filters in complementary
+directions:
+
+- `registerFatalError<T>()` globally excludes `T` and its subtypes from every
+  mapper. A match remains in Dart's error channel.
+- `catchOnly<E, L>()` selects `E` and its subtypes for one mapper. Every
+  non-match remains in the error channel.
+
+Global exclusion runs first. An error that is both registered as fatal and
+selected by `catchOnly` bypasses the mapper and keeps its original stack trace.
 
 Use the receiver extensions when the `Future` or `Stream` has already been
 created:

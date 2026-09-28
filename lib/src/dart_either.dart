@@ -25,6 +25,13 @@ typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 /// with its original stack trace. Errors thrown by [errorMapper] propagate
 /// unchanged.
 ///
+/// [Either.registerFatalError] and [catchOnly] filter in complementary
+/// directions. `registerFatalError<T>()` globally excludes `T` and its
+/// subtypes from every capture mapper, so matching errors remain in Dart's
+/// error channel. `catchOnly<E, L>()` selects [E] and its subtypes for this
+/// mapper, so every non-match remains in the error channel. Global fatal
+/// exclusions run first when both filters match.
+///
 /// The capture operation applies its fatal-error policy before invoking the
 /// returned mapper. Calling the returned mapper directly does not apply that
 /// policy.
@@ -150,6 +157,12 @@ sealed class Either<L, R> {
   ///
   /// Internal [ControlError] values are always treated as fatal and do not need
   /// to be registered.
+  ///
+  /// This is the global exclusion policy for error capture. The complementary
+  /// [catchOnly] adapter selects one error type for an individual mapper.
+  /// Registration wins when an error matches both policies: the error bypasses
+  /// `catchOnly` and remains in Dart's error channel with its original stack
+  /// trace.
   ///
   /// ### Example
   ///
