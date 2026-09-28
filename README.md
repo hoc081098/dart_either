@@ -259,6 +259,7 @@ signature currently provided by `Either.fromNullableOrElse`.
 |----------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
 | [`Either.tryCatch`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.tryCatch.html)              | Captures errors thrown by a synchronous action |
 | [`Either.tryCatchAsync`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/tryCatchAsync.html)            | Captures sync and async errors from an action |
+| [`catchOnly`](https://pub.dev/documentation/dart_either/latest/dart_either/catchOnly.html)                                  | Maps only errors matching a selected type      |
 | [`Future.toEitherFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherFutureExtension/toEitherFuture.html) | Converts an existing future's outcome    |
 | [`Stream.toEitherStream`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherStreamExtension/toEitherStream.html) | Converts an existing stream's events     |
 | [`Either.registerFatalError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/registerFatalError.html) | Excludes an error type from capture           |
@@ -277,6 +278,23 @@ final Either<String, int> loaded = await Either.tryCatchAsync(
   errorMapper: (error, stackTrace) => 'Error: $error',
 ); // Either.Right(42)
 ```
+
+Use `catchOnly` when one operation should map only an expected error type.
+Non-matching errors remain in Dart's error channel with their original stack
+trace:
+
+```dart
+final Either<String, int> selectivelyParsed = Either.tryCatch(
+  action: () => throw const FormatException('invalid integer'),
+  errorMapper: catchOnly(
+    (FormatException error, StackTrace stackTrace) => error.message,
+  ),
+); // Either.Left(invalid integer)
+```
+
+The typed mapper also composes with `Either.tryCatchAsync`,
+`Future.toEitherFuture`, and `Stream.toEitherStream`. Each capture operation
+applies the registered fatal-error policy before invoking `catchOnly`.
 
 Use the receiver extensions when the `Future` or `Stream` has already been
 created:

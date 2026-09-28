@@ -74,6 +74,15 @@ void main() {
   // ^
   // )
 
+  /// Map only an expected error type. Other errors remain errors.
+  final Either<String, int> selectiveTryCatchResult = Either.tryCatch(
+    action: () => throw const FormatException('invalid integer'),
+    errorMapper: catchOnly(
+      (FormatException error, StackTrace stackTrace) => error.message,
+    ),
+  );
+  print(selectiveTryCatchResult); // Prints Either.Left(invalid integer)
+
   // ---------------------------------------------------------------------------
   // 2) Operations: extraction, transformation, composition
   // ---------------------------------------------------------------------------

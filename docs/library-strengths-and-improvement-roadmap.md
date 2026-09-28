@@ -28,11 +28,9 @@ it is now an opaque, scope-bound, contravariant capability backed by a private
 final class. Captured capabilities are revoked, intercepted short-circuits are
 detected, `raise` is implemented, and the full test suite runs in CI.
 
-The main remaining design work is not a lack of more convenience methods. It is
-semantic precision:
-
-1. make nullable and exception conversion more domain-selective; and
-2. decide whether `BuiltList` still fits the lightweight positioning.
+Nullable and exception conversion now support domain-selective adapters. The
+main remaining design question is whether `BuiltList` still fits the
+lightweight positioning.
 
 Law, lower-bound, documentation, and package validation are covered by CI;
 keep those gates current as the package evolves.
@@ -64,7 +62,8 @@ The current API covers the operations that make `Either` practical in an app:
   `getOrHandle`, `handleError`, and `handleErrorWith`;
 - exception, `Future`, and `Stream` bridges through `tryCatch`,
   `tryCatchAsync`, `toEitherFuture`, and `toEitherStream`, with
-  `registerFatalError` for app-wide rethrow policy;
+  `registerFatalError` for app-wide rethrow policy and `catchOnly` for
+  per-operation type selection;
 - async chaining with `thenMapEither` and `thenFlatMapEither`;
 - sequential and parallel collection operations through `sequence`,
   `traverse`, `parSequenceN`, and `parTraverseN`; and
@@ -400,7 +399,7 @@ static Either<L, R> fromNullable<L, R extends Object>(
 Keep `fromNullableOrElse` as a deprecated forwarding alias during the 3.x
 migration so callers that adopted the 2.x replacement continue to compile.
 
-### Priority 2: make exception capture selective
+### Completed: make exception capture selective
 
 `tryCatch`, `tryCatchAsync`, `toEitherFuture`, and `toEitherStream` catch
 `Object`, except that their internal guard rethrows `ControlError` and types
@@ -409,20 +408,22 @@ registered through `registerFatalError`. This means `StateError`, `TypeError`,
 the application registers a matching fatal type.
 
 The global registration policy handles app-wide exclusions such as
-cancellation exceptions. Teams may still want an individual call to recover
-only from an expected exception class. Consider a non-breaking predicate:
+cancellation exceptions. An individual operation can recover only from an
+expected exception class through the typed mapper adapter:
 
 ```dart
-Either.tryCatch(
-  action: block,
-  errorMapper: mapper,
-  test: (error) => error is FormatException,
+ErrorMapper<L> catchOnly<E extends Object, L>(
+  L Function(E error, StackTrace stackTrace) errorMapper,
 )
 ```
 
-or a typed API such as `catchOnly<FormatException, L, R>`. The internal control
-signal and registered fatal errors must always be rethrown before any user
-predicate or mapper runs.
+`catchOnly` matches `E` and its subtypes, invokes the typed mapper once for a
+match, and rethrows a non-match with its original object and stack trace. It
+composes with all four canonical capture operations at their existing
+`ErrorMapper<L>` seam. Their internal guard rethrows `ControlError` and
+registered fatal errors before the adapter runs. Errors from the typed mapper
+propagate unchanged. [ADR 0005](adr/0005-add-catch-only-as-a-selective-error-mapper-adapter.md)
+records the interface and rejected alternatives.
 
 #### Recommended Flutter application policy
 
@@ -519,14 +520,14 @@ technical correctness verdict or quote stale PR counts as evidence.
 ## Recommended next slice
 
 With `2.4.0` published, the semantic-law, variance-relocation, parallel
-fail-fast, and package-gate slices are complete.
+fail-fast, package-gate, typed-nullable, and selective-capture slices are
+complete.
 
 Continue in this order:
 
-1. design selective exception capture while preserving the unconditional
-   rethrow of `ControlError` and registered fatal types; and
-2. evaluate the collection strategy and richer scoped recovery against
-   concrete consumer needs before expanding the API.
+1. evaluate the collection strategy; and
+2. evaluate richer scoped recovery against concrete consumer needs before
+   expanding the API.
 
 Removing `getOrHandle`, replacing the legacy `getOrElse` signature, and
 changing existing collection return types remain `3.x` work. The fallback

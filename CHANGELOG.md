@@ -1,5 +1,14 @@
 ## Unreleased
 
+### Selective error capture
+
+- Added `catchOnly<E, L>`, which adapts a typed error mapper to the existing
+  `ErrorMapper<L>` interface. Matching errors and their subtypes are mapped;
+  non-matching errors retain their original object and stack trace.
+- `catchOnly` composes with `Either.tryCatch`, `Either.tryCatchAsync`,
+  `Future.toEitherFuture`, and `Stream.toEitherStream`. Their fatal-error guard
+  runs before type selection, and errors from the typed mapper propagate.
+
 ### Typed nullable construction
 
 - Added `Either.fromNullableOrElse`, which converts a non-null value to `Right`

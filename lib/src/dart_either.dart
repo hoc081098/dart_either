@@ -16,6 +16,41 @@ part 'utils/par_sequence_n_executor.dart';
 /// Map [error] and [stackTrace] to a [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 
+/// Adapts a typed error mapper to an [ErrorMapper] that maps only [E].
+///
+/// When invoked by [Either.tryCatch], [Either.tryCatchAsync],
+/// [ToEitherFutureExtension.toEitherFuture], or
+/// [ToEitherStreamExtension.toEitherStream], an error of type [E] or one of
+/// its subtypes is passed to [errorMapper]. A non-matching error is rethrown
+/// with its original stack trace. Errors thrown by [errorMapper] propagate
+/// unchanged.
+///
+/// The capture operation applies its fatal-error policy before invoking the
+/// returned mapper. Calling the returned mapper directly does not apply that
+/// policy.
+///
+/// ### Example
+///
+/// ```dart
+/// final Either<String, int> result = Either.tryCatch(
+///   action: () => throw const FormatException('invalid integer'),
+///   errorMapper: catchOnly(
+///     (FormatException error, StackTrace stackTrace) => error.message,
+///   ),
+/// );
+/// // Result: Left('invalid integer')
+/// ```
+@useResult
+ErrorMapper<L> catchOnly<E extends Object, L>(
+  L Function(E error, StackTrace stackTrace) errorMapper,
+) =>
+    (error, stackTrace) {
+      if (error is E) {
+        return errorMapper(error, stackTrace);
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    };
+
 /// Rethrows [error] with [stackTrace] when it is an internal control signal or
 /// matches a type registered through [Either.registerFatalError].
 @internal

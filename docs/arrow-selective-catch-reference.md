@@ -131,9 +131,9 @@ final Either<ParseFailure, int> result = Either.tryCatch(
 
 Typing the mapper's first parameter makes `E` explicit while allowing Dart to
 infer `E` and `L`. The same adapter composes with the asynchronous, Future, and
-Stream capture interfaces. A local Stream probe also confirmed that a matching
-error becomes a `Left`, a non-match remains an error event, and later data
-events continue through the existing transformer.
+Stream capture interfaces. Regression coverage confirms that a matching error
+becomes a `Left`, a non-match remains an error event, and later data events
+continue through the existing transformer.
 
 Two alternatives have weaker trade-offs for the current package:
 
@@ -147,9 +147,9 @@ Two alternatives have weaker trade-offs for the current package:
   four methods before the repository has a concrete need for reusable
   stateful capture policies or value-level predicates.
 
-The recommended first slice is the single `catchOnly` mapper adapter. It keeps
-the public interface small, places type selection at the existing seam, and
-concentrates type matching and non-match rethrow behavior in one
-implementation. Arbitrary predicates and a reusable policy object can remain
-deferred until a consumer needs selection that cannot be expressed by an
-error type.
+The accepted and implemented interface is the single `catchOnly` mapper
+adapter. It keeps the public interface small, places type selection at the
+existing seam, and concentrates type matching and non-match rethrow behavior
+in one implementation. Arbitrary predicates and a reusable policy object
+remain deferred until a consumer needs selection that cannot be expressed by
+an error type.
