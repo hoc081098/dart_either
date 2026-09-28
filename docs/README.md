@@ -11,6 +11,9 @@ from the published package through `.pubignore`.
   compatibility decisions, the major-version roadmap, and deferred proposals.
 - [Arrow Either reference](arrow-either-reference.md): upstream links and the
   boundary between Arrow inspiration and the Dart implementation.
+- [Arrow selective catch reference](arrow-selective-catch-reference.md):
+  pinned upstream evidence and the accepted Dart interface direction for
+  type-directed error capture.
 - [Either variance safety](either-variance-safety.md): signature variance,
   instance-method runtime checks, extension design, and widened-type tests.
 - [Library strengths and improvement roadmap](library-strengths-and-improvement-roadmap.md):
@@ -29,6 +32,8 @@ from the published package through `.pubignore`.
 - [ADR 0004](adr/0004-define-either-value-equality-and-branch-aware-hashing.md):
   why `Either` equality ignores generic type arguments and hashing must combine
   a branch discriminator with the active payload hash.
+- [ADR 0005](adr/0005-add-catch-only-as-a-selective-error-mapper-adapter.md):
+  why selective capture is a typed adapter at the shared `ErrorMapper` seam.
 - [API rename workflow](../.agents/skills/api-rename-flow/SKILL.md): the required
   process for non-breaking public API renames.
 
