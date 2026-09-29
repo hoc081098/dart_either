@@ -92,10 +92,10 @@ type or invoking an `ErrorMapper`.
 Arrow does not establish a Dart name or require Dart to reproduce the
 transform overloads. Those overloads compensate for Kotlin's overloaded
 top-level API and provide reusable branch construction internally. For this
-package, the source supports a typed selective operation such as `catchOnly`
-or `tryCatchOnly`. It does not provide evidence that a user-supplied predicate
-is preferable, nor does its construction API establish the shape of a Dart
-error mapper that also receives a `StackTrace`.
+package, the source supports a typed selective operation. It does not provide
+evidence that a user-supplied predicate is preferable, nor does its
+construction API establish the shape of a Dart error mapper that also receives
+a `StackTrace`.
 
 ## Dart interface design
 
@@ -106,9 +106,11 @@ adapter can therefore add selective capture to all four forms without adding
 four parallel operations:
 
 ```dart
-ErrorMapper<L> catchOnly<E extends Object, L>(
-  L Function(E error, StackTrace stackTrace) errorMapper,
-)
+abstract final class ErrorMappers {
+  static ErrorMapper<L> only<E extends Object, L>(
+    L Function(E error, StackTrace stackTrace) errorMapper,
+  ) => ...;
+}
 ```
 
 For a matching non-fatal `E`, the adapter invokes `errorMapper`. For a
@@ -122,7 +124,7 @@ The call site keeps the established execution interface:
 ```dart
 final Either<ParseFailure, int> result = Either.tryCatch(
   action: () => int.parse(input),
-  errorMapper: catchOnly(
+  errorMapper: ErrorMappers.only(
     (FormatException error, StackTrace stackTrace) =>
         ParseFailure(error.message),
   ),
@@ -147,9 +149,10 @@ Two alternatives have weaker trade-offs for the current package:
   four methods before the repository has a concrete need for reusable
   stateful capture policies or value-level predicates.
 
-The accepted and implemented interface is the single `catchOnly` mapper
-adapter. It keeps the public interface small, places type selection at the
-existing seam, and concentrates type matching and non-match rethrow behavior
-in one implementation. Arbitrary predicates and a reusable policy object
-remain deferred until a consumer needs selection that cannot be expressed by
-an error type.
+The accepted and implemented interface is the single `ErrorMappers.only`
+adapter. The namespace identifies it as an `ErrorMapper` factory while keeping
+the call site compact. It places type selection at the existing seam and
+concentrates type matching and non-match rethrow behavior in one
+implementation. Arbitrary predicates and a reusable policy object remain
+deferred until a consumer needs selection that cannot be expressed by an error
+type.

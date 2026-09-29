@@ -11,7 +11,7 @@ class _RegisteredFatalException implements Exception {}
 
 final class _RegisteredFatalSubtype extends _RegisteredFatalException {}
 
-final class _CatchOnlyFatalException implements Exception {}
+final class _ErrorMappersOnlyFatalException implements Exception {}
 
 final class _MutableHashValue {
   _MutableHashValue(this.hashCodeValue);
@@ -48,13 +48,13 @@ void main() {
   final exception = Exception();
   final exceptionLeft = Left<Object, Never>(exception);
 
-  group('catchOnly', () {
+  group('ErrorMappers.only', () {
     test('maps a matching error through tryCatch', () {
       var mapperCalls = 0;
 
       final Either<String, int> result = Either.tryCatch(
         action: () => throw const FormatException('invalid integer'),
-        errorMapper: catchOnly(
+        errorMapper: ErrorMappers.only(
           (FormatException error, StackTrace stackTrace) {
             mapperCalls += 1;
             return error.message;
@@ -71,7 +71,7 @@ void main() {
 
       final Either<String, int> result = Either.tryCatch(
         action: () => throw error,
-        errorMapper: catchOnly(
+        errorMapper: ErrorMappers.only(
           (Exception error, StackTrace stackTrace) => error.toString(),
         ),
       );
@@ -88,7 +88,7 @@ void main() {
       );
       final selective = Either<Object, int>.tryCatch(
         action: () => throw error,
-        errorMapper: catchOnly<Object, Object>(takeOnlyError),
+        errorMapper: ErrorMappers.only<Object, Object>(takeOnlyError),
       );
 
       expect(selective, direct);
@@ -102,7 +102,7 @@ void main() {
       try {
         Either<String, int>.tryCatch(
           action: () => Error.throwWithStackTrace(error, stackTrace),
-          errorMapper: catchOnly(
+          errorMapper: ErrorMappers.only(
             (FormatException error, StackTrace stackTrace) {
               mapperCalls += 1;
               return error.message;
@@ -124,7 +124,7 @@ void main() {
       expect(
         () => Either<String, int>.tryCatch(
           action: () => throw const FormatException('invalid integer'),
-          errorMapper: catchOnly<FormatException, String>(
+          errorMapper: ErrorMappers.only<FormatException, String>(
             (error, stackTrace) => throw mapperError,
           ),
         ),
@@ -133,14 +133,15 @@ void main() {
     });
 
     test('does not receive registered fatal errors', () {
-      final fatalError = _CatchOnlyFatalException();
+      final fatalError = _ErrorMappersOnlyFatalException();
       var mapperCalls = 0;
-      Either.registerFatalError<_CatchOnlyFatalException>();
+      Either.registerFatalError<_ErrorMappersOnlyFatalException>();
 
       expect(
         () => Either<String, int>.tryCatch(
           action: () => throw fatalError,
-          errorMapper: catchOnly<_CatchOnlyFatalException, String>(
+          errorMapper:
+              ErrorMappers.only<_ErrorMappersOnlyFatalException, String>(
             (error, stackTrace) {
               mapperCalls += 1;
               return 'mapped';
@@ -158,7 +159,7 @@ void main() {
       final result = Either<String, int>.binding((effect) {
         Either<String, int>.tryCatch(
           action: () => effect.raise('raised'),
-          errorMapper: catchOnly<Object, String>(
+          errorMapper: ErrorMappers.only<Object, String>(
             (error, stackTrace) {
               mapperCalls += 1;
               return 'mapped';
@@ -173,7 +174,7 @@ void main() {
     });
 
     test('composes with tryCatchAsync for sync and async errors', () async {
-      final ErrorMapper<String> mapper = catchOnly(
+      final ErrorMapper<String> mapper = ErrorMappers.only(
         (FormatException error, StackTrace stackTrace) => error.message,
       );
 
@@ -197,7 +198,7 @@ void main() {
       await expectLater(
         Future<int>.error(const FormatException('future failure'))
             .toEitherFuture(
-          catchOnly(
+          ErrorMappers.only(
             (FormatException error, StackTrace stackTrace) => error.message,
           ),
         ),
@@ -216,7 +217,7 @@ void main() {
           Stream.error(nonMatchingError),
           Stream.value(3),
         ]).toEitherStream(
-          catchOnly(
+          ErrorMappers.only(
             (FormatException error, StackTrace stackTrace) => error.message,
           ),
         ),

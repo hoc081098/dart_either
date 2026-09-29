@@ -259,7 +259,7 @@ signature currently provided by `Either.fromNullableOrElse`.
 |----------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
 | [`Either.tryCatch`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/Either.tryCatch.html)              | Captures errors thrown by a synchronous action |
 | [`Either.tryCatchAsync`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/tryCatchAsync.html)            | Captures sync and async errors from an action |
-| [`catchOnly`](https://pub.dev/documentation/dart_either/latest/dart_either/catchOnly.html)                                  | Maps only errors matching a selected type      |
+| [`ErrorMappers.only`](https://pub.dev/documentation/dart_either/latest/dart_either/ErrorMappers/only.html)                                | Maps only errors matching a selected type      |
 | [`Future.toEitherFuture`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherFutureExtension/toEitherFuture.html) | Converts an existing future's outcome    |
 | [`Stream.toEitherStream`](https://pub.dev/documentation/dart_either/latest/dart_either/ToEitherStreamExtension/toEitherStream.html) | Converts an existing stream's events     |
 | [`Either.registerFatalError`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/registerFatalError.html) | Excludes an error type from capture           |
@@ -279,14 +279,14 @@ final Either<String, int> loaded = await Either.tryCatchAsync(
 ); // Either.Right(42)
 ```
 
-Use `catchOnly` when one operation should map only an expected error type.
-Non-matching errors remain in Dart's error channel with their original stack
-trace:
+Use `ErrorMappers.only` when one operation should map only an expected error
+type. Non-matching errors remain in Dart's error channel with their original
+stack trace:
 
 ```dart
 final Either<String, int> selectivelyParsed = Either.tryCatch(
   action: () => throw const FormatException('invalid integer'),
-  errorMapper: catchOnly(
+  errorMapper: ErrorMappers.only(
     (FormatException error, StackTrace stackTrace) => error.message,
   ),
 ); // Either.Left(invalid integer)
@@ -295,16 +295,17 @@ final Either<String, int> selectivelyParsed = Either.tryCatch(
 The typed mapper also composes with `Either.tryCatchAsync`,
 `Future.toEitherFuture`, and `Stream.toEitherStream`.
 
-Think of `registerFatalError` and `catchOnly` as filters in complementary
+Think of `registerFatalError` and `ErrorMappers.only` as filters in complementary
 directions:
 
 - `registerFatalError<T>()` globally excludes `T` and its subtypes from every
   mapper. A match remains in Dart's error channel.
-- `catchOnly<E, L>()` selects `E` and its subtypes for one mapper. Every
+- `ErrorMappers.only<E, L>()` selects `E` and its subtypes for one mapper. Every
   non-match remains in the error channel.
 
 Global exclusion runs first. An error that is both registered as fatal and
-selected by `catchOnly` bypasses the mapper and keeps its original stack trace.
+selected by `ErrorMappers.only` bypasses the mapper and keeps its original
+stack trace.
 
 Use the receiver extensions when the `Future` or `Stream` has already been
 created:

@@ -62,7 +62,7 @@ The current API covers the operations that make `Either` practical in an app:
   `getOrHandle`, `handleError`, and `handleErrorWith`;
 - exception, `Future`, and `Stream` bridges through `tryCatch`,
   `tryCatchAsync`, `toEitherFuture`, and `toEitherStream`, with
-  `registerFatalError` for app-wide rethrow policy and `catchOnly` for
+  `registerFatalError` for app-wide rethrow policy and `ErrorMappers.only` for
   per-operation type selection;
 - async chaining with `thenMapEither` and `thenFlatMapEither`;
 - sequential and parallel collection operations through `sequence`,
@@ -412,17 +412,20 @@ cancellation exceptions. An individual operation can recover only from an
 expected exception class through the typed mapper adapter:
 
 ```dart
-ErrorMapper<L> catchOnly<E extends Object, L>(
-  L Function(E error, StackTrace stackTrace) errorMapper,
-)
+abstract final class ErrorMappers {
+  static ErrorMapper<L> only<E extends Object, L>(
+    L Function(E error, StackTrace stackTrace) errorMapper,
+  ) => ...;
+}
 ```
 
-`catchOnly` matches `E` and its subtypes, invokes the typed mapper once for a
-match, and rethrows a non-match with its original object and stack trace. It
-composes with all four canonical capture operations at their existing
+`ErrorMappers.only` matches `E` and its subtypes, invokes the typed mapper once
+for a match, and rethrows a non-match with its original object and stack trace.
+It composes with all four canonical capture operations at their existing
 `ErrorMapper<L>` seam. Their internal guard rethrows `ControlError` and
 registered fatal errors before the adapter runs. Errors from the typed mapper
-propagate unchanged. [ADR 0005](adr/0005-add-catch-only-as-a-selective-error-mapper-adapter.md)
+propagate unchanged.
+[ADR 0005](adr/0005-add-error-mappers-only-as-a-selective-error-mapper-adapter.md)
 records the interface and rejected alternatives.
 
 #### Recommended Flutter application policy
