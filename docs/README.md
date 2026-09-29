@@ -32,7 +32,7 @@ from the published package through `.pubignore`.
 - [ADR 0004](adr/0004-define-either-value-equality-and-branch-aware-hashing.md):
   why `Either` equality ignores generic type arguments and hashing must combine
   a branch discriminator with the active payload hash.
-- [ADR 0005](adr/0005-add-catch-only-as-a-selective-error-mapper-adapter.md):
+- [ADR 0005](adr/0005-add-error-mappers-only-as-a-selective-error-mapper-adapter.md):
   why selective capture is a typed adapter at the shared `ErrorMapper` seam.
 - [API rename workflow](../.agents/skills/api-rename-flow/SKILL.md): the required
   process for non-breaking public API renames.

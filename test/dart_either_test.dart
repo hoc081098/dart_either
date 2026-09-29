@@ -11,6 +11,8 @@ class _RegisteredFatalException implements Exception {}
 
 final class _RegisteredFatalSubtype extends _RegisteredFatalException {}
 
+final class _ErrorMappersOnlyFatalException implements Exception {}
+
 final class _MutableHashValue {
   _MutableHashValue(this.hashCodeValue);
 
@@ -45,6 +47,191 @@ void main() {
 
   final exception = Exception();
   final exceptionLeft = Left<Object, Never>(exception);
+
+  group('ErrorMappers.only', () {
+    test('maps a matching error through tryCatch', () {
+      var mapperCalls = 0;
+
+      final Either<String, int> result = Either.tryCatch(
+        action: () => throw const FormatException('invalid integer'),
+        errorMapper: ErrorMappers.only(
+          (FormatException error, StackTrace stackTrace) {
+            mapperCalls += 1;
+            return error.message;
+          },
+        ),
+      );
+
+      expect(result, const Left<String, Never>('invalid integer'));
+      expect(mapperCalls, 1);
+    });
+
+    test('matches subtypes', () {
+      const error = FormatException('invalid integer');
+
+      final Either<String, int> result = Either.tryCatch(
+        action: () => throw error,
+        errorMapper: ErrorMappers.only(
+          (Exception error, StackTrace stackTrace) => error.toString(),
+        ),
+      );
+
+      expect(result, Left<String, Never>(error.toString()));
+    });
+
+    test('Object selection is coherent with a direct ErrorMapper', () {
+      final error = Exception('failure');
+
+      final direct = Either<Object, int>.tryCatch(
+        action: () => throw error,
+        errorMapper: takeOnlyError,
+      );
+      final selective = Either<Object, int>.tryCatch(
+        action: () => throw error,
+        errorMapper: ErrorMappers.only<Object, Object>(takeOnlyError),
+      );
+
+      expect(selective, direct);
+    });
+
+    test('rethrows a non-matching error with its stack trace', () {
+      final error = StateError('unexpected');
+      final stackTrace = StackTrace.fromString('non-match origin');
+      var mapperCalls = 0;
+
+      try {
+        Either<String, int>.tryCatch(
+          action: () => Error.throwWithStackTrace(error, stackTrace),
+          errorMapper: ErrorMappers.only(
+            (FormatException error, StackTrace stackTrace) {
+              mapperCalls += 1;
+              return error.message;
+            },
+          ),
+        );
+        fail('Expected the non-matching error to propagate');
+      } catch (caught, caughtStackTrace) {
+        expect(caught, same(error));
+        expect(caughtStackTrace.toString(), stackTrace.toString());
+      }
+
+      expect(mapperCalls, 0);
+    });
+
+    test('propagates an error thrown by the typed mapper', () {
+      final mapperError = StateError('mapper failed');
+
+      expect(
+        () => Either<String, int>.tryCatch(
+          action: () => throw const FormatException('invalid integer'),
+          errorMapper: ErrorMappers.only<FormatException, String>(
+            (error, stackTrace) => throw mapperError,
+          ),
+        ),
+        throwsA(same(mapperError)),
+      );
+    });
+
+    test('does not receive registered fatal errors', () {
+      final fatalError = _ErrorMappersOnlyFatalException();
+      var mapperCalls = 0;
+      Either.registerFatalError<_ErrorMappersOnlyFatalException>();
+
+      expect(
+        () => Either<String, int>.tryCatch(
+          action: () => throw fatalError,
+          errorMapper:
+              ErrorMappers.only<_ErrorMappersOnlyFatalException, String>(
+            (error, stackTrace) {
+              mapperCalls += 1;
+              return 'mapped';
+            },
+          ),
+        ),
+        throwsA(same(fatalError)),
+      );
+      expect(mapperCalls, 0);
+    });
+
+    test('does not intercept binding control errors', () {
+      var mapperCalls = 0;
+
+      final result = Either<String, int>.binding((effect) {
+        Either<String, int>.tryCatch(
+          action: () => effect.raise('raised'),
+          errorMapper: ErrorMappers.only<Object, String>(
+            (error, stackTrace) {
+              mapperCalls += 1;
+              return 'mapped';
+            },
+          ),
+        );
+        return 42;
+      });
+
+      expect(result, const Left<String, Never>('raised'));
+      expect(mapperCalls, 0);
+    });
+
+    test('composes with tryCatchAsync for sync and async errors', () async {
+      final ErrorMapper<String> mapper = ErrorMappers.only(
+        (FormatException error, StackTrace stackTrace) => error.message,
+      );
+
+      await expectLater(
+        Either.tryCatchAsync<String, int>(
+          action: () => throw const FormatException('sync failure'),
+          errorMapper: mapper,
+        ),
+        completion(const Left<String, Never>('sync failure')),
+      );
+      await expectLater(
+        Either.tryCatchAsync<String, int>(
+          action: () async => throw const FormatException('async failure'),
+          errorMapper: mapper,
+        ),
+        completion(const Left<String, Never>('async failure')),
+      );
+    });
+
+    test('composes with Future.toEitherFuture', () async {
+      await expectLater(
+        Future<int>.error(const FormatException('future failure'))
+            .toEitherFuture(
+          ErrorMappers.only(
+            (FormatException error, StackTrace stackTrace) => error.message,
+          ),
+        ),
+        completion(const Left<String, Never>('future failure')),
+      );
+    });
+
+    test('composes with Stream.toEitherStream', () async {
+      final nonMatchingError = StateError('unexpected');
+
+      await expectLater(
+        Rx.concat<int>([
+          Stream.value(1),
+          Stream.error(const FormatException('stream failure')),
+          Stream.value(2),
+          Stream.error(nonMatchingError),
+          Stream.value(3),
+        ]).toEitherStream(
+          ErrorMappers.only(
+            (FormatException error, StackTrace stackTrace) => error.message,
+          ),
+        ),
+        emitsInOrder(<Object>[
+          const Right<Never, int>(1),
+          const Left<String, Never>('stream failure'),
+          const Right<Never, int>(2),
+          emitsError(same(nonMatchingError)),
+          const Right<Never, int>(3),
+          emitsDone,
+        ]),
+      );
+    });
+  });
 
   group('Either', () {
     test('isLeft', () {

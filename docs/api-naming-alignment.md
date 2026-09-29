@@ -211,6 +211,12 @@ The similar suffix does not make them rename counterparts. Arrow operations
 such as `validate`, `toIor`, and `zipOrAccumulate` are also new-feature inputs,
 not missing rename targets.
 
+Selective capture is exposed as the static `ErrorMappers.only<E, L>` adapter at
+the existing `ErrorMapper<L>` seam. It preserves Dart's domain-left mapper and
+stack-trace input while applying one typed selection rule across the sync,
+async, Future, and Stream capture operations. This adaptation is recorded in
+[ADR 0005](adr/0005-add-error-mappers-only-as-a-selective-error-mapper-adapter.md).
+
 ## Added and deferred operations
 
 | API | Location | Status and semantics |
@@ -221,6 +227,7 @@ not missing rename targets.
 | `merge` | `MergeEitherExtension` | Implemented; extract the value from `Either<T, T>` |
 | `EitherEffect.raise` | `RaiseEitherEffectExtension` | Implemented; short-circuit directly with a left value |
 | `isLeftAnd` | Safe `Either` member | Implemented in 2.3.0; adapts Arrow's predicate overload of `isLeft` because Dart already uses an `isLeft` getter |
+| `ErrorMappers.only` | Static `ErrorMapper` adapter | Implemented; maps matching errors and subtypes while rethrowing non-matches with their original stack trace |
 | Arrow-style `recover` | Generic extension plus scoped `Raise` capability | Deferred new API, not a rename; it must support returning a success value or raising a new left value and must not be introduced as a weaker alias of `handleError` or `handleErrorWith` |
 
 Deferred or rejected names must not appear in usage examples as available

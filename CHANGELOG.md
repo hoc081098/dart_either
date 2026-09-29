@@ -1,5 +1,27 @@
 ## Unreleased
 
+### Selective error capture
+
+- Added `ErrorMappers.only<E, L>`, which adapts a typed error mapper to the
+  existing `ErrorMapper<L>` interface. Matching errors and their subtypes are
+  mapped; non-matching errors retain their original object and stack trace.
+  Errors thrown by the typed mapper propagate unchanged.
+- `ErrorMappers.only` composes with `Either.tryCatch`, `Either.tryCatchAsync`,
+  `Future.toEitherFuture`, and `Stream.toEitherStream`.
+- `registerFatalError<T>()` and `ErrorMappers.only<E, L>()` filter in
+  complementary directions: registration globally excludes a type from every
+  mapper, while `ErrorMappers.only` selects one type for an individual mapper.
+  Global exclusion runs first.
+
+```dart
+final Either<String, int> result = Either.tryCatch(
+  action: () => throw const FormatException('invalid integer'),
+  errorMapper: ErrorMappers.only(
+    (FormatException error, StackTrace stackTrace) => error.message,
+  ),
+); // Either.Left(invalid integer)
+```
+
 ### Typed nullable construction
 
 - Added `Either.fromNullableOrElse`, which converts a non-null value to `Right`
@@ -9,6 +31,18 @@
   Use `Either.fromNullableOrElse<void, R>(value, ifNull: () {})` to
   preserve `Either<void, R>` and `Left(null)`. In 3.0.0,
   `Either.fromNullable` will adopt the typed, lazy `ifNull` signature.
+
+```dart
+Either.fromNullableOrElse<String, int>(
+  null,
+  ifNull: () => 'missing',
+); // Either.Left(missing)
+
+Either.fromNullableOrElse<String, int>(
+  42,
+  ifNull: () => 'missing',
+); // Either.Right(42)
+```
 
 ### Either value equality and hashing
 

@@ -16,6 +16,51 @@ part 'utils/par_sequence_n_executor.dart';
 /// Map [error] and [stackTrace] to a [T] value.
 typedef ErrorMapper<T> = T Function(Object error, StackTrace stackTrace);
 
+/// Factories for adapting functions to the [ErrorMapper] interface.
+abstract final class ErrorMappers {
+  /// Adapts a typed error mapper to an [ErrorMapper] that maps only [E].
+  ///
+  /// When invoked by [Either.tryCatch], [Either.tryCatchAsync],
+  /// [ToEitherFutureExtension.toEitherFuture], or
+  /// [ToEitherStreamExtension.toEitherStream], an error of type [E] or one of
+  /// its subtypes is passed to [errorMapper]. A non-matching error is rethrown
+  /// with its original stack trace. Errors thrown by [errorMapper] propagate
+  /// unchanged.
+  ///
+  /// [Either.registerFatalError] and [ErrorMappers.only] filter in
+  /// complementary directions. `registerFatalError<T>()` globally excludes
+  /// `T` and its subtypes from every capture mapper, so matching errors remain
+  /// in Dart's error channel. `ErrorMappers.only<E, L>()` selects [E] and its
+  /// subtypes for this mapper, so every non-match remains in the error channel.
+  /// Global fatal exclusions run first when both filters match.
+  ///
+  /// The capture operation applies its fatal-error policy before invoking the
+  /// returned mapper. Calling the returned mapper directly does not apply that
+  /// policy.
+  ///
+  /// ### Example
+  ///
+  /// ```dart
+  /// final Either<String, int> result = Either.tryCatch(
+  ///   action: () => throw const FormatException('invalid integer'),
+  ///   errorMapper: ErrorMappers.only(
+  ///     (FormatException error, StackTrace stackTrace) => error.message,
+  ///   ),
+  /// );
+  /// // Result: Left('invalid integer')
+  /// ```
+  @useResult
+  static ErrorMapper<L> only<E extends Object, L>(
+    L Function(E error, StackTrace stackTrace) errorMapper,
+  ) =>
+      (error, stackTrace) {
+        if (error is E) {
+          return errorMapper(error, stackTrace);
+        }
+        Error.throwWithStackTrace(error, stackTrace);
+      };
+}
+
 /// Rethrows [error] with [stackTrace] when it is an internal control signal or
 /// matches a type registered through [Either.registerFatalError].
 @internal
@@ -115,6 +160,12 @@ sealed class Either<L, R> {
   ///
   /// Internal [ControlError] values are always treated as fatal and do not need
   /// to be registered.
+  ///
+  /// This is the global exclusion policy for error capture. The complementary
+  /// [ErrorMappers.only] adapter selects one error type for an individual mapper.
+  /// Registration wins when an error matches both policies: the error bypasses
+  /// `ErrorMappers.only` and remains in Dart's error channel with its original
+  /// stack trace.
   ///
   /// ### Example
   ///

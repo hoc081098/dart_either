@@ -74,6 +74,18 @@ void main() {
   // ^
   // )
 
+  /// `registerFatalError<T>()` globally excludes a type from every mapper.
+  /// In the complementary direction, `ErrorMappers.only<E, L>()` selects one
+  /// type for this mapper. Other error types remain errors, and global
+  /// exclusions win.
+  final Either<String, int> selectiveTryCatchResult = Either.tryCatch(
+    action: () => throw const FormatException('invalid integer'),
+    errorMapper: ErrorMappers.only(
+      (FormatException error, StackTrace stackTrace) => error.message,
+    ),
+  );
+  print(selectiveTryCatchResult); // Prints Either.Left(invalid integer)
+
   // ---------------------------------------------------------------------------
   // 2) Operations: extraction, transformation, composition
   // ---------------------------------------------------------------------------

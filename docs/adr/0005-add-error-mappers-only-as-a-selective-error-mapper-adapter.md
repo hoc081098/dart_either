@@ -2,20 +2,24 @@
 status: accepted
 ---
 
-# Add catchOnly as a selective ErrorMapper adapter
+# Add ErrorMappers.only as a selective ErrorMapper adapter
 
-`dart_either` will add one top-level `catchOnly` function that adapts a typed
-error mapper to the existing `ErrorMapper<L>` interface:
+`dart_either` will keep the existing `ErrorMapper<T>` typedef and add an
+`ErrorMappers` namespace with one static adapter:
 
 ```dart
-ErrorMapper<L> catchOnly<E extends Object, L>(
-  L Function(E error, StackTrace stackTrace) errorMapper,
-)
+abstract final class ErrorMappers {
+  static ErrorMapper<L> only<E extends Object, L>(
+    L Function(E error, StackTrace stackTrace) errorMapper,
+  ) => ...;
+}
 ```
 
-Place `catchOnly` next to `ErrorMapper` in `lib/src/dart_either.dart`. The
+Place `ErrorMappers` next to `ErrorMapper` in `lib/src/dart_either.dart`. The
 package barrel already exports that source file, so no additional public
-module or export seam is required.
+module or export seam is required. The namespace makes it explicit that
+`only` creates an `ErrorMapper`; `only` remains compact and descriptive within
+that namespace.
 
 The existing `ErrorMapper<L>` seam is shared by `Either.tryCatch`,
 `Either.tryCatchAsync`, `Future.toEitherFuture`, and `Stream.toEitherStream`.
@@ -25,9 +29,9 @@ execution form.
 
 ## Behavioral contract
 
-`catchOnly` is an adapter intended for the `errorMapper` parameter of the four
-canonical capture operations. Those operations retain ownership of error
-capture and fatal-error policy. They must invoke `throwIfFatal` before the
+`ErrorMappers.only` is an adapter intended for the `errorMapper` parameter of
+the four canonical capture operations. Those operations retain ownership of
+error capture and fatal-error policy. They invoke `throwIfFatal` before the
 adapter sees an error, so `ControlError` and errors matching
 `Either.registerFatalError` remain in the outer error channel with their
 original object and stack trace even when they satisfy `E`.
@@ -42,8 +46,8 @@ For a non-fatal error passed to the adapter:
   operation does not catch it again and convert it to a `Left`.
 
 `E = Object` is valid. For non-fatal errors,
-`catchOnly<Object, L>(errorMapper)` is coherent with passing an equivalent
-`ErrorMapper<L>` directly.
+`ErrorMappers.only<Object, L>(errorMapper)` is coherent with passing an
+equivalent `ErrorMapper<L>` directly.
 
 Calling the returned function directly is not an error-capture operation and
 does not apply the package's fatal-error policy. The fatal-before-selection
@@ -61,6 +65,9 @@ and this Dart adapter are recorded in the
 
 ## Considered options
 
+- A loose top-level adapter was rejected because its name can imply that it
+  performs error capture itself. The `ErrorMappers` namespace communicates
+  ownership and purpose at the call site.
 - A `tryCatchOnly<E, L, R>` family was rejected because equivalent sync,
   async, Future, and Stream entry points would repeat one selection interface
   across four execution forms. A selective factory constructor is also not
@@ -77,18 +84,21 @@ and this Dart adapter are recorded in the
 - A public `ErrorCapture<E, L>` policy object was rejected because it would add
   a nominal type and multiple methods before a concrete consumer requires a
   reusable policy or value-level selection.
-- Arbitrary predicates and overloads are deferred. The accepted interface is
-  type-directed only; reconsider broader selection when a concrete case cannot
-  be represented by an error type.
+- Additional named adapters, arbitrary predicates, and overloads are deferred.
+  The accepted interface is type-directed only; reconsider broader selection
+  when a concrete case cannot be represented by an error type.
 
 ## Consequences
 
-- One additive public function enables selective capture through all four
+- One additive public static method enables selective capture through all four
   canonical execution forms while leaving their signatures unchanged.
+- The package adds one non-instantiable namespace class instead of another
+  loose top-level function.
 - Type selection, typed mapping, and non-match rethrow behavior remain local to
   one implementation.
-- Callers must type the mapper's error parameter or provide explicit generic
-  arguments when inference would otherwise choose a broader `E`.
+- Callers normally express `E` by typing the mapper's first parameter. Explicit
+  generic arguments remain available when inference would choose a broader
+  type.
 - Tests must cover exact-type and subtype matches, `E = Object`, non-matching
   error identity and stack preservation, fatal-before-selection ordering,
   mapper invocation count, mapper-error propagation, and composition with the
