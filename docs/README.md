@@ -35,7 +35,7 @@ from the published package through `.pubignore`.
 - [ADR 0005](adr/0005-add-error-mappers-only-as-a-selective-error-mapper-adapter.md):
   why selective capture is a typed adapter at the shared `ErrorMapper` seam.
 - [ADR 0006](adr/0006-retain-built-list-for-collection-results.md): why collection
-  results retain `BuiltList` and how consumers adapt them to SDK `List` APIs.
+  results retain `BuiltList` and how consumers adapt them to APIs requiring `List`.
 - [API rename workflow](../.agents/skills/api-rename-flow/SKILL.md): the required
   process for non-breaking public API renames.
 

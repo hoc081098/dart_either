@@ -636,8 +636,8 @@ sealed class Either<L, R> {
   ///
   /// This is a shorthand for `Either.sequence<L, R>(values.map(mapper))`.
   ///
-  /// Successful values are collected into an immutable [BuiltList]. For SDK
-  /// [List] compatibility, use [BuiltList.asList] to obtain an unmodifiable
+  /// Successful values are collected into an immutable [BuiltList]. When an API
+  /// requires a [List], use [BuiltList.asList] to obtain an unmodifiable
   /// [List]. Use [BuiltList.toList] if the receiving API needs to mutate it.
   ///
   /// ### Example
@@ -671,8 +671,8 @@ sealed class Either<L, R> {
   ///
   /// Otherwise, collects all values and wrap them in a [Right].
   ///
-  /// Successful values are collected into an immutable [BuiltList]. For SDK
-  /// [List] compatibility, use [BuiltList.asList] to obtain an unmodifiable
+  /// Successful values are collected into an immutable [BuiltList]. When an API
+  /// requires a [List], use [BuiltList.asList] to obtain an unmodifiable
   /// [List]. Use [BuiltList.toList] if the receiving API needs to mutate it.
   ///
   /// ### Example
@@ -777,7 +777,7 @@ sealed class Either<L, R> {
   /// values in input order, regardless of completion order. An empty [values]
   /// iterable produces a [Right] containing an empty [BuiltList].
   ///
-  /// For SDK [List] compatibility, use [BuiltList.asList] to obtain an
+  /// When an API requires a [List], use [BuiltList.asList] to obtain an
   /// unmodifiable [List]. Use [BuiltList.toList] if the receiving API needs
   /// to mutate it.
   ///
@@ -886,7 +886,7 @@ sealed class Either<L, R> {
   /// values in input order, regardless of completion order. An empty
   /// [functions] iterable produces a [Right] containing an empty [BuiltList].
   ///
-  /// For SDK [List] compatibility, use [BuiltList.asList] to obtain an
+  /// When an API requires a [List], use [BuiltList.asList] to obtain an
   /// unmodifiable [List]. Use [BuiltList.toList] if the receiving API needs
   /// to mutate it.
   ///

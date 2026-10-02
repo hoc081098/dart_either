@@ -31,7 +31,7 @@ detected, `raise` is implemented, and the full test suite runs in CI.
 Nullable and exception conversion now support domain-selective adapters.
 Collection results intentionally retain `BuiltList` for its immutable
 interface and equality and hashing by contents. Consumers can use `.asList()`
-when an SDK `List` is required.
+when a `List` is required.
 
 Law, lower-bound, documentation, and package validation are covered by CI;
 keep those gates current as the package evolves.
@@ -52,9 +52,9 @@ The "lightweight" claim needs one qualification. Runtime dependencies are only
 of the public API and not merely an internal implementation detail.
 
 This choice is retained in
-[ADR 0006](adr/0006-retain-built-list-for-collection-results.md). SDK collection
+[ADR 0006](adr/0006-retain-built-list-for-collection-results.md). `List`
 interoperability is documented in the
-[README](../README.md#sdk-list-interoperability).
+[README](../README.md#list-interoperability).
 
 ### The API around `Either` is the product
 
@@ -491,16 +491,16 @@ error is reported or terminated.
 their canonical successful result type, including in the current 3.x plan.
 Its immutable collection interface and equality and hashing by contents are
 intentional. `Either` delegates to its payload's equality, so changing the
-result to an SDK `List` would also change equality behavior.
+result to Dart's `List` type would also change equality behavior.
 
-Consumers can pass `BuiltList` directly to APIs accepting `Iterable`. For SDK
-`List` compatibility, use `.asList()` to obtain an unmodifiable list. If the
+Consumers can pass `BuiltList` directly to APIs accepting `Iterable`. When an
+API requires `List`, use `.asList()` to obtain an unmodifiable list. If the
 receiving API needs to modify it, use `.toList()` instead. Mutable elements
-remain mutable, and the returned SDK lists use identity equality.
+remain mutable, and the returned lists use identity equality.
 
 The README, Dartdocs, and runnable example explain this conversion. Keeping
 one canonical result type avoids duplicating the four operations solely for
-SDK collection compatibility.
+`List` compatibility.
 [ADR 0006](adr/0006-retain-built-list-for-collection-results.md) records the
 decision and its dependency and compatibility trade-offs.
 

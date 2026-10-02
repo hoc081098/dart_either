@@ -151,7 +151,7 @@ void main() {
   print(merged); // Prints 10
 
   // ---------------------------------------------------------------------------
-  // 3) Collections: adapt immutable results to SDK List APIs
+  // 3) Collections: adapt immutable results to List APIs
   // ---------------------------------------------------------------------------
 
   final Either<String, BuiltList<int>> sequenced = Either.sequence([

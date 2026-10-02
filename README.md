@@ -407,7 +407,7 @@ final Either<String, BuiltList<int>> parallelTraverse = await Either.parTraverse
 );
 ```
 
-#### SDK List interoperability
+#### List interoperability
 
 `BuiltList` implements `Iterable`, so it can be passed directly to APIs that
 accept `Iterable`. When an API requires `List`, call `.asList()`:
@@ -422,7 +422,7 @@ print(listCompatible); // Either.Right([1, 2])
 returns an unmodifiable `List`: operations such as `add`, `remove`, and `[]=`
 throw `UnsupportedError`. If the receiving API needs to modify the list, use
 `.toList()` instead; changes to that list do not modify the original
-`BuiltList`. The resulting SDK lists use identity equality; retain `BuiltList`
+`BuiltList`. The resulting lists use identity equality; retain `BuiltList`
 when comparisons by contents are needed.
 
 #### Parallel execution semantics
