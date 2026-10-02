@@ -636,6 +636,10 @@ sealed class Either<L, R> {
   ///
   /// This is a shorthand for `Either.sequence<L, R>(values.map(mapper))`.
   ///
+  /// Successful values are collected into an immutable [BuiltList]. When an API
+  /// requires a [List], use [BuiltList.asList] to obtain an unmodifiable
+  /// [List]. Use [BuiltList.toList] if the receiving API needs to mutate it.
+  ///
   /// ### Example
   /// ```dart
   /// // Result: Left('3')
@@ -645,10 +649,14 @@ sealed class Either<L, R> {
   /// );
   ///
   /// // Result: Right(BuiltList.of(['1', '2', '3', '4', '5', '6']))
-  /// Either.traverse<int, String, int>(
+  /// final result = Either.traverse<int, String, int>(
   ///   [1, 2, 3, 4, 5, 6],
   ///   (int i) => i.toString().right(),
   /// );
+  ///
+  /// final Either<int, List<String>> listCompatible =
+  ///     result.map((values) => values.asList());
+  /// // Result: Right(['1', '2', '3', '4', '5', '6'])
   /// ```
   @useResult
   static Either<L, BuiltList<R>> traverse<L, R, T>(
@@ -663,6 +671,10 @@ sealed class Either<L, R> {
   ///
   /// Otherwise, collects all values and wrap them in a [Right].
   ///
+  /// Successful values are collected into an immutable [BuiltList]. When an API
+  /// requires a [List], use [BuiltList.asList] to obtain an unmodifiable
+  /// [List]. Use [BuiltList.toList] if the receiving API needs to mutate it.
+  ///
   /// ### Example
   /// ```dart
   /// // Result: Left('3')
@@ -670,8 +682,12 @@ sealed class Either<L, R> {
   ///     .map((int i) => i < 3 ? i.toString().right() : i.left()));
   ///
   /// // Result: Right(BuiltList.of(['1', '2', '3', '4', '5', '6']))
-  /// Either.sequence<int, String>(
+  /// final result = Either.sequence<int, String>(
   ///     [1, 2, 3, 4, 5, 6].map((int i) => i.toString().right()));
+  ///
+  /// final Either<int, List<String>> listCompatible =
+  ///     result.map((values) => values.asList());
+  /// // Result: Right(['1', '2', '3', '4', '5', '6'])
   /// ```
   @useResult
   static Either<L, BuiltList<R>> sequence<L, R>(Iterable<Either<L, R>> values) {
@@ -761,6 +777,10 @@ sealed class Either<L, R> {
   /// values in input order, regardless of completion order. An empty [values]
   /// iterable produces a [Right] containing an empty [BuiltList].
   ///
+  /// When an API requires a [List], use [BuiltList.asList] to obtain an
+  /// unmodifiable [List]. Use [BuiltList.toList] if the receiving API needs
+  /// to mutate it.
+  ///
   /// ### Example
   /// ```dart
   /// // Fetch numbers for IDs 1,2,3 with max 2 concurrent requests
@@ -769,6 +789,9 @@ sealed class Either<L, R> {
   ///   mapper: (id) => () async => fetchNumber(id),
   ///   maxConcurrent: 2,
   /// );
+  ///
+  /// final Either<String, List<int>> listCompatible =
+  ///     result.map((values) => values.asList());
   /// ```
   ///
   /// ### Returns
@@ -863,6 +886,10 @@ sealed class Either<L, R> {
   /// values in input order, regardless of completion order. An empty
   /// [functions] iterable produces a [Right] containing an empty [BuiltList].
   ///
+  /// When an API requires a [List], use [BuiltList.asList] to obtain an
+  /// unmodifiable [List]. Use [BuiltList.toList] if the receiving API needs
+  /// to mutate it.
+  ///
   /// ### Example
   /// ```dart
   /// // Run up to 2 concurrent requests
@@ -875,6 +902,9 @@ sealed class Either<L, R> {
   ///   ],
   ///   maxConcurrent: 2,
   /// );
+  ///
+  /// final Either<String, List<int>> listCompatible =
+  ///     result.map((values) => values.asList());
   /// ```
   ///
   /// ### Returns

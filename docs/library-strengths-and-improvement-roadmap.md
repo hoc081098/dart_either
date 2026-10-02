@@ -28,9 +28,10 @@ it is now an opaque, scope-bound, contravariant capability backed by a private
 final class. Captured capabilities are revoked, intercepted short-circuits are
 detected, `raise` is implemented, and the full test suite runs in CI.
 
-Nullable and exception conversion now support domain-selective adapters. The
-main remaining design question is whether `BuiltList` still fits the
-lightweight positioning.
+Nullable and exception conversion now support domain-selective adapters.
+Collection results intentionally retain `BuiltList` for its immutable
+interface and equality and hashing by contents. Consumers can use `.asList()`
+when a `List` is required.
 
 Law, lower-bound, documentation, and package validation are covered by CI;
 keep those gates current as the package evolves.
@@ -49,6 +50,11 @@ The "lightweight" claim needs one qualification. Runtime dependencies are only
 `meta` and `built_collection`, but `BuiltList` is exposed in the return types of
 `sequence`, `traverse`, `parSequenceN`, and `parTraverseN`. It is therefore part
 of the public API and not merely an internal implementation detail.
+
+This choice is retained in
+[ADR 0006](adr/0006-retain-built-list-for-collection-results.md). `List`
+interoperability is documented in the
+[README](../README.md#list-interoperability).
 
 ### The API around `Either` is the product
 
@@ -479,20 +485,24 @@ terminate: cancellation still propagates to its owning lifecycle boundary, and
 a Flutter global error handler ultimately decides how an otherwise unhandled
 error is reported or terminated.
 
-### Priority 3: decide the collection return strategy
+### Completed: retain BuiltList for collection results
 
-`BuiltList` provides immutability and stable collection semantics, but it also
-adds a runtime dependency and exposes a more FP-specific type to consumers.
-Changing existing return types is breaking. Available paths are:
+`sequence`, `traverse`, `parSequenceN`, and `parTraverseN` keep `BuiltList` as
+their canonical successful result type, including in the current 3.x plan.
+Its immutable collection interface and equality and hashing by contents are
+intentional. `Either` delegates to its payload's equality, so changing the
+result to Dart's `List` type would also change equality behavior.
 
-- keep `BuiltList` and state clearly that immutable collections are an
-  intentional part of the package;
-- add `sequenceList`, `traverseList`, and parallel `List` variants returning
-  `List.unmodifiable`; or
-- change the defaults only in a major release.
+Consumers can pass `BuiltList` directly to APIs accepting `Iterable`. When an
+API requires `List`, use `.asList()` to obtain an unmodifiable list. If the
+receiving API needs to modify it, use `.toList()` instead. Mutable elements
+remain mutable, and the returned lists use identity equality.
 
-This is a product-positioning choice, not an automatic cleanup. Measure the
-dependency and migration cost before deciding.
+The README, Dartdocs, and runnable example explain this conversion. Keeping
+one canonical result type avoids duplicating the four operations solely for
+`List` compatibility.
+[ADR 0006](adr/0006-retain-built-list-for-collection-results.md) records the
+decision and its dependency and compatibility trade-offs.
 
 ### Operational risk: community and bus factor
 
@@ -523,18 +533,14 @@ technical correctness verdict or quote stale PR counts as evidence.
 ## Recommended next slice
 
 With `2.4.0` published, the semantic-law, variance-relocation, parallel
-fail-fast, package-gate, typed-nullable, and selective-capture slices are
-complete.
+fail-fast, package-gate, typed-nullable, selective-capture, and collection
+strategy slices are complete.
 
-Continue in this order:
+Evaluate richer scoped recovery against concrete consumer needs before
+expanding the API.
 
-1. evaluate the collection strategy; and
-2. evaluate richer scoped recovery against concrete consumer needs before
-   expanding the API.
-
-Removing `getOrHandle`, replacing the legacy `getOrElse` signature, and
-changing existing collection return types remain `3.x` work. The fallback
-migration is specified in
+Removing `getOrHandle` and replacing the legacy `getOrElse` signature remain
+`3.x` work. The fallback migration is specified in
 [API naming alignment](api-naming-alignment.md#fallback-migration-details).
 Worker-pool optimization and cooperative cancellation remain separate future
 work, not requirements for `2.4.0`.
