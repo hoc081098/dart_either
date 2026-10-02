@@ -371,6 +371,12 @@ The old names remain available in `2.x` so existing code keeps working:
 | [`Either.parSequenceN`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/parSequenceN.html)     | Sequences async actions with concurrency control |
 | [`Either.parTraverseN`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/parTraverseN.html)     | Maps and runs async actions with concurrency control |
 
+All four operations collect successful values into a
+[`BuiltList`](https://pub.dev/documentation/built_collection/latest/built_collection/BuiltList-class.html).
+This is intentional: its collection structure is immutable, and equality and
+hashing use the elements' equality and hash codes. Mutable elements are not
+made immutable by placing them in a `BuiltList`.
+
 ```dart
 import 'package:built_collection/built_collection.dart';
 
@@ -400,6 +406,24 @@ final Either<String, BuiltList<int>> parallelTraverse = await Either.parTraverse
   maxConcurrent: 2,
 );
 ```
+
+#### SDK List interoperability
+
+`BuiltList` implements `Iterable`, so it can be passed directly to APIs that
+accept `Iterable`. When an API requires `List`, call `.asList()`:
+
+```dart
+final Either<String, List<int>> listCompatible =
+    sequenced.map((values) => values.asList());
+print(listCompatible); // Either.Right([1, 2])
+```
+
+[`BuiltList.asList()`](https://pub.dev/documentation/built_collection/latest/built_collection/BuiltList/asList.html)
+returns an unmodifiable `List`: operations such as `add`, `remove`, and `[]=`
+throw `UnsupportedError`. If the receiving API needs to modify the list, use
+`.toList()` instead; changes to that list do not modify the original
+`BuiltList`. The resulting SDK lists use identity equality; retain `BuiltList`
+when comparisons by contents are needed.
 
 #### Parallel execution semantics
 
