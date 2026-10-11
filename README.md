@@ -371,6 +371,11 @@ The old names remain available in `2.x` so existing code keeps working:
 | [`Either.parSequenceN`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/parSequenceN.html)     | Sequences async actions with concurrency control |
 | [`Either.parTraverseN`](https://pub.dev/documentation/dart_either/latest/dart_either/Either/parTraverseN.html)     | Maps and runs async actions with concurrency control |
 
+All four operations collect successful values into a
+[`BuiltList`](https://pub.dev/documentation/built_collection/latest/built_collection/BuiltList-class.html).
+This is intentional: its collection structure is immutable, and equality and
+hashing use the elements' equality and hash codes.
+
 ```dart
 import 'package:built_collection/built_collection.dart';
 
@@ -400,6 +405,25 @@ final Either<String, BuiltList<int>> parallelTraverse = await Either.parTraverse
   maxConcurrent: 2,
 );
 ```
+
+#### List interoperability
+
+`BuiltList` implements `Iterable`, so it can be passed directly to APIs that
+accept `Iterable`. When an API requires `List`, call `.asList()`:
+
+```dart
+final Either<String, List<int>> listCompatible =
+    sequenced.map((values) => values.asList());
+print(listCompatible); // Either.Right([1, 2])
+```
+
+- [`BuiltList.asList()`](https://pub.dev/documentation/built_collection/latest/built_collection/BuiltList/asList.html)
+  returns an unmodifiable `List` that throws `UnsupportedError` on mutation
+  operations such as `add`, `remove`, and `[]=`.
+- If the receiving API needs to modify the list, use `.toList()` instead to
+  get a mutable list whose changes do not affect the original `BuiltList`.
+- `asList()` and `toList()` return lists with identity equality, so retain
+  `BuiltList` when comparisons by contents are needed.
 
 #### Parallel execution semantics
 

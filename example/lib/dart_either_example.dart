@@ -1,3 +1,4 @@
+import 'package:built_collection/built_collection.dart';
 import 'package:dart_either/dart_either.dart';
 
 Either<String, int> parseQuantity(String input) {
@@ -150,7 +151,22 @@ void main() {
   print(merged); // Prints 10
 
   // ---------------------------------------------------------------------------
-  // 3) Binding: compose Either operations and raise domain errors
+  // 3) Collections: adapt immutable results to List APIs
+  // ---------------------------------------------------------------------------
+
+  final Either<String, BuiltList<int>> sequenced = Either.sequence([
+    Either.right(1),
+    Either.right(2),
+  ]);
+
+  // For APIs that require List, use asList() to get an unmodifiable list
+  // or toList() if the API needs to modify it.
+  final Either<String, List<int>> listCompatible =
+      sequenced.map((values) => values.asList());
+  print(listCompatible); // Prints Either.Right([1, 2])
+
+  // ---------------------------------------------------------------------------
+  // 4) Binding: compose Either operations and raise domain errors
   // ---------------------------------------------------------------------------
 
   /// A successful binding unwraps [Right] values and returns the final result
@@ -180,7 +196,7 @@ void main() {
   print(insufficientStock); // Prints Either.Left(Only 10 items are in stock)
 
   // ---------------------------------------------------------------------------
-  // 4) Pattern matching
+  // 5) Pattern matching
   // ---------------------------------------------------------------------------
 
   /// Pattern matching
