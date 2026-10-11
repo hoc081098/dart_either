@@ -160,7 +160,7 @@ void main() {
   ]);
 
   // BuiltList implements Iterable. Use asList() when an API requires List.
-  // The returned List is unmodifiable; use toList() if mutation is needed.
+  // The returned List is unmodifiable. Use toList() if mutation is needed.
   final Either<String, List<int>> listCompatible =
       sequenced.map((values) => values.asList());
   print(listCompatible); // Prints Either.Right([1, 2])

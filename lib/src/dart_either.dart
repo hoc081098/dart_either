@@ -636,9 +636,11 @@ sealed class Either<L, R> {
   ///
   /// This is a shorthand for `Either.sequence<L, R>(values.map(mapper))`.
   ///
-  /// Successful values are collected into an immutable [BuiltList]. When an API
-  /// requires a [List], use [BuiltList.asList] to obtain an unmodifiable
-  /// [List]. Use [BuiltList.toList] if the receiving API needs to mutate it.
+  /// Successful values are collected into an immutable [BuiltList].
+  /// [BuiltList] implements [Iterable], so no conversion is needed for APIs
+  /// that accept [Iterable]. When an API requires a [List], use
+  /// [BuiltList.asList] to obtain an unmodifiable [List]. Use [BuiltList.toList]
+  /// if the receiving API needs to mutate it.
   ///
   /// ### Example
   /// ```dart
@@ -671,9 +673,11 @@ sealed class Either<L, R> {
   ///
   /// Otherwise, collects all values and wrap them in a [Right].
   ///
-  /// Successful values are collected into an immutable [BuiltList]. When an API
-  /// requires a [List], use [BuiltList.asList] to obtain an unmodifiable
-  /// [List]. Use [BuiltList.toList] if the receiving API needs to mutate it.
+  /// Successful values are collected into an immutable [BuiltList].
+  /// [BuiltList] implements [Iterable], so no conversion is needed for APIs
+  /// that accept [Iterable]. When an API requires a [List], use
+  /// [BuiltList.asList] to obtain an unmodifiable [List]. Use [BuiltList.toList]
+  /// if the receiving API needs to mutate it.
   ///
   /// ### Example
   /// ```dart
@@ -777,9 +781,10 @@ sealed class Either<L, R> {
   /// values in input order, regardless of completion order. An empty [values]
   /// iterable produces a [Right] containing an empty [BuiltList].
   ///
-  /// When an API requires a [List], use [BuiltList.asList] to obtain an
-  /// unmodifiable [List]. Use [BuiltList.toList] if the receiving API needs
-  /// to mutate it.
+  /// [BuiltList] implements [Iterable], so no conversion is needed for APIs
+  /// that accept [Iterable]. When an API requires a [List], use
+  /// [BuiltList.asList] to obtain an unmodifiable [List]. Use [BuiltList.toList]
+  /// if the receiving API needs to mutate it.
   ///
   /// ### Example
   /// ```dart
@@ -886,9 +891,10 @@ sealed class Either<L, R> {
   /// values in input order, regardless of completion order. An empty
   /// [functions] iterable produces a [Right] containing an empty [BuiltList].
   ///
-  /// When an API requires a [List], use [BuiltList.asList] to obtain an
-  /// unmodifiable [List]. Use [BuiltList.toList] if the receiving API needs
-  /// to mutate it.
+  /// [BuiltList] implements [Iterable], so no conversion is needed for APIs
+  /// that accept [Iterable]. When an API requires a [List], use
+  /// [BuiltList.asList] to obtain an unmodifiable [List]. Use [BuiltList.toList]
+  /// if the receiving API needs to mutate it.
   ///
   /// ### Example
   /// ```dart

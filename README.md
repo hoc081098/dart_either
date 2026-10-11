@@ -374,8 +374,7 @@ The old names remain available in `2.x` so existing code keeps working:
 All four operations collect successful values into a
 [`BuiltList`](https://pub.dev/documentation/built_collection/latest/built_collection/BuiltList-class.html).
 This is intentional: its collection structure is immutable, and equality and
-hashing use the elements' equality and hash codes. Mutable elements are not
-made immutable by placing them in a `BuiltList`.
+hashing use the elements' equality and hash codes.
 
 ```dart
 import 'package:built_collection/built_collection.dart';
@@ -418,12 +417,13 @@ final Either<String, List<int>> listCompatible =
 print(listCompatible); // Either.Right([1, 2])
 ```
 
-[`BuiltList.asList()`](https://pub.dev/documentation/built_collection/latest/built_collection/BuiltList/asList.html)
-returns an unmodifiable `List`: operations such as `add`, `remove`, and `[]=`
-throw `UnsupportedError`. If the receiving API needs to modify the list, use
-`.toList()` instead; changes to that list do not modify the original
-`BuiltList`. The resulting lists use identity equality; retain `BuiltList`
-when comparisons by contents are needed.
+- [`BuiltList.asList()`](https://pub.dev/documentation/built_collection/latest/built_collection/BuiltList/asList.html)
+  returns an unmodifiable `List` that throws `UnsupportedError` on mutation
+  operations such as `add`, `remove`, and `[]=`.
+- If the receiving API needs to modify the list, use `.toList()` instead to
+  get a mutable list whose changes do not affect the original `BuiltList`.
+- `asList()` and `toList()` return lists with identity equality, so retain
+  `BuiltList` when comparisons by contents are needed.
 
 #### Parallel execution semantics
 
