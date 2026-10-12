@@ -53,7 +53,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dart_either: ^2.4.0
+  dart_either: ^2.5.0
 ```
 
 Then run:

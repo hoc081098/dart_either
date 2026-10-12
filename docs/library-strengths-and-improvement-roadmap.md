@@ -5,8 +5,7 @@ This note distills an earlier discussion about the value proposition of
 transcript or marketing copy. Every technical statement below was last
 reconciled with the repository state on 2026-09-21.
 
-The package currently declares version `2.4.0`, which is
-[published on pub.dev](https://pub.dev/packages/dart_either).
+The package currently declares version `2.5.0` for the next release.
 
 ## Executive summary
 
@@ -532,9 +531,9 @@ technical correctness verdict or quote stale PR counts as evidence.
 
 ## Recommended next slice
 
-With `2.4.0` published, the semantic-law, variance-relocation, parallel
-fail-fast, package-gate, typed-nullable, selective-capture, and collection
-strategy slices are complete.
+The semantic-law, variance-relocation, parallel fail-fast, package-gate,
+typed-nullable, selective-capture, and collection strategy slices are complete
+for `2.5.0`.
 
 Evaluate richer scoped recovery against concrete consumer needs before
 expanding the API.
@@ -543,4 +542,4 @@ Removing `getOrHandle` and replacing the legacy `getOrElse` signature remain
 `3.x` work. The fallback migration is specified in
 [API naming alignment](api-naming-alignment.md#fallback-migration-details).
 Worker-pool optimization and cooperative cancellation remain separate future
-work, not requirements for `2.4.0`.
+work, not requirements for `2.5.0`.

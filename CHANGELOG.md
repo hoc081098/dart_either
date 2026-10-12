@@ -1,10 +1,10 @@
-## Unreleased
+## 2.5.0 - Oct 12, 2026
 
 ### Selective error capture
 
 - Added `ErrorMappers.only<E, L>`, which adapts a typed error mapper to the
   existing `ErrorMapper<L>` interface. Matching errors and their subtypes are
-  mapped; non-matching errors retain their original object and stack trace.
+  mapped, while non-matching errors retain their original object and stack trace.
   Errors thrown by the typed mapper propagate unchanged.
 - `ErrorMappers.only` composes with `Either.tryCatch`, `Either.tryCatchAsync`,
   `Future.toEitherFuture`, and `Stream.toEitherStream`.
@@ -26,7 +26,7 @@ final Either<String, int> result = Either.tryCatch(
 
 - Added `Either.fromNullableOrElse`, which converts a non-null value to `Right`
   and lazily creates a typed `Left` when the value is `null`. The `ifNull`
-  callback runs once only for `null`; errors from it propagate unchanged.
+  callback runs once only for `null`, and errors from it propagate unchanged.
 - Deprecated `Either.fromNullable(value)` without changing its 2.x behavior.
   Use `Either.fromNullableOrElse<void, R>(value, ifNull: () {})` to
   preserve `Either<void, R>` and `Left(null)`. In 3.0.0,
@@ -57,6 +57,14 @@ Either.fromNullableOrElse<String, int>(
   `flatMap`, `mapLeft`, `bimap`, and `swap`, plus sequential traversal and
   synchronous and asynchronous binding scopes. The async coherence cases
   include real asynchronous suspension.
+
+### Collection interoperability
+
+- Clarified how to use the `BuiltList` results of `traverse`, `sequence`,
+  `parTraverseN`, and `parSequenceN`: pass them directly to APIs accepting
+  `Iterable`, use `.asList()` for an unmodifiable `List`, or `.toList()` for a
+  mutable `List`. The resulting lists use identity equality, so keep
+  `BuiltList` if you want `==` to compare their contents.
 
 ## 2.4.0 - Sep 06, 2026
 
