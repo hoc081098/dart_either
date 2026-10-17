@@ -84,10 +84,10 @@ packages:
     dependency: "direct main"
     description:
       name: rxdart_ext
-      sha256: "95df7e8b13140e2c3fdb3b943569a51f18090e82aaaf6ca6e8e6437e434a6fb0"
+      sha256: "9d6fcf38d3e125c1ccf0b4eaf50e1838e613f91c33bf5608fc9c036e3a9f453c"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.0"
+    version: "0.4.0"
   source_span:
     dependency: transitive
     description:
