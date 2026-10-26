@@ -22,7 +22,7 @@ topics:
 
 dependencies:
   meta: ^1.7.0
-  built_collection: ^5.1.1
+  built_collection: ^6.0.0
 
 dev_dependencies:
   benchmark_harness: ^2.2.2
