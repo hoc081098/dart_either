@@ -7,7 +7,7 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
-  built_collection: ^5.1.1
+  built_collection: ^6.0.0
   http: ^1.0.0
   rxdart_ext: ^0.3.0
   lints: ^3.0.0
